@@ -10,8 +10,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <commons/temporal.h>
 
 int main(void) {
-	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
+	char* time = temporal_get_string_time();
+	puts(time);
+	free(time);
 	return EXIT_SUCCESS;
 }
