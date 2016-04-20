@@ -8,7 +8,9 @@
 #include "Nucleo.h"
 
 int main(void) {
-	cargar_conf();
+
+	t_nucleo *nucleo;
+	cargar_conf(nucleo);
 	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
 	return EXIT_SUCCESS;
 }

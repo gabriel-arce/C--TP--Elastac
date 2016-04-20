@@ -8,14 +8,10 @@
  ============================================================================
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <commons/config.h>
 #include "Nucleo.h"
 
-void cargar_conf(){
+void cargar_conf(t_nucleo *nucleo){
 	t_config *config = config_create(CONFIG);
-	t_nucleo *nucleo = NULL;
 
 	if(config_has_property(config, "PUERTO_PROG"))
 		nucleo->puerto_programas = config_get_int_value(config,"PUERTO_PROG");
@@ -28,6 +24,9 @@ void cargar_conf(){
 
 	if(config_has_property(config, "QUANTUM_SLEEP"))
 		nucleo->quantum_sleep = config_get_int_value(config, "QUANTUM_SLEEP");
+
+	if(config_has_property(config, "SEM_IDS"))
+		nucleo->sem_ids = config_get_array_value(config, "SEM_IDS");
 
 	config_destroy(config);
 

@@ -19,14 +19,14 @@ typedef struct {
 	int puerto_cpu;
 	int quantum;
 	int quantum_sleep;
-	char *sem_ids;
-	char *sem_init;
-	char *io_ids;
-	char *io_sleep;
-	char *shared_vars;
+	char **sem_ids;
+	char **sem_init;
+	char **io_ids;
+	char **io_sleep;
+	char **shared_vars;
 } t_nucleo;
 
-void cargar_conf();
+void cargar_conf(t_nucleo *nucleo);
 int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
 
