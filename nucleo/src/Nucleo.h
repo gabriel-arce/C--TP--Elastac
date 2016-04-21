@@ -30,6 +30,8 @@ typedef struct {
 } t_nucleo;
 
 void cargar_conf();
+t_list *obtener_lista(t_config *config, char *property);
+int string_count(char *text, char *pattern);
 int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
 
