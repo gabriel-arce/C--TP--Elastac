@@ -10,8 +10,11 @@
 
 #include "Nucleo.h"
 
-void cargar_conf(t_nucleo *nucleo){
+void cargar_conf(){
 	t_config *config = config_create(CONFIG);
+	t_nucleo *nucleo = malloc(sizeof(t_nucleo));
+
+//	nucleo->puerto_cpu = config_get_int_value(config, "PUERTO_CPU");
 
 	if(config_has_property(config, "PUERTO_PROG"))
 		nucleo->puerto_programas = config_get_int_value(config,"PUERTO_PROG");
@@ -25,11 +28,16 @@ void cargar_conf(t_nucleo *nucleo){
 	if(config_has_property(config, "QUANTUM_SLEEP"))
 		nucleo->quantum_sleep = config_get_int_value(config, "QUANTUM_SLEEP");
 
+	nucleo->sem_ids  = list_create();
+	nucleo->sem_init = list_create();
+	nucleo->io_ids	 = list_create();
+	nucleo->io_sleep = list_create();
+	nucleo->shared_vars = list_create();
+
 	if(config_has_property(config, "SEM_IDS"))
 		nucleo->sem_ids = config_get_array_value(config, "SEM_IDS");
 
 	config_destroy(config);
-
 }
 
 int get_quantum(t_nucleo *nucleo){

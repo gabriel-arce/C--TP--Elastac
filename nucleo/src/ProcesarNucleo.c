@@ -9,8 +9,7 @@
 
 int main(void) {
 
-	t_nucleo *nucleo;
-	cargar_conf(nucleo);
+	cargar_conf();
 	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
 	return EXIT_SUCCESS;
 }

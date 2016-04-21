@@ -20,7 +20,7 @@ void test_si_existe_config(){
 }
 
 void test_si_puerto_programas_tiene_puerto_existente(){
-	cargar_conf(nucleo);
+	cargar_conf();
 	CU_ASSERT_EQUAL(nucleo->puerto_programas,0);
 }
 

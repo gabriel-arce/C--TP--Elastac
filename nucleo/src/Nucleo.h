@@ -10,23 +10,26 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <commons/config.h>
+#include <commons/collections/list.h>
+#include <commons/string.h>
 
-#define CONFIG "../nucleo.conf"
+#define CONFIG "../nucleo/src/nucleo.conf"
 
 typedef struct {
 	int puerto_programas;
 	int puerto_cpu;
 	int quantum;
 	int quantum_sleep;
-	char **sem_ids;
-	char **sem_init;
-	char **io_ids;
-	char **io_sleep;
-	char **shared_vars;
+	t_list *sem_ids;
+	t_list *sem_init;
+	t_list *io_ids;
+	t_list *io_sleep;
+	t_list *shared_vars;
 } t_nucleo;
 
-void cargar_conf(t_nucleo *nucleo);
+void cargar_conf();
 int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
 
