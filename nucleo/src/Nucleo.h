@@ -29,7 +29,7 @@ typedef struct {
 	t_list *shared_vars;
 } t_nucleo;
 
-void cargar_conf();
+t_nucleo *cargar_conf();
 t_list *obtener_lista(t_config *config, char *property);
 int string_count(char *text, char *pattern);
 int get_quantum(t_nucleo *nucleo);

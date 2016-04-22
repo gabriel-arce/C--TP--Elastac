@@ -19,16 +19,23 @@ void test_si_existe_config(){
 }
 
 void test_si_puerto_programas_tiene_puerto_existente(){
-	cargar_conf();
-//	CU_ASSERT_EQUAL(nucleo->puerto_programas,0);
+	t_nucleo *nucleo = cargar_conf();
+	CU_ASSERT(nucleo->puerto_programas != 0);
 }
+
+void test_si_puerto_cpu_tiene_puerto_existente(){
+	t_nucleo *nucleo = cargar_conf();
+	CU_ASSERT(nucleo->puerto_cpu != 0 && nucleo->puerto_programas != 0);
+}
+
 
 int main(){
 	CU_initialize_registry();
 
 	CU_pSuite prueba = CU_add_suite("Suite de prueba", NULL, NULL);
 	CU_add_test(prueba, "Probando que la configuracion existe", test_si_existe_config);
-//	CU_add_test(prueba, "Probando que el puerto de programas tenga un puerto existente", test_si_puerto_programas_tiene_puerto_existente);
+	CU_add_test(prueba, "Probando que el puerto de programas tenga un puerto existente", test_si_puerto_programas_tiene_puerto_existente);
+	CU_add_test(prueba, "Probando que el puerto CPU tenga un puerto existente", test_si_puerto_cpu_tiene_puerto_existente);
 	CU_basic_set_mode(CU_BRM_VERBOSE);
 	CU_basic_run_tests();
 	CU_cleanup_registry();
