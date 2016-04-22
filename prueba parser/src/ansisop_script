@@ -1,0 +1,10 @@
+#!/usr/bin/ansisop 
+
+ begin 
+ 
+  variables a, b, c 
+  a = b + 12 
+  print b
+  textPrint foo
+    
+ end
