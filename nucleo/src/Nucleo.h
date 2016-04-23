@@ -11,9 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <commons/config.h>
 #include <commons/collections/list.h>
-#include <commons/string.h>
+#include "elestac_config.h"
 
 #define CONFIG "../nucleo/src/nucleo.conf"
 
@@ -30,10 +29,9 @@ typedef struct {
 } t_nucleo;
 
 t_nucleo *cargar_conf();
-t_list *obtener_lista(t_config *config, char *property);
-int string_count(char *text, char *pattern);
 int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
-
+t_list *obtener_lista(t_config *config, char *property);
+int string_count(char *text, char *pattern);
 
 #endif /* NUCLEO_H_ */
