@@ -16,16 +16,17 @@
 #include <commons/string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <elestac_config.h>
 
 
 #define CONFIG_PATH "../consola/src/consola.conf"
 
 typedef struct {
 	int puerto_nucleo;
-	char* ip_nucleo;
-	char* programa_ansisop;
+	char * ip_nucleo;
+	char * programa_ansisop;
 } t_consola_config;
 
-t_consola_config *cargar_config();
+t_consola_config * cargar_config();
 
 #endif /* CONSOLA_H_ */

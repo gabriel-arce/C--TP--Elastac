@@ -5,6 +5,7 @@
 	<projects>
 		<project>commons</project>
 		<project>sharedElestac</project>
+		<project>sharedLibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
