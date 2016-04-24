@@ -14,7 +14,7 @@ int main(void) {
 
 	t_consola_config * config = cargar_config();
 
-	puts("PROCESO CONSOLA/n");
+	//puts("PROCESO CONSOLA/n");
 	//printf("Programa ansisop : %s", config->programa_ansisop);
 
 	/*BEGIN CONECTION*/
