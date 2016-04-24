@@ -4,7 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>commons</project>
-		<project>shared_library</project>
+		<project>sharedElestac</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

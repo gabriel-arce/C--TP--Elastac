@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <commons/collections/list.h>
-#include <sharedLibrary/elestac_config.h>
+#include <elestac_config.h>
 
 #define CONFIG "../nucleo/src/nucleo.conf"
 
