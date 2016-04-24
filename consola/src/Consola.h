@@ -16,7 +16,7 @@
 #include <commons/string.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <elestac_config.h>
+#include <sharedLibrary/elestac_config.h>
 
 
 #define CONFIG_PATH "../consola/src/consola.conf"

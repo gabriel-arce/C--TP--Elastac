@@ -15,12 +15,12 @@ int main(void) {
 	t_consola_config * config = cargar_config();
 
 	puts("PROCESO CONSOLA/n");
-	printf("Programa ansisop : %s", config->programa_ansisop);
+	//printf("Programa ansisop : %s", config->programa_ansisop);
 
 	/*BEGIN CONECTION*/
-	int socket_consola = crearSocket();
+	//int socket_consola = crearSocket();
 
-	conectarA(socket_consola, config->ip_nucleo, config->puerto_nucleo);
+	//conectarA(socket_consola, config->ip_nucleo, config->puerto_nucleo);
 	//close(socket_consola);
 	/*END CONECTION*/
 
@@ -38,7 +38,7 @@ t_consola_config *cargar_config() {
 	if (chequearProperty(config, "IP_NUCLEO"))
 		consola_config->ip_nucleo = config_get_string_value(config, "IP_NUCLEO");
 
-	if (config, "PROGRAMA_ANSISOP")
+	if (chequearProperty(config, "PROGRAMA_ANSISOP"))
 		consola_config->programa_ansisop = config_get_string_value(config, "PROGRAMA_ANSISOP");
 
 	config_destroy(config);
