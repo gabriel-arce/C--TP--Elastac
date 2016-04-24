@@ -5,7 +5,7 @@
  *      Author: gabriel
  */
 
-#include <sharedLibrary/elestac_sockets.h>
+#include <elestac_sockets.h>
 
 #include "Nucleo.h"
 
