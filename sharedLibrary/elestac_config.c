@@ -26,7 +26,8 @@ t_list *getListProperty(t_config *config, char *property){
 	t_list *ret  = list_create();
 	int cant	 = string_count(config_get_string_value(config, property), ",") +1;
 
-	for(int i = 0; i < cant; i++)
+	int i;
+	for(i = 0; i < cant; i++)
 		list_add(ret, (void *)string_duplicate(items[i]));
 
 	return ret;
