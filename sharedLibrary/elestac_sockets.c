@@ -74,11 +74,11 @@ int aceptarEntrantes(int socketFd){
 int conectarA(int socketFd, char* ipDestino, int puertoDestino){
 	int resultadoAccept = -1;
 
-	struct sockaddr_in direccionDestino;						// Guardará la dirección de destino
-	direccionDestino.sin_family			= AF_INET;				// Ordenación de máquina
-	direccionDestino.sin_port			= htons(puertoDestino);	// short, Ordenación de la red
+	struct sockaddr_in direccionDestino;											// Guardará la dirección de destino
+	direccionDestino.sin_family				= AF_INET;							// Ordenación de máquina
+	direccionDestino.sin_port					= htons(puertoDestino);	// short, Ordenación de la red
 	direccionDestino.sin_addr.s_addr	= inet_addr(ipDestino);
-	memset(&(direccionDestino.sin_zero), '\0', 8); 				// Poner a cero el resto de la estructura
+	memset(&(direccionDestino.sin_zero), '\0', 8); 							// Poner a cero el resto de la estructura
 
 	if ((resultadoAccept = connect(socketFd,
 							  	  (struct sockaddr *)&direccionDestino,
