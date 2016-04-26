@@ -13,8 +13,10 @@
 #include <stdint.h>
 #include <commons/collections/list.h>
 #include <elestac_config.h>
+#include <signal.h>
 
-#define CONFIG "../nucleo/src/nucleo.conf"
+#define CONFIG						"../nucleo/src/nucleo.conf"
+#define PUERTO_NUCLEO	7200
 
 typedef struct {
 	int puerto_programas;
@@ -27,6 +29,9 @@ typedef struct {
 	t_list *io_sleep;
 	t_list *shared_vars;
 } t_nucleo;
+
+fd_set master;		// conjunto maestro de descriptores de fichero
+fd_set read_fds;		// conjunto temporal de descriptores de fichero para select()
 
 t_nucleo *cargar_conf();
 int get_quantum(t_nucleo *nucleo);

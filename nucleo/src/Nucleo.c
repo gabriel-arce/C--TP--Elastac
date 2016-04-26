@@ -21,59 +21,15 @@ t_nucleo *cargar_conf(){
 	nucleo->io_sleep 	= list_create();
 	nucleo->shared_vars = list_create();
 
-	if(config_has_property(config, "PUERTO_PROG"))
-		nucleo->puerto_programas = config_get_int_value(config, "PUERTO_PROG");
-
-	if(config_has_property(config, "PUERTO_CPU"))
-		nucleo->puerto_programas = config_get_int_value(config, "PUERTO_CPU");
-
-	if(config_has_property(config, "QUANTUM"))
-		nucleo->puerto_programas = config_get_int_value(config, "QUANTUM");
-
-	if(config_has_property(config, "QUANTUM_SLEEP"))
-		nucleo->puerto_programas = config_get_int_value(config, "QUANTUM_SLEEP");
-
-	if(config_has_property(config, "SEM_IDS"))
-		nucleo->puerto_programas = obtener_lista(config, "SEM_IDS");
-
-	if(config_has_property(config, "SEM_INIT"))
-		nucleo->puerto_programas = obtener_lista(config, "SEM_INIT");
-
-	if(config_has_property(config, "IO_IDS"))
-		nucleo->io_ids = obtener_lista(config, "IO_IDS");
-
-	if(config_has_property(config, "IO_SLEEP"))
-		nucleo->io_sleep = obtener_lista(config, "IO_SLEEP");
-
-	if(config_has_property(config, "SHARED_VARS"))
-		nucleo->shared_vars = obtener_lista(config, "SHARED_VARS");
-
-/*	if(chequearProperty(config, "PUERTO_PROG"))
-		nucleo->puerto_programas = getIntProperty(config, "PUERTO_PROG");
-
-	if(chequearProperty(config, "PUERTO_CPU"))
-		nucleo->puerto_cpu = getIntProperty(config,"PUERTO_CPU");
-
-	if(chequearProperty(config, "QUANTUM"))
-		nucleo->quantum = getIntProperty(config, "QUANTUM");
-
-	if(chequearProperty(config, "QUANTUM_SLEEP"))
-		nucleo->quantum_sleep = getIntProperty(config, "QUANTUM_SLEEP");
-
-	if(chequearProperty(config, "SEM_IDS"))
-		nucleo->sem_ids = getListProperty(config, "SEM_IDS");
-
-	if(chequearProperty(config, "SEM_INIT"))
-		nucleo->sem_init = getListProperty(config, "SEM_INIT");
-
-	if(chequearProperty(config, "IO_IDS"))
-		nucleo->io_ids = getListProperty(config, "IO_IDS");
-
-	if(chequearProperty(config, "IO_SLEEP"))
-		nucleo->io_sleep = getListProperty(config, "IO_SLEEP");
-
-	if(chequearProperty(config, "SHARED_VARS"))
-		nucleo->shared_vars = getListProperty(config, "SHARED_VARS");*/
+	nucleo->puerto_programas = config_get_int_value(config, "PUERTO_PROG");
+	nucleo->puerto_programas = config_get_int_value(config, "PUERTO_CPU");
+	nucleo->puerto_programas = config_get_int_value(config, "QUANTUM");
+	nucleo->puerto_programas = config_get_int_value(config, "QUANTUM_SLEEP");
+	nucleo->puerto_programas = obtener_lista(config, "SEM_IDS");
+	nucleo->puerto_programas = obtener_lista(config, "SEM_INIT");
+	nucleo->io_ids = obtener_lista(config, "IO_IDS");
+	nucleo->io_sleep = obtener_lista(config, "IO_SLEEP");
+	nucleo->shared_vars = obtener_lista(config, "SHARED_VARS");
 
 	config_destroy(config);
 
