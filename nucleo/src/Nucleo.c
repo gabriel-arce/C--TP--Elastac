@@ -15,21 +15,21 @@ t_nucleo *cargar_conf(){
 	t_config *config = config_create(CONFIG);
 	t_nucleo *nucleo = malloc(sizeof(t_nucleo));
 
-	nucleo->sem_ids  	= list_create();
-	nucleo->sem_init 	= list_create();
-	nucleo->io_ids	 	= list_create();
-	nucleo->io_sleep 	= list_create();
+	nucleo->sem_ids  		 = list_create();
+	nucleo->sem_init 		 = list_create();
+	nucleo->io_ids	 		 = list_create();
+	nucleo->io_sleep 		 = list_create();
 	nucleo->shared_vars = list_create();
 
-	nucleo->puerto_programas = config_get_int_value(config, "PUERTO_PROG");
-	nucleo->puerto_programas = config_get_int_value(config, "PUERTO_CPU");
-	nucleo->puerto_programas = config_get_int_value(config, "QUANTUM");
-	nucleo->puerto_programas = config_get_int_value(config, "QUANTUM_SLEEP");
-	nucleo->puerto_programas = obtener_lista(config, "SEM_IDS");
-	nucleo->puerto_programas = obtener_lista(config, "SEM_INIT");
-	nucleo->io_ids = obtener_lista(config, "IO_IDS");
-	nucleo->io_sleep = obtener_lista(config, "IO_SLEEP");
-	nucleo->shared_vars = obtener_lista(config, "SHARED_VARS");
+	nucleo->puerto_programas	= getIntProperty(config, "PUERTO_PROG");
+	nucleo->puerto_cpu					= getIntProperty(config, "PUERTO_CPU");
+	nucleo->quantum						= getIntProperty(config, "QUANTUM");
+	nucleo->quantum_sleep			= getIntProperty(config, "QUANTUM_SLEEP");
+	nucleo->sem_ids						= obtener_lista(config, "SEM_IDS");
+	nucleo->sem_init						= obtener_lista(config, "SEM_INIT");
+	nucleo->io_ids							= obtener_lista(config, "IO_IDS");
+	nucleo->io_sleep						= obtener_lista(config, "IO_SLEEP");
+	nucleo->shared_vars				= obtener_lista(config, "SHARED_VARS");
 
 	config_destroy(config);
 

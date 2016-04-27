@@ -11,13 +11,15 @@
 
 int main(void) {
 
-	t_nucleo *nucleo = NULL;
+	t_nucleo *nucleo = NULL;		//Configuracion
 	int listener;									//Descriptor de escucha
 	int reuse = 1;								//Indicador de reusabilidad del socket
 	sigset_t mask;								//Mascara
 	sigset_t orig_mask;					//Mascara original
 	int fdmax;									//Numero maximo de descriptores a recibir
 	int newfd;									//Descriptor de conexion aceptada
+	int nbytes;									//Cantidad de bytes
+	char *bufferCPU[2000];			//BufferCPU
 
 
 
@@ -38,10 +40,8 @@ int main(void) {
 		exit(1);
 	}
 
-	printf("socket creado..\n");
-
 	//descriptor para enlace
-	if(setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1){
+	if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1){
 		perror("Nucleo: No es posible reusar el socket\n");
 		exit(1);
 	}
@@ -86,22 +86,43 @@ int main(void) {
 			exit(1);
 		}
 
-		for(int i = 0; i <= fdmax; i++){
-			if(FD_ISSET(i, &read_fds)){
-					// gestionar nuevas conexiones
-					if ((newfd = aceptarEntrantes(listener)) == -1)	{
-						perror("accept");
-					} else {
-						FD_SET(newfd, &master);		// añadir al conjunto maestro
-						//agregar(&ptrCabeza,newfd,0);
+		for(int i = 0; i <= fdmax; i++){		//Por cada conexion
 
-						if (newfd > fdmax){					// actualizar el máximo
-							fdmax = newfd;
-						}
+			if(FD_ISSET(i, &read_fds)){
+				if(listener == i){
+
+					// gestionar nuevas conexiones
+					if ((newfd = aceptarEntrantes(listener)) == -1)
+						perror("accept\n");
+
+					FD_SET(newfd, &master);		// añadir al conjunto maestro
+
+					if (newfd > fdmax)
+						fdmax = newfd;			// actualizar el máximo
+
+				} else {
+
+					// gestionar datos de un cliente
+					if ((nbytes = recv(i, bufferCPU, sizeof(bufferCPU), 0)) < 0)		// Error en recv
+						perror("recv");
+					if ((nbytes = recv(i, bufferCPU, sizeof(bufferCPU), 0)) == 0)	// Conexion cerrada
+						printf("Se ha desconectado el socket %d\n", i);
+
+					// finalizar
+					close(i);
+					FD_CLR(i, &master);
+
+					if ((nbytes = recv(i, bufferCPU, sizeof(bufferCPU), 0)) > 0){		// Contiene datos
+						printf("Procesando datos del socket %d\n", i);
+
+						char buffer[2000];
+						strcpy(buffer, bufferCPU);
+
 					}
 				}
-
 			}
+
+		}
 
 	}
 
