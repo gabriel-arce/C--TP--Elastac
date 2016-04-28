@@ -17,8 +17,9 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <elestac_config.h>
+#include <elestac_sockets.h>
 
-#define CONFIG_PATH "../CPU/src/CPU.conf"
+#define CONFIG_PATH "../cpu/src/CPU.conf"
 
 typedef struct {
 	int puerto_nucleo;

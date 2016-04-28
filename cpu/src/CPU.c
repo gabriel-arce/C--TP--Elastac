@@ -11,11 +11,7 @@
 #include "CPU.h"
 
 
-int main(void) {
 
-	t_CPU_config * config = cargar_config();
-
-	//puts("PROCESO CPU/n");
 
 	/*BEGIN CONECTION*/
 	//int socket_CPU_nucleo = crearSocket();
@@ -29,29 +25,25 @@ int main(void) {
 
 	/*END CONECTION*/
 
-	return EXIT_SUCCESS;
-}
 
 
 
 
 t_CPU_config *cargar_config() {
+	printf("Cargando configuracion..");                                     /* Nunca sale el printf, como que se corta antes el programa*/
 	t_config *config = config_create(CONFIG_PATH);
-	t_CPU_config *CPU_config = malloc(sizeof(t_CPU_config));
+	t_CPU_config *cpu_config	= malloc(sizeof(t_CPU_config));
 
-	if (chequearProperty(config, "PUERTO_NUCLEO"))
-		CPU_config->puerto_nucleo = config_get_int_value(config, "PUERTO_NUCLEO");
+	cpu_config->ip_nucleo 					= string_new();
+	cpu_config->ip_UMC						= string_new();
 
-	if (chequearProperty(config, "IP_NUCLEO"))
-		CPU_config->ip_nucleo = config_get_string_value(config, "IP_NUCLEO");
+	cpu_config->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
+	cpu_config->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
 
-	if (chequearProperty(config, "PROGRAMA_ANSISOP"))
-		CPU_config->puerto_UMC = config_get_string_value(config, "PUERTO_UMC");
-
-	if (chequearProperty(config, "IP_NUCLEO"))
-		CPU_config->ip_UMC = config_get_string_value(config, "IP_UMC");
+	string_append(&cpu_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
+	string_append(&cpu_config->ip_UMC, getStringProperty(config, "PROGRAMA_ANSISOP"));
 
 	config_destroy(config);
 
-	return CPU_config;
+	return cpu_config;
 }
