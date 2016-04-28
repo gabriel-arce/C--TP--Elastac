@@ -7,17 +7,18 @@
 
 #include "elestac_config.h"
 
-int chequearProperty(t_config* config, char* property) {
-	return config_has_property(config, property);
-}
+/*void chequearProperty(t_config* config, char* property) {
+	if (!config_has_property(config, property))
+		exit(EXIT_FAILURE);
+}*/
 
 char* getStringProperty(t_config* config, char* property) {
-	chequearProperty(config, property);
+//	chequearProperty(config, property);
 	return string_duplicate(config_get_string_value(config, property));
 }
 
 int getIntProperty(t_config* config, char* property) {
-	chequearProperty(config, property);
+//	chequearProperty(config, property);
 	return config_get_int_value(config, property);
 }
 

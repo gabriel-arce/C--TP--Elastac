@@ -11,7 +11,6 @@
 
 int main(void){
 
-	t_consola_config *consola = NULL;		//Configuracion
 	int socketConsola;									//Descriptor de consola
 
 	//Cargar configuracion
@@ -19,7 +18,8 @@ int main(void){
 	printf("please wait..\n");
 	printf("\n");
 
-	consola = cargar_config();
+	cargar_config();
+
 	printf("IP Nucleo: %s\n", consola->ip_nucleo);
 	printf("Puerto Nucleo: %d\n", consola->puerto_nucleo);
 

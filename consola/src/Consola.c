@@ -29,19 +29,23 @@
 	return EXIT_SUCCESS;
 }*/
 
-t_consola_config *cargar_config() {
-	t_config *config 									= config_create(CONFIG_PATH);
-	t_consola_config *consola_config	= malloc(sizeof(t_consola_config));
+void cargar_config() {
+	t_config *config	= config_create(CONFIG_PATH);
+	consola					= malloc(sizeof(t_consola_config));
 
-	consola_config->ip_nucleo 					= string_new();
-	consola_config->programa_ansisop	= string_new();
+	consola->ip_nucleo						= malloc(sizeof(char) * 15);
+	consola->programa_ansisop		= malloc(sizeof(char) * 15);
 
-	consola_config->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
+	consola->ip_nucleo 					= string_new();
+	consola->programa_ansisop	= string_new();
 
-	string_append(&consola_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
-	string_append(&consola_config->programa_ansisop, getStringProperty(config, "PROGRAMA_ANSISOP"));
+	consola->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
+
+	string_append(&consola->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
+	string_append(&consola->programa_ansisop, getStringProperty(config, "PROGRAMA_ANSISOP"));
+
+
 
 	config_destroy(config);
 
-	return consola_config;
 }

@@ -27,6 +27,8 @@ typedef struct {
 	char * programa_ansisop;
 } t_consola_config;
 
-t_consola_config * cargar_config();
+t_consola_config *consola;
+
+void cargar_config();
 
 #endif /* CONSOLA_H_ */
