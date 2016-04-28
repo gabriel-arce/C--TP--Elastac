@@ -20,6 +20,8 @@ int main(void){
 	printf("\n");
 
 	consola = cargar_config();
+	printf("IP Nucleo: %s\n", consola->ip_nucleo);
+	printf("Puerto Nucleo: %d\n", consola->puerto_nucleo);
 
 	//Conectar al nucleo
 	if((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1)
@@ -27,5 +29,6 @@ int main(void){
 
 	return EXIT_SUCCESS;
 }
+
 
 

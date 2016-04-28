@@ -30,17 +30,16 @@
 }*/
 
 t_consola_config *cargar_config() {
-	t_config *config = config_create(CONFIG_PATH);
-	t_consola_config *consola_config = malloc(sizeof(t_consola_config));
+	t_config *config 									= config_create(CONFIG_PATH);
+	t_consola_config *consola_config	= malloc(sizeof(t_consola_config));
 
-	if (chequearProperty(config, "PUERTO_NUCLEO"))
-		consola_config->puerto_nucleo = config_get_int_value(config, "PUERTO_NUCLEO");
+	consola_config->ip_nucleo 					= string_new();
+	consola_config->programa_ansisop	= string_new();
 
-	if (chequearProperty(config, "IP_NUCLEO"))
-		consola_config->ip_nucleo = config_get_string_value(config, "IP_NUCLEO");
+	consola_config->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
 
-	if (chequearProperty(config, "PROGRAMA_ANSISOP"))
-		consola_config->programa_ansisop = config_get_string_value(config, "PROGRAMA_ANSISOP");
+	string_append(&consola_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
+	string_append(&consola_config->programa_ansisop, getStringProperty(config, "PROGRAMA_ANSISOP"));
 
 	config_destroy(config);
 
