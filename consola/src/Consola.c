@@ -9,24 +9,25 @@
  */
 
 #include "Consola.h"
+#include <elestac_config.h>
 
-int main(void) {
+/*int main(void) {
 
 	t_consola_config * config = cargar_config();
 
-	//puts("PROCESO CONSOLA/n");
-	//printf("Programa ansisop : %s", config->programa_ansisop);
+	puts("PROCESO CONSOLA/n");
+	printf("Programa ansisop : %s", config->programa_ansisop);
 
-	/*BEGIN CONECTION*/
+	BEGIN CONECTION
 	//int socket_consola = crearSocket();
 
 	//conectarA(socket_consola, config->ip_nucleo, config->puerto_nucleo);
 	//close(socket_consola);
-	/*END CONECTION*/
+	END CONECTION
 
 
 	return EXIT_SUCCESS;
-}
+}*/
 
 t_consola_config *cargar_config() {
 	t_config *config = config_create(CONFIG_PATH);

@@ -15,7 +15,7 @@
 #include <elestac_config.h>
 #include <signal.h>
 
-#define CONFIG						"../nucleo/src/nucleo.conf"
+#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define PUERTO_NUCLEO	7200
 
 typedef struct {
@@ -30,13 +30,13 @@ typedef struct {
 	t_list *shared_vars;
 } t_nucleo;
 
-fd_set master;		// conjunto maestro de descriptores de fichero
-fd_set read_fds;		// conjunto temporal de descriptores de fichero para select()
 
 t_nucleo *cargar_conf();
 int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
 t_list *obtener_lista(t_config *config, char *property);
 int string_count(char *text, char *pattern);
+int dameMaximo (int *tabla, int n);
+void compactaClaves (int *tabla, int *n);
 
 #endif /* NUCLEO_H_ */
