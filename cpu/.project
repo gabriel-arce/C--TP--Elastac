@@ -3,9 +3,7 @@
 	<name>CPU</name>
 	<comment></comment>
 	<projects>
-		<project>commons</project>
 		<project>sharedElestac</project>
-		<project>Commons</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

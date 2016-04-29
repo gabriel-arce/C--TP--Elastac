@@ -52,11 +52,32 @@
 								<option id="gnu.both.asm.option.include.paths.928274112" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/sharedElestac}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/commons}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/UMC/src}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.73648424" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.529959979.2053247984" name="ProcesarUMC.c" rcbsApplicability="disable" resourcePath="src/ProcesarUMC.c" toolsToInvoke="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.516543956.2085671647">
+						<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.516543956.2085671647" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.516543956">
+							<option id="gnu.c.compiler.option.include.paths.1719897996" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<listOptionValue builtIn="false" value="&quot;${workspace_loc:/sharedElestac}&quot;"/>
+								<listOptionValue builtIn="false" value="&quot;${workspace_loc:/commons}&quot;"/>
+								<listOptionValue builtIn="false" value="&quot;${workspace_loc:/UMC/src}&quot;"/>
+							</option>
+							<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1241681644" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.exe.debug.529959979.1074889853" name="UMC.c" rcbsApplicability="disable" resourcePath="src/UMC.c" toolsToInvoke="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.516543956.482793567">
+						<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.516543956.482793567" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.516543956">
+							<option id="gnu.c.compiler.option.include.paths.421016402" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<listOptionValue builtIn="false" value="&quot;${workspace_loc:/sharedElestac}&quot;"/>
+								<listOptionValue builtIn="false" value="&quot;${workspace_loc:/commons}&quot;"/>
+								<listOptionValue builtIn="false" value="&quot;${workspace_loc:/UMC/src}&quot;"/>
+							</option>
+							<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2093836616" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>

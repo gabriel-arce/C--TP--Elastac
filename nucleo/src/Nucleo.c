@@ -25,35 +25,15 @@ t_nucleo *cargar_conf(){
 	nucleo->puerto_cpu					= getIntProperty(config, "PUERTO_CPU");
 	nucleo->quantum						= getIntProperty(config, "QUANTUM");
 	nucleo->quantum_sleep			= getIntProperty(config, "QUANTUM_SLEEP");
-	nucleo->sem_ids						= obtener_lista(config, "SEM_IDS");
-	nucleo->sem_init						= obtener_lista(config, "SEM_INIT");
-	nucleo->io_ids							= obtener_lista(config, "IO_IDS");
-	nucleo->io_sleep						= obtener_lista(config, "IO_SLEEP");
-	nucleo->shared_vars				= obtener_lista(config, "SHARED_VARS");
+	nucleo->sem_ids						= getListProperty(config, "SEM_IDS");
+	nucleo->sem_init						= getListProperty(config, "SEM_INIT");
+	nucleo->io_ids							= getListProperty(config, "IO_IDS");
+	nucleo->io_sleep						= getListProperty(config, "IO_SLEEP");
+	nucleo->shared_vars				= getListProperty(config, "SHARED_VARS");
 
 	config_destroy(config);
 
 	return nucleo;
-}
-
-t_list *obtener_lista(t_config *config, char *property){
-	char **items = config_get_array_value(config, property);
-	t_list *ret  = list_create();
-	int cant	 = string_count(config_get_string_value(config, property), ",") +1;
-
-	int i = 0;
-
-	for(i; i < cant; i++)
-		list_add(ret, (void *)string_duplicate(items[i]));
-
-	return ret;
-}
-
-int string_count(char *text, char *pattern){
-	char **chunks = string_split(text, pattern);
-	int ret;
-	for(ret = 0; chunks[ret]; ret++);
-	return ret - 1;
 }
 
 int get_quantum(t_nucleo *nucleo){
