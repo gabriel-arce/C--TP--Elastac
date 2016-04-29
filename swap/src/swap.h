@@ -32,7 +32,7 @@ typedef struct {
 	int retardo_compactacion;
 } t_swap_config;
 
-t_swap_config swap_config;
+t_swap_config *swap_config;
 
 void cargar_config();
 
