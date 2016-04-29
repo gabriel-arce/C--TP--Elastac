@@ -22,15 +22,15 @@ void cargar_config() {
 
 	umc_config->ip_swap = malloc(sizeof(char) * 15);
 	umc_config->ip_swap = string_new();
-	string_append(&umc_config->ip_swap, getStringProperty(umc_config, "IP_SWAP"));
+	string_append(&umc_config->ip_swap, getStringProperty(config_file, "IP_SWAP"));
 
-	umc_config->puerto_escucha = getIntProperty(umc_config, "PUERTO");
-	umc_config->puerto_swap = getIntProperty(umc_config, "PUERTO_SWAP");
-	umc_config->cant_frames = getIntProperty(umc_config, "MARCOS");
-	umc_config->frames_size = getIntProperty(umc_config, "MARCO_SIZE");
-	umc_config->frame_x_prog = getIntProperty(umc_config, "MARCO_X_PROG");
-	umc_config->entradas_tlb = getIntProperty(umc_config, "ENTRADAS_TLB");
-	umc_config->retardo = getIntProperty(umc_config, "RETARDO");
+	umc_config->puerto_escucha = getIntProperty(config_file, "PUERTO");
+	umc_config->puerto_swap = getIntProperty(config_file, "PUERTO_SWAP");
+	umc_config->cant_frames = getIntProperty(config_file, "MARCOS");
+	umc_config->frames_size = getIntProperty(config_file, "MARCO_SIZE");
+	umc_config->frame_x_prog = getIntProperty(config_file, "MARCO_X_PROG");
+	umc_config->entradas_tlb = getIntProperty(config_file, "ENTRADAS_TLB");
+	umc_config->retardo = getIntProperty(config_file, "RETARDO");
 
 	config_destroy(config_file);
 }

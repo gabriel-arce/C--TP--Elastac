@@ -19,12 +19,12 @@ void cargar_config() {
 
 	swap_config->espacio_swap = malloc(sizeof(char) * 10);
 	swap_config->espacio_swap = string_new();
-	string_append(&swap_config->espacio_swap, getStringProperty(swap_config, "NOMBRE_SWAP"));
+	string_append(&swap_config->espacio_swap, getStringProperty(config_file, "NOMBRE_SWAP"));
 
-	swap_config->puerto_escucha = getIntProperty(swap_config, "PUERTO_ESCUCHA");
-	swap_config->cant_paginas = getIntProperty(swap_config, "CANTIDAD_PAGINAS");
-	swap_config->pagina_size = getIntProperty(swap_config, "TAMANIO_PAGINA");
-	swap_config->retardo_compactacion = getIntProperty(swap_config, "RETARDO_COMPACTACION");
+	swap_config->puerto_escucha = getIntProperty(config_file, "PUERTO_ESCUCHA");
+	swap_config->cant_paginas = getIntProperty(config_file, "CANTIDAD_PAGINAS");
+	swap_config->pagina_size = getIntProperty(config_file, "TAMANIO_PAGINA");
+	swap_config->retardo_compactacion = getIntProperty(config_file, "RETARDO_COMPACTACION");
 
 	config_destroy(config_file);
 }

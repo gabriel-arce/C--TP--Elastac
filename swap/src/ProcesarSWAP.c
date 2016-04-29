@@ -7,8 +7,7 @@
 
 #include <swap.h>
 
-int main(void) {
-
+int main() {
 	printf("***Proceso SWAP***\n");
 	printf("\n");
 
@@ -53,5 +52,6 @@ int main(void) {
 	free(paquete);
 
 	close(socket_swap);
+
 	return EXIT_SUCCESS;
 }
