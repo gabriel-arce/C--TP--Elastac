@@ -35,7 +35,7 @@ prueba\ parser: $(OBJS) $(USER_OBJS)
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) "prueba parser"
+	-$(RM) $(OBJS)$(C_DEPS)$(EXECUTABLES) "prueba parser"
 	-@echo ' '
 
 .PHONY: all clean dependents
