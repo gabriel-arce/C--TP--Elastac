@@ -12,7 +12,7 @@
 
 void cargar_config() {
 
-	t_config config_file = config_create(CONFIG_PATH);
+	t_config * config_file = config_create(CONFIG_PATH);
 
 	swap_config = malloc(sizeof(t_swap_config));
 	memset(swap_config, 0 , sizeof(t_swap_config));

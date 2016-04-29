@@ -10,6 +10,10 @@
 
 #include <UMC.h>
 
+void new_line() {
+	printf("\n");
+}
+
 void cargar_config() {
 
 	t_config * config_file = config_create(CONFIG_PATH);
