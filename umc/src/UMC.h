@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <pthread.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
@@ -40,9 +41,13 @@ typedef struct {
 } t_umc_config;
 
 t_umc_config * umc_config;
+pthread_t hiloConsola, hilo_server, hilo_cliente;
 
+void new_line();
 void cargar_config();
 void lanzar_consola();
+void atiende_server();
+void conecta_swap();
 int no_es_comando();
 void modificar_retardo(int ret);
 void reporte_estructuras();
