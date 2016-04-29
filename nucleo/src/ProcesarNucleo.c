@@ -48,15 +48,10 @@ int main(void) {
 		exit(1);
 	}
 
-	printf("Enlazado al puerto %d\n", PUERTO_NUCLEO);
-
-
 	//Escuchar
 	if((escucharEn(listener)) == -1){
 		exit(1);
 	}
-
-	printf("Escuchando a consolas o a cpu's..\n");
 
 	while(1){
 
