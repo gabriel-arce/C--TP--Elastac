@@ -30,7 +30,8 @@
 
 
 t_CPU_config *cargar_config() {
-	printf("Cargando configuracion..");                                     /* Nunca sale el printf, como que se corta antes el programa*/
+
+	printf(" Cargando configuracion.. \n");                                 /* Nunca sale el printf, como que se corta antes el programa*/
 	t_config *config = config_create(CONFIG_PATH);
 	t_CPU_config *cpu_config	= malloc(sizeof(t_CPU_config));
 
@@ -41,7 +42,7 @@ t_CPU_config *cargar_config() {
 	cpu_config->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
 
 	string_append(&cpu_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
-	string_append(&cpu_config->ip_UMC, getStringProperty(config, "PROGRAMA_ANSISOP"));
+	string_append(&cpu_config->ip_UMC, getStringProperty(config, "IP_UMC"));
 
 	config_destroy(config);
 
