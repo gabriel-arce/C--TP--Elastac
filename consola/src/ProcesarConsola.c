@@ -27,6 +27,8 @@ int main(void){
 	if((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1)
 		exit(1);
 
+	enviarPorSocket(socketConsola, "Hola! Soy una consola!..");
+
 	return EXIT_SUCCESS;
 }
 

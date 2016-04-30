@@ -13,14 +13,14 @@
 int main(void) {
 
 	 int listener;														//Descriptor de escucha
-	 int socketCliente[MAX_CLIENTES];		//Descriptores de sockets con clientes
-	 int numeroClientes = 0;								/* Número clientes conectados */
-	 fd_set descriptoresLectura;						/* Descriptores de interes para select() */
 	 int i;
-	 int maximo;													/* Número de descriptor más grande */
+	 int maximo;													/* Número de descriptor maximo */
 	 int newfd;
 	 int nbytes;
 	 char buffer[2000];
+
+	 fd_set master;				// conjunto maestro de descriptores de fichero
+	 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 
 	//Cargar configuracion
 	printf("Inicializando Nucleo..\n");
@@ -53,65 +53,66 @@ int main(void) {
 		exit(1);
 	}
 
+	// añadir listener al conjunto maestro
+	FD_SET(listener, &master);
+
+	maximo = listener; // por ahora es éste
+
 	while(1){
 
-		compactaClaves(socketCliente, &numeroClientes);
+		read_fds = master; // cópialo
 
-		FD_ZERO(&descriptoresLectura);					/* Se inicializa descriptoresLectura */
-		FD_SET(listener, &descriptoresLectura);		/* Se añade para select() el socket servidor */
-
-		/* Se añaden para select() los sockets con los clientes ya conectados */
-		for (i=0; i<numeroClientes; i++)
-			FD_SET (socketCliente[i], &descriptoresLectura);
-
-		/* Se el valor del descriptor más grande. Si no hay ningún cliente,
-		 * devolverá 0 */
-		maximo = dameMaximo (socketCliente, numeroClientes);
-
-		if (maximo < listener)
-			maximo = listener;
-
-		/* Espera indefinida hasta que alguno de los descriptores tenga algo
-		 * que decir: un nuevo cliente o un cliente ya conectado que envía un
-		 * mensaje */
-		if((select (maximo + 1, &descriptoresLectura, NULL, NULL, NULL)) == -1){
-			perror("Nucleo: Error en select");
+		if (select(maximo+1, &read_fds, NULL, NULL, NULL) == -1){
+			perror("select");
 			exit(1);
 		}
 
+		// explorar conexiones existentes en busca de datos que leer
+		for(i = 0; i <= maximo; i++){
 
-		/* Se comprueba si algún cliente ya conectado ha enviado algo */
-		for (i=0; i<numeroClientes; i++)
-		{
-			if (FD_ISSET (socketCliente[i], &descriptoresLectura))	{
-				/* Se lee lo enviado por el cliente y se escribe en pantalla */
-				if ((newfd = aceptarEntrantes(listener)) == -1)
-					perror("accept");
+			if (FD_ISSET(i, &read_fds)){
+				// ¡¡tenemos datos!!
+				if (i == listener){
+					// gestionar nuevas conexiones
+					if ((newfd = aceptarEntrantes(listener)) == -1)	{
+						perror("accept");
+					} else {
+						FD_SET(newfd, &master); // añadir al conjunto maestro
+						if (newfd > maximo)
+							maximo = newfd;		// actualizar el máximo
+					}
+				} else	{
+					// gestionar datos de un cliente
+					if ((nbytes = recv(i, buffer, sizeof(buffer), 0)) <= 0){
+						// error o conexión cerrada por el cliente
+						if (nbytes == 0)
+						{
+							// conexión cerrada
+							printf("[NUCLEO] socket %d desconectado\n", i);
+						}
+						else
+						{
+							perror("recv");
+						}
+						close(i); // ¡Hasta luego!
+						FD_CLR(i, &master); // eliminar del conjunto maestro
+					}
+					else
+					{
+					// tenemos datos de algún cliente
+						if (FD_ISSET(i, &master))
+						{
+							char buff[2000];
+							strcpy(buff,buffer);
 
-				nbytes = recv(i, buffer, sizeof(buffer), 0);
-				if(nbytes == 0){
-					printf("socket %d desconectado\n", i);
-					close(i);
+							//memset(buffer,'\0',sizeof(buffer));
+							printf("%s\n", buffer);
+
+						}
+					}
 				}
-
-				if(nbytes < 0){
-					perror("recv");
-					close(i);
-				}
-
-				if(nbytes > 0){
-					printf("socket aceptado..\n");
-				}
-
-				}
+			}
 		}
-
-		/* Se comprueba si algún cliente nuevo desea conectarse y se le
-		 * admite */
-		if (FD_ISSET (listener, &descriptoresLectura))
-			//nuevoCliente (socketServidor, socketCliente, &numeroClientes);
-			printf("Cliente aceptado..\n");
-
 	}
 
 	return EXIT_SUCCESS;
