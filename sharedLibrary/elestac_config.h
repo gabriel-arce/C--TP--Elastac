@@ -14,7 +14,7 @@
 #include <commons/collections/list.h>
 #include <commons/string.h>
 
-//void chequearProperty(t_config* config, char* property);		//Chequear propiedad
+void chequearProperty(t_config* config, char* property);		//Chequear propiedad
 char* getStringProperty(t_config* config, char* property);	//Obtener valor de un string
 int getIntProperty(t_config* config, char* property);		//Obtener valor de un int
 t_list *getListProperty(t_config *config, char *property);	//Obtener valores de una lista
