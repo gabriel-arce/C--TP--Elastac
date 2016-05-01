@@ -35,13 +35,14 @@ typedef struct {
 	unsigned int tamanio;			//Tamanio de instruccion
 } t_indice;
 
-typedef struct {
+typedef struct t_list_pcb{
 	int pcb_pid;									//Identificador unico
 	int pcb_pc;									//Program counter
 	int pcb_sp;									//Stack pointer
 	int paginas_codigo;					//Paginas del codigo
 	t_indice indice_codigo;			//Indice del codigo
 	int indice_etiquetas;					//Indice de etiquetas
+	struct t_list_pcb *proximo;
 } t_pcb;
 
 
