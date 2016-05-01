@@ -30,13 +30,25 @@ typedef struct {
 	t_list *shared_vars;
 } t_nucleo;
 
+typedef struct {
+	unsigned int posicion;			//Posicion de comienzo
+	unsigned int tamanio;			//Tamanio de instruccion
+} t_indice;
+
+typedef struct {
+	int pcb_pid;									//Identificador unico
+	int pcb_pc;									//Program counter
+	int pcb_sp;									//Stack pointer
+	int paginas_codigo;					//Paginas del codigo
+	t_indice indice_codigo;			//Indice del codigo
+	int indice_etiquetas;					//Indice de etiquetas
+} t_pcb;
+
 
 t_nucleo *cargar_conf();
 int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
-t_list *obtener_lista(t_config *config, char *property);
-int string_count(char *text, char *pattern);
-int dameMaximo (int *tabla, int n);
-void compactaClaves (int *tabla, int *n);
+//t_list *obtener_lista(t_config *config, char *property);
+//int string_count(char *text, char *pattern);
 
 #endif /* NUCLEO_H_ */

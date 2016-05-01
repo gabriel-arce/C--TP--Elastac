@@ -15,11 +15,11 @@ t_nucleo *cargar_conf(){
 	t_config *config = config_create(CONFIG_NUCLEO);
 	t_nucleo *nucleo = malloc(sizeof(t_nucleo));
 
-	nucleo->sem_ids  		 = list_create();
-	nucleo->sem_init 		 = list_create();
-	nucleo->io_ids	 		 = list_create();
-	nucleo->io_sleep 		 = list_create();
-	nucleo->shared_vars = list_create();
+// Inicializar estructura
+	nucleo->puerto_programas = 0;
+	nucleo->puerto_cpu = 0;
+	nucleo->quantum = 0;
+	nucleo->quantum_sleep = 0;
 
 	nucleo->puerto_programas	= getIntProperty(config, "PUERTO_PROG");
 	nucleo->puerto_cpu					= getIntProperty(config, "PUERTO_CPU");
