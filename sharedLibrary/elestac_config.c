@@ -7,9 +7,8 @@
 
 #include "elestac_config.h"
 
-void chequearProperty(t_config* config, char* property) {
-	if (!config_has_property(config, property))
-		exit(EXIT_FAILURE);
+bool chequearProperty(t_config* config, char* property) {
+	return (!config_has_property(config, property));
 }
 
 char* getStringProperty(t_config* config, char* property) {
@@ -18,8 +17,9 @@ char* getStringProperty(t_config* config, char* property) {
 }
 
 int getIntProperty(t_config* config, char* property) {
-	chequearProperty(config, property);
-	return config_get_int_value(config, property);
+	if (chequearProperty(config, property))
+		return config_get_int_value(config, property);
+	return EXIT_FAILURE;
 }
 
 t_list *getListProperty(t_config *config, char *property){
