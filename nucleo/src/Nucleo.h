@@ -15,7 +15,7 @@
 #include <elestac_config.h>
 #include <signal.h>
 
-#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+#define CONFIG_NUCLEO	"nucleo.conf"
 #define PUERTO_NUCLEO	7200
 
 typedef struct {

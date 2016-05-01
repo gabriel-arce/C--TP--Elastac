@@ -27,6 +27,12 @@ int main(void) {
 	printf("please wait..\n");
 	printf("\n");
 
+
+/*	// Obtener el directorio actual - TEST
+	char *directorio = getcwd(NULL, 0);
+	printf("El directorio actual es: %s\n", directorio);
+	free(directorio);*/
+
 	t_nucleo *nucleo = cargar_conf();
 
 	//Crear socket de escucha
