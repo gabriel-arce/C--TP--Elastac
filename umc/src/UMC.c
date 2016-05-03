@@ -22,7 +22,8 @@ void cargar_config() {
 
 	umc_config->ip_swap = malloc(sizeof(char) * 15);
 	umc_config->ip_swap = string_new();
-	string_append(&umc_config->ip_swap, getStringProperty(config_file, "IP_SWAP"));
+	string_append(&umc_config->ip_swap,
+			getStringProperty(config_file, "IP_SWAP"));
 
 	umc_config->puerto_escucha = getIntProperty(config_file, "PUERTO");
 	umc_config->puerto_swap = getIntProperty(config_file, "PUERTO_SWAP");
@@ -89,8 +90,8 @@ void lanzar_consola() {
 				break;
 
 			default:
-			puts(MSJ_ERROR2);
-			continue;
+				puts(MSJ_ERROR2);
+				continue;
 			}
 		}
 
@@ -103,8 +104,8 @@ void lanzar_consola() {
 				marcar_paginas();
 				break;
 			default:
-			puts(MSJ_ERROR2);
-			continue;
+				puts(MSJ_ERROR2);
+				continue;
 			}
 		}
 
@@ -125,6 +126,38 @@ int no_es_comando(char * com) {
 	}
 
 	return true;
+}
+
+void conecta_swap() {
+	if ((socket_cliente = clienteDelServidor(umc_config->ip_swap,
+			umc_config->puerto_swap)) == -1)
+		exit(EXIT_FAILURE);
+
+	while (1) {
+		char mensaje[1000];
+		scanf("%s", mensaje);
+
+		if (enviarPorSocket(socket_cliente, mensaje) == -1) {
+			perror("No se pudo enviar el mensaje");
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+void atiende_server() {
+	socket_servidor = crearSocket();
+	if (socket_servidor == -1)
+		exit(EXIT_FAILURE);
+	new_line();
+
+	if (bindearSocket(socket_servidor, umc_config->puerto_escucha) == -1)
+		exit(EXIT_FAILURE);
+	new_line();
+
+	if (escucharEn(socket_servidor) == -1)
+		exit(EXIT_FAILURE);
+	new_line();
+
 }
 
 void modificar_retardo(int ret) {

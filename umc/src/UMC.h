@@ -23,7 +23,8 @@
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
 
-#define CONFIG_PATH "../umc/src/umc.conf"
+#define CONFIG_PATH "umc.conf" //para runear en terminal
+//#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
 #define MSJ_ERROR1 "Error en sintaxis del comando\n"
 #define MSJ_ERROR2 "Error en # de variable"
 #define PROMPT "#>"
@@ -41,6 +42,7 @@ typedef struct {
 } t_umc_config;
 
 t_umc_config * umc_config;
+int socket_cliente, socket_servidor;
 pthread_t hiloConsola, hilo_server, hilo_cliente;
 
 void new_line();

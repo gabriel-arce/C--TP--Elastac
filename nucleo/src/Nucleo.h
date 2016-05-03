@@ -17,8 +17,8 @@
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
 
-//#define CONFIG_NUCLEO	"nucleo.conf"
-#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+#define CONFIG_NUCLEO	"nucleo.conf"
+//#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define MAXIMO_BUFFER	2000
 #define PUERTO_NUCLEO	7200
 

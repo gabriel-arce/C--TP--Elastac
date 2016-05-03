@@ -22,7 +22,8 @@
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
 
-#define CONFIG_PATH "../swap/src/swap.conf"
+#define CONFIG_PATH "swap.conf"
+//#define CONFIG_PATH "../swap/src/swap.conf"
 
 typedef struct {
 	int puerto_escucha;
