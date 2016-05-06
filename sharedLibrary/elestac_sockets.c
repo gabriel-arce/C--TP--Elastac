@@ -93,7 +93,11 @@ int conectarA(int socketFd, char* ipDestino, int puertoDestino){
 }
 
 int clienteDelServidor(char *ipDestino,int puerto){
+	int opt_reuse = 1;
+
 	int socketCliente = crearSocket();
+	setsockopt(socketCliente, SOL_SOCKET, SO_REUSEADDR, &opt_reuse, sizeof(opt_reuse));
+
 	conectarA(socketCliente,ipDestino,puerto);
 	return socketCliente;
 }
