@@ -199,6 +199,7 @@ void escuchar_procesos(){
 
 void planificar_procesos(){
 	crear_semaforos();
+	crear_colas();
 }
 
 t_pcb *crear_pcb(char *buffer){
@@ -218,9 +219,9 @@ t_pcb *crear_pcb(char *buffer){
 int crear_id(){
 	waitSemaforo(mutex);
 
-	if( cantidadElementos(lista_pcb) == 0){
+	if( cantidadElementos(cola_pcb) == 0){
 		return 1;}
-	return cantidadElementos(lista_pcb) + 1;
+	return cantidadElementos(cola_pcb) + 1;
 
 	signalSemaforo(mutex);
 
@@ -234,4 +235,16 @@ int cantidadElementos(t_list lista){
 
 void crear_semaforos(){
 	mutex = crearMutex();
+}
+
+void destruir_pcb(t_pcb *pcb){
+	free(pcb);
+}
+
+void crear_colas(){
+	cola_pcb 					= queue_create();
+	cola_listos 				= queue_create();
+	cola_bloqueados	= queue_create();
+	cola_ejecutando	= queue_create();
+
 }

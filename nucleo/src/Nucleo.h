@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <elestac_config.h>
 #include <signal.h>
 #include <elestac_sockets.h>
@@ -21,6 +22,13 @@
 //#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define MAXIMO_BUFFER	2000
 #define PUERTO_NUCLEO	7200
+
+typedef enum {
+	Listo,
+	Corriendo,
+	Ejecutando,
+	Terminado,
+} t_estado;
 
 typedef struct {
 	int puerto_programas;
@@ -50,7 +58,8 @@ typedef struct {
 
 t_nucleo *nucleo;
 t_config  *config;
-t_list lista_pcb;
+
+t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
 sem_t *mutex;
 
 void *cargar_conf();
@@ -60,5 +69,6 @@ void escuchar_procesos();
 void planificar_procesos();
 
 t_pcb *crear_lista_pcb();
+void destruir_pcb(t_pcb *pcb);
 
 #endif /* NUCLEO_H_ */
