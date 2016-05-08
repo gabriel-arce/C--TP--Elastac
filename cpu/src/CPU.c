@@ -10,6 +10,26 @@
 
 #include "CPU.h"
 
+AnSISOP_funciones functions = {
+		.AnSISOP_definirVariable		 = elestac_definirVariable,
+		.AnSISOP_obtenerPosicionVariable = elestac_obtenerPosicionVariable,
+		.AnSISOP_dereferenciar			 = elestac_dereferenciar,
+		.AnSISOP_asignar				 = elestac_asignar,
+		.AnSISOP_obtenerValorCompartida  = elestac_obtenerValorCompartida,
+		.AnSISOP_asignarValorCompartida  = elestac_asignarValorCompartida,
+		.AnSISOP_irAlLabel 				 = elestac_irALabel,
+		.AnSISOP_llamarConRetorno        = elestac_llamarFuncion,
+		.AnSISOP_retornar				 = elestac_retornar,
+		.AnSISOP_imprimir				 = elestac_imprimir,
+		.AnSISOP_imprimirTexto			 = elestac_imprimirTexto,
+		.AnSISOP_entradaSalida           = elestac_entradaSalida,
+		//wait
+		//signal
+
+};
+
+AnSISOP_kernel kernel_functions = { };
+
 
 
 
@@ -49,3 +69,5 @@ t_CPU_config *cargar_config() {
 
 	return cpu_config;
 }
+
+

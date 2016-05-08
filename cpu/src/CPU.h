@@ -18,6 +18,8 @@
 #include <sys/socket.h>
 #include <elestac_config.h>
 #include <elestac_sockets.h>
+#include <parser/metadata_program.h>
+#include <parser/parser.h>
 
 //#define CONFIG_PATH "../cpu/src/CPU.conf"
 #define CONFIG_PATH "CPU.conf"
