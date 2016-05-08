@@ -72,7 +72,7 @@ typedef struct {
 } t_mem_frame;
 
 t_umc_config * umc_config;
-int contador_hilos = 0;
+int contador_hilos;
 int socket_cliente, socket_servidor;
 pthread_t hiloConsola, hilo_server, hilo_cliente;
 int id_cpu;
@@ -80,7 +80,7 @@ t_list * cpu_conectadas;
 pthread_mutex_t mutex_hilos, mutex_lista_cpu;
 unsigned long memoria_size;
 char * memoria_principal;
-char * archivo_log = "umc.log";
+char * archivo_log;
 t_log * logger;
 FILE * archivo_reporte;
 t_list * tlb;

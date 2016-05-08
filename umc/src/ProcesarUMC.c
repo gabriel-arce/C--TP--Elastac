@@ -12,6 +12,9 @@ int main() {
 	printf("***Proceso UMC***\n");
 	new_line();
 
+	archivo_log  = "umc.log";
+	contador_hilos = 0;
+
 	//creo estructuras
 	inicializar_memoria();
 	crear_archivo_reporte();
