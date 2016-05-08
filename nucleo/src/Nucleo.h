@@ -18,10 +18,13 @@
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
 
-#define CONFIG_NUCLEO	"nucleo.conf"
-//#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+//#define CONFIG_NUCLEO	"nucleo.conf"
+#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define MAXIMO_BUFFER	2000
 #define PUERTO_NUCLEO	7200
+#define MAX_CLIENTES 10
+#define PROCESO_CONSOLA		0
+#define PROCESO_CPU					1
 
 typedef enum {
 	Listo,

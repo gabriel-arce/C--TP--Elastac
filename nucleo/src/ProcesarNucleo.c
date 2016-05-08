@@ -5,10 +5,8 @@
  *      Author: gabriel
  */
 
-#include <elestac_sockets.h>
-
 #include "Nucleo.h"
-#define MAX_CLIENTES 10
+
 
 int main(void) {
 
@@ -27,7 +25,7 @@ int main(void) {
 
 	//while procesos_cpu > 1
 
-	planificar_procesos();
+	//planificar_procesos();
 
 	return EXIT_SUCCESS;
 }

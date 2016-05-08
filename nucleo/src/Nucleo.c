@@ -106,6 +106,8 @@ void escuchar_procesos(){
 	 int nbytes;
 	 int reuse;
 	 char buffer[MAXIMO_BUFFER];
+	 char tipoProceso;
+
 
 	 fd_set master;				// conjunto maestro de descriptores de fichero
 	 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
@@ -183,10 +185,14 @@ void escuchar_procesos(){
 					// tenemos datos de algún cliente
 						if (FD_ISSET(i, &master))
 						{
-							char buff[2000];
+							char buff[MAXIMO_BUFFER];
 							strcpy(buff,buffer);
-							printf("%s\n", buffer);
 
+							tipoProceso = buffer[3];
+							switch(tipoProceso){
+								case PROCESO_CONSOLA: { printf("%s\n", buffer); break; }
+								case PROCESO_CPU: { printf("CPU"); break; }
+							}
 
 
 						}

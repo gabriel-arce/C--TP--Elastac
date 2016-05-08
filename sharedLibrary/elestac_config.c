@@ -7,6 +7,7 @@
 
 #include "elestac_config.h"
 
+
 bool chequearProperty(t_config* config, char* property) {
 	return (config_has_property(config, property));
 }

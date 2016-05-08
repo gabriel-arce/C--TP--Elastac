@@ -11,24 +11,6 @@
 #include "Consola.h"
 #include <elestac_config.h>
 
-/*int main(void) {
-
-	t_consola_config * config = cargar_config();
-
-	puts("PROCESO CONSOLA/n");
-	printf("Programa ansisop : %s", config->programa_ansisop);
-
-	BEGIN CONECTION
-	//int socket_consola = crearSocket();
-
-	//conectarA(socket_consola, config->ip_nucleo, config->puerto_nucleo);
-	//close(socket_consola);
-	END CONECTION
-
-
-	return EXIT_SUCCESS;
-}*/
-
 void cargar_config() {
 	t_config *config	= config_create(CONFIG_PATH);
 	consola					= malloc(sizeof(t_consola_config));
@@ -44,8 +26,40 @@ void cargar_config() {
 	string_append(&consola->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
 	string_append(&consola->programa_ansisop, getStringProperty(config, "PROGRAMA_ANSISOP"));
 
-
-
 	config_destroy(config);
 
 }
+
+void MostrarAyuda(){
+	puts("Ayuda");
+	}
+
+void MostrarMensajeDeError(Error e){
+	switch(e){
+		case CantidadArgumentosIncorrecta: {
+			puts("[CONSOLA] Cantidad de Argumentos Incorrecta.\n");
+			break;
+		}
+
+	  case NoSePudoAbrirIn: {
+		  puts("[CONSOLA] No Se Pudo Abrir Archivo Script.\n");
+		  break;
+	   }
+
+	  case NoSePudoCrearSocket: {
+		  puts("[CONSOLA] No Se Pudo Crear Socket.\n");
+		  break;
+	  }
+
+	  case NoSePudoEnviarSocket: {
+		  puts("[CONSOLA] No Se Pudo Enviar Socket Al Nucleo.\n");
+		  break;
+	  }
+
+	  case OtroError: {
+		  puts("[CONSOLA] Error Desconocido.\n");
+		  break;
+	  }
+	}
+}
+

@@ -10,9 +10,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <commons/config.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
+#include <commons/config.h>
 
 bool chequearProperty(t_config* config, char* property);		//Chequear propiedad
 char* getStringProperty(t_config* config, char* property);	//Obtener valor de un string
