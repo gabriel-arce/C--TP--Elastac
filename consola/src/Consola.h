@@ -44,7 +44,6 @@ t_consola_config *consola;
 t_proceso *proceso;
 FILE *in;
 
-
 void cargar_config();
 void MostrarAyuda();
 void MostrarError( Error );

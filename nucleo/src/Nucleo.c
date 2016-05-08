@@ -38,7 +38,6 @@ void *cargar_conf(){
 
 	config_destroy(config);
 
-	//return nucleo;
 }
 
 int get_quantum(t_nucleo *nucleo){
