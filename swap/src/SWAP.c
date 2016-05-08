@@ -28,3 +28,11 @@ void cargar_config() {
 
 	config_destroy(config_file);
 }
+
+void imprimir_config() {
+	printf("PUERTO_ESCUCHA: %d\n", swap_config->puerto_escucha);
+	printf("NOMBRE_SWAP: %s\n", swap_config->espacio_swap);
+	printf("CANTIDAD_PAGINAS: %d\n", swap_config->cant_paginas);
+	printf("TAMANIO_PAGINA: %d\n", swap_config->pagina_size);
+	printf("RETARDO_COMPACTACION: %d\n", swap_config->retardo_compactacion);
+}
