@@ -42,7 +42,9 @@ int escucharEn(int socketFd/*,int colaDeConecciones*/){
 	//colaDeConecciones es la cantidad de Conecciones que pueden estar esperando en cola hasta un accept()
 	int resultadoListen = -1;
 
-	if ((resultadoListen = listen(socketFd,COLADECONEXIONES)) == -1){
+	resultadoListen = listen(socketFd,COLADECONEXIONES);
+
+	if (resultadoListen == -1){
 		perror("[ERROR] Funcion LISTEN: No se pudo escuchar con el puerto\n");
 		return resultadoListen;
 	};

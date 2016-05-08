@@ -38,7 +38,7 @@ void cargar_config() {
 
 void imprimir_config() {
 	puts("ARCHIVO DE CONFIGURACION:");
-	printf("PUERTO: %d\n",umc_config->puerto_escucha);
+	printf("PUERTO: %d\n", umc_config->puerto_escucha);
 	printf("IP_SWAP: %s\n", umc_config->ip_swap);
 	printf("PUERTO_SWAP: %d\n", umc_config->puerto_swap);
 	printf("FRAMES: %d\n", umc_config->frames_size);
@@ -76,15 +76,18 @@ void * lanzar_consola() {
 
 		printf(PROMPT);
 		scanf("%[^\n]%*c", buffer_in);
+		new_line();
 
 		char ** substrings = string_split(buffer_in, " ");
 		char * cmd_in = substrings[0];
 		int opt_var = strtol(substrings[1], NULL, 10);
+		char * snd_arg = substrings[2];
+
+		//log_trace(logger, "Comando ingresado: %s %d %s", cmd_in, opt_var, snd_arg);
 
 		if (string_equals_ignore_case(cmd_in, cadFin)) {
 			fin = 1;
 			free(buffer_in);
-			exit(1);
 		}
 
 		if (no_es_comando(cmd_in)) {
@@ -100,10 +103,10 @@ void * lanzar_consola() {
 		if (string_equals_ignore_case(cmd_in, "dump")) {
 			switch (opt_var) {
 			case 1:
-				reporte_estructuras();
+				reporte_estructuras(snd_arg);
 				break;
 			case 2:
-				reporte_contenido();
+				reporte_contenido(snd_arg);
 				break;
 
 			default:
@@ -118,7 +121,7 @@ void * lanzar_consola() {
 				limpiar_tlb();
 				break;
 			case 2:
-				marcar_paginas();
+				marcar_paginas(snd_arg);
 				break;
 			default:
 				puts(MSJ_ERROR2);
@@ -147,16 +150,59 @@ int no_es_comando(char * com) {
 	return true;
 }
 
+void inicializar_memoria() {
+	memoria_size = umc_config->frames_size * umc_config->cant_frames;
+	memoria_principal = malloc(memoria_size);
+	memset(memoria_principal, 0, memoria_size);
+
+	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
+			memoria_size);
+
+	int pos, indice_frame = 0;
+	while (pos < memoria_size) {
+		memoria_principal[pos] = 'X';
+		pos++;
+	}
+
+	for (indice_frame = 0; indice_frame < memoria_size; indice_frame++) {
+		t_mem_frame * frame = malloc(sizeof(t_mem_frame));
+
+		frame->nro_frame = indice_frame;
+		frame->pagina = -1;
+		frame->pid = -1;
+		frame->libre = true;
+
+		list_add(lista_frames, frame);
+	}
+}
+
+void crear_archivo_reporte() {
+	/*
+	 * Aca en realidad iria una implementacion diferente con respecto
+	 * a la representacion del contenido de la memoria
+	 *
+	 * TASK: AVERIGUAR ESTRATEGIAS DE DUMP!!
+	 *
+	 * */
+	archivo_reporte = txt_open_for_append(REPORT_PATH);
+	txt_write_in_file(archivo_reporte, "Reporte de estructuras:\n");
+}
+
+void crear_archivo_log() {
+	remove(archivo_log);
+	logger = log_create(archivo_log, "UMC log", false, LOG_LEVEL_TRACE);
+	log_info(logger, "UMC iniciado.");
+}
+
 void * conecta_swap() {
 	if ((socket_cliente = clienteDelServidor(umc_config->ip_swap,
 			umc_config->puerto_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	//envia handshake
-	t_handshake * handshake = malloc(sizeof(t_handshake));
-	handshake->identificador = ID_UMC;
-
-	send(socket_cliente, handshake, sizeof(t_handshake), 0);
+	if (enviarPorSocket(socket_cliente, string_itoa(3)) == -1) {
+		puts("No se pudo enviar");
+		exit(EXIT_FAILURE);
+	}
 
 	//creo el hilo para atender a swap
 
@@ -172,7 +218,8 @@ void * escucha_conexiones() {
 		exit(EXIT_FAILURE);
 	new_line();
 
-	setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+	setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &optval,
+			sizeof(optval));
 
 	if (bindearSocket(socket_servidor, umc_config->puerto_escucha) == -1)
 		exit(EXIT_FAILURE);
@@ -187,39 +234,51 @@ void * escucha_conexiones() {
 	int socket_nuevo = 0;
 	int recibidos = 1;
 
-	while(recibidos > 0) {
+	while (recibidos > 0) {
 
-		socket_nuevo = accept(socket_servidor, (struct sockaddr*) &direccion_cliente, &addrlen);
-		setsockopt(socket_nuevo, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+		socket_nuevo = accept(socket_servidor,
+				(struct sockaddr*) &direccion_cliente, &addrlen);
+		setsockopt(socket_nuevo, SOL_SOCKET, SO_REUSEADDR, &optval,
+				sizeof(optval));
 
-		t_handshake * handshake_cliente = malloc(sizeof(t_handshake));
+		pthread_mutex_lock(&mutex_hilos);
+		contador_hilos++;
+		pthread_mutex_unlock(&mutex_hilos);
 
-		recv(socket_nuevo, handshake_cliente, sizeof(t_handshake), MSG_WAITALL);
+		char * buffer_in = malloc(1000);
 
-		switch (handshake_cliente->identificador) {
-		case ID_NUCLEO:
-			new_line();
-			printf("Se conecto Nucleo \n");
-			t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
-			nucleo->socket_nucleo = socket_nuevo;
-			enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
-			//creo el hilo para atender el nucleo
-			break;
-		case ID_CPU:
-			new_line();
-			printf("Se conecto una CPU \n");
-			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
-			cpu->socket_cpu = socket_nuevo;
-			cpu->id_cpu = ++id_cpu;
-			pthread_mutex_lock(&mutex_lista_cpu);
-			list_add(cpu_conectadas, cpu);
-			pthread_mutex_unlock(&mutex_lista_cpu);
-			enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
-			//creo el hilo para atender los cpu
-			break;
-		default:
-			enviarPorSocket(socket_servidor, "No te conozco");
-		}
+		recv(socket_nuevo, buffer_in, 1000, MSG_WAITALL);
+
+		printf("%s\n", buffer_in);
+		/*
+		 aca deserealizo el buffer_in
+
+		 switch (handshake_cliente->identificador) {
+		 case ID_NUCLEO:
+		 new_line();
+		 printf("Se conecto Nucleo \n");
+		 t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
+		 nucleo->socket_nucleo = socket_nuevo;
+		 enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
+		 //creo el hilo para atender el nucleo
+		 break;
+		 case ID_CPU:
+		 new_line();
+		 printf("Se conecto una CPU \n");
+		 t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
+		 cpu->socket_cpu = socket_nuevo;
+		 cpu->id_cpu = ++id_cpu;
+		 pthread_mutex_lock(&mutex_lista_cpu);
+		 list_add(cpu_conectadas, cpu);
+		 pthread_mutex_unlock(&mutex_lista_cpu);
+		 enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
+		 //creo el hilo para atender los cpu
+		 break;
+		 default:
+		 enviarPorSocket(socket_servidor, "No te conozco");
+		 }
+
+		 */
 	}
 
 	return EXIT_SUCCESS;
@@ -227,20 +286,35 @@ void * escucha_conexiones() {
 
 void modificar_retardo(int ret) {
 	printf("comando retardo %d\n", ret);
+	umc_config->retardo = ret;
 }
 
-void reporte_estructuras() {
+void reporte_estructuras(char * arg) {
 	puts("comando dump - estructuras");
+
+	if (string_equals_ignore_case(arg, "todo")) {
+		puts("dump - estructuras - todo");
+	} else {
+		puts("dump - estructuras - proceso en particular");
+	}
+
 }
 
-void reporte_contenido() {
+void reporte_contenido(char * arg) {
 	puts("comando dump - contenido");
+
+	if (string_equals_ignore_case(arg, "todo")) {
+		puts("dump - contenido - todo");
+	} else {
+		puts("dump - contenido - proceso en particular");
+	}
 }
 
 void limpiar_tlb() {
 	puts("comando flush - tlb");
+	//list_clean(tlb);
 }
 
-void marcar_paginas() {
-	puts("comando flush - memory");
+void marcar_paginas(char * arg) {
+	printf("comando flush - memory - %s\n", arg);
 }

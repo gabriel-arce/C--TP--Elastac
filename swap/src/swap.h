@@ -24,6 +24,7 @@
 
 #define CONFIG_PATH "swap.conf"
 //#define CONFIG_PATH "../swap/src/swap.conf"
+#define ID_UMC 3
 
 typedef struct {
 	int puerto_escucha;
@@ -33,8 +34,14 @@ typedef struct {
 	int retardo_compactacion;
 } t_swap_config;
 
+typedef struct {
+	int identificador;
+	char * mensaje;
+} t_handshake;
+
 t_swap_config * swap_config;
 
 void cargar_config();
+void imprimir_config();
 
 #endif /* SWAP_H_ */
