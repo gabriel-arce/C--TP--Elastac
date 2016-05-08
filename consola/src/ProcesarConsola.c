@@ -11,7 +11,8 @@
 
 int main(int argc, char **argv){
 
-	int socketConsola;									//Descriptor de consola
+	int socketConsola;		//Descriptor de consola
+	int socketEscucha;		//Descriptor de escucha
 
 	//Cargar configuracion
 	printf("Inicializando Consola..\n");
@@ -49,7 +50,7 @@ int main(int argc, char **argv){
 
 	//Leer un archivo que contiene el programa ansisop y envia al nucleo
 
-	//Conectar al nucleo
+	//Crear socket al nucleo
 	if((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1){
 		MostrarMensajeDeError(NoSePudoCrearSocket);
 		return EXIT_FAILURE;
@@ -57,13 +58,26 @@ int main(int argc, char **argv){
 
 	proceso = malloc(sizeof(t_proceso));
 
+	strcpy(proceso->tipoProceso, "CON");
+	strcpy(proceso->contenido, in);
 
 	if ((enviarPorSocket(socketConsola, "Hola! Soy una consola!..")) == -1){
 		MostrarMensajeDeError(NoSePudoEnviarSocket);
+		return EXIT_FAILURE;
 	};
 
+	if ((enviarPorSocket(socketConsola, proceso)) == -1){
+		MostrarMensajeDeError(NoSePudoEnviarSocket);
+		return EXIT_FAILURE;
+	};
 
+	//Crear socket desde el nucleo
+	if((socketEscucha = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1){
+		MostrarMensajeDeError(NoSePudoCrearSocket);
+		return EXIT_FAILURE;
+	}
 
+	escucharEn(socketEscucha);
 
 	return EXIT_SUCCESS;
 }
