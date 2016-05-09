@@ -11,18 +11,18 @@
 #include "CPU.h"
 
 AnSISOP_funciones functions = {
-		.AnSISOP_definirVariable		 = elestac_definirVariable,
-		.AnSISOP_obtenerPosicionVariable = elestac_obtenerPosicionVariable,
-		.AnSISOP_dereferenciar			 = elestac_dereferenciar,
-		.AnSISOP_asignar				 = elestac_asignar,
-		.AnSISOP_obtenerValorCompartida  = elestac_obtenerValorCompartida,
-		.AnSISOP_asignarValorCompartida  = elestac_asignarValorCompartida,
-		.AnSISOP_irAlLabel 				 = elestac_irALabel,
-		.AnSISOP_llamarConRetorno        = elestac_llamarFuncion,
-		.AnSISOP_retornar				 = elestac_retornar,
-		.AnSISOP_imprimir				 = elestac_imprimir,
-		.AnSISOP_imprimirTexto			 = elestac_imprimirTexto,
-		.AnSISOP_entradaSalida           = elestac_entradaSalida,
+		.AnSISOP_definirVariable		 = definirVariable,
+		.AnSISOP_obtenerPosicionVariable = obtenerPosicionVariable,
+		.AnSISOP_dereferenciar			 = dereferenciar,
+		.AnSISOP_asignar				 = asignar,
+		.AnSISOP_obtenerValorCompartida  = obtenerValorCompartida,
+		.AnSISOP_asignarValorCompartida  = asignarValorCompartida,
+		.AnSISOP_irAlLabel 				 = irALabel,
+		.AnSISOP_llamarConRetorno        = llamarFuncion,
+		.AnSISOP_retornar				 = retornar,
+		.AnSISOP_imprimir				 = imprimir,
+		.AnSISOP_imprimirTexto			 = imprimirTexto,
+		.AnSISOP_entradaSalida           = entradaSalida,
 		//wait
 		//signal
 
@@ -33,25 +33,9 @@ AnSISOP_kernel kernel_functions = { };
 
 
 
-	/*BEGIN CONECTION*/
-	//int socket_CPU_nucleo = crearSocket();
-	//int socket_CPU_UMC    = crearSocket();
-
-	//conectarA(socket_CPU_nucleo, config->ip_nucleo, config->puerto_nucleo);
-	//close(socket_CPU);
-
-	//conectarA(socket_CPU_UMC, config->ip_UMC, config->puerto_UMC);
-	//close(socket_CPU);
-
-	/*END CONECTION*/
-
-
-
-
-
 t_CPU_config *cargar_config() {
 
-	printf(" Cargando configuracion.. \n");                                 /* Nunca sale el printf, como que se corta antes el programa*/
+	printf(" Cargando configuracion.. \n");
 	t_config *config = config_create(CONFIG_PATH);
 	t_CPU_config *cpu_config	= malloc(sizeof(t_CPU_config));
 
@@ -70,4 +54,53 @@ t_CPU_config *cargar_config() {
 	return cpu_config;
 }
 
+t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
 
+}
+
+t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
+
+}
+
+t_valor_variable dereferenciar(t_posicion direccion_variable) {
+
+}
+
+void asignar(t_posicion direccion_variable, t_valor_variable valor) {
+
+}
+
+
+t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
+
+}
+
+t_puntero_instruccion irAlLabel(t_nombre_etiqueta etiqueta){
+
+}
+t_puntero_instruccion llamarFuncion(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion){
+
+}
+t_puntero_instruccion retornar(t_valor_variable retorno){
+
+}
+
+int imprimir(t_valor_variable valor_mostrar){
+
+}
+
+int imprimirTexto(char* texto){
+
+}
+
+int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
+
+}
+
+int wait(t_nombre_semaforo identificador_semaforo){
+
+}
+
+int signal(t_nombre_semaforo identificador_semaforo){
+
+}

@@ -21,8 +21,8 @@
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
 
-//#define CONFIG_PATH "../cpu/src/CPU.conf"
-#define CONFIG_PATH "CPU.conf"
+#define CONFIG_PATH "../cpu/src/CPU.conf"
+//#define CONFIG_PATH "CPU.conf"
 
 typedef struct {
 	int puerto_nucleo;
@@ -32,5 +32,26 @@ typedef struct {
 } t_CPU_config;
 
 t_CPU_config * cargar_config();
+
+
+//Primitivas
+
+t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable);
+t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable);
+t_valor_variable dereferenciar(t_posicion direccion_variable);
+void asignar(t_posicion direccion_variable, t_valor_variable valor);
+t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor);
+t_puntero_instruccion irAlLabel(t_nombre_etiqueta etiqueta);
+t_puntero_instruccion llamarFuncion(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion);
+t_puntero_instruccion retornar(t_valor_variable retorno);
+int imprimir(t_valor_variable valor_mostrar);
+int imprimirTexto(char* texto);
+int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
+int wait(t_nombre_semaforo identificador_semaforo);
+int signal(t_nombre_semaforo identificador_semaforo);
+
+
+
+
 
 #endif /* CPU_H_ */
