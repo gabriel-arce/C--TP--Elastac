@@ -194,6 +194,35 @@ void crear_archivo_log() {
 	log_info(logger, "UMC iniciado.");
 }
 
+t_stream * serializar_header(t_header * unHeader) {
+	t_stream * unStream = NULL;
+	unStream = malloc(sizeof(t_stream));
+	int32_t offset = 0, tmp_size = 0;
+
+	unStream->data = malloc(
+			sizeof(unHeader->identificador) + sizeof(unHeader->tamanio));
+	memcpy(unStream->data + offset, &unHeader->identificador, tmp_size =
+			sizeof(unHeader->identificador));
+	offset += tmp_size;
+	memcpy(unStream->data + offset, &unHeader->tamanio, tmp_size =
+			sizeof(unHeader->tamanio));
+	unStream->size = offset + tmp_size;
+	return unStream;
+}
+
+t_header * deserializar_header(t_stream * unStream) {
+	t_header * unHeader = NULL;
+	unHeader = malloc(sizeof(t_header));
+	int32_t offset = 0, tmp_size = 0;
+
+	memcpy(&unHeader->identificador, unStream->data + offset, tmp_size =
+			sizeof(unHeader->identificador));
+	offset += tmp_size;
+	memcpy(&unHeader->tamanio, unStream->data + offset, tmp_size =
+			sizeof(unHeader->tamanio));
+	return unHeader;
+}
+
 void * conecta_swap() {
 	if ((socket_cliente = clienteDelServidor(umc_config->ip_swap,
 			umc_config->puerto_swap)) == -1)
@@ -232,9 +261,13 @@ void * escucha_conexiones() {
 	struct sockaddr_in direccion_cliente;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
 	int socket_nuevo = 0;
-	int recibidos = 1;
+	int recibido = 1;
 
-	while (recibidos > 0) {
+	char * buffer_header = NULL;
+	t_header * header_handshake = NULL;
+	t_stream * stream_handshake = NULL;
+
+	while (recibido > 0) {
 
 		socket_nuevo = accept(socket_servidor,
 				(struct sockaddr*) &direccion_cliente, &addrlen);
@@ -245,40 +278,46 @@ void * escucha_conexiones() {
 		contador_hilos++;
 		pthread_mutex_unlock(&mutex_hilos);
 
-		char * buffer_in = malloc(1000);
+		buffer_header = malloc(5);
 
-		recv(socket_nuevo, buffer_in, 1000, MSG_WAITALL);
+		recibido = recv(socket_nuevo, buffer_header, 5, MSG_WAITALL);
 
-		printf("%s\n", buffer_in);
-		/*
-		 aca deserealizo el buffer_in
+		stream_handshake = malloc(sizeof(t_stream));
+		stream_handshake->data = buffer_header;
+		stream_handshake->size = 5;
 
-		 switch (handshake_cliente->identificador) {
-		 case ID_NUCLEO:
-		 new_line();
-		 printf("Se conecto Nucleo \n");
-		 t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
-		 nucleo->socket_nucleo = socket_nuevo;
-		 enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
-		 //creo el hilo para atender el nucleo
-		 break;
-		 case ID_CPU:
-		 new_line();
-		 printf("Se conecto una CPU \n");
-		 t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
-		 cpu->socket_cpu = socket_nuevo;
-		 cpu->id_cpu = ++id_cpu;
-		 pthread_mutex_lock(&mutex_lista_cpu);
-		 list_add(cpu_conectadas, cpu);
-		 pthread_mutex_unlock(&mutex_lista_cpu);
-		 enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
-		 //creo el hilo para atender los cpu
-		 break;
-		 default:
-		 enviarPorSocket(socket_servidor, "No te conozco");
-		 }
+		header_handshake = deserializar_header(stream_handshake);
 
-		 */
+		switch (header_handshake->identificador) {
+		case ID_NUCLEO:
+			new_line();
+			printf("Se conecto Nucleo \n");
+			t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
+			nucleo->socket_nucleo = socket_nuevo;
+			enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
+			//creo el hilo para atender el nucleo
+			break;
+		case ID_CPU:
+			new_line();
+			printf("Se conecto una CPU \n");
+			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
+			cpu->socket_cpu = socket_nuevo;
+			cpu->id_cpu = ++id_cpu;
+			pthread_mutex_lock(&mutex_lista_cpu);
+			list_add(cpu_conectadas, cpu);
+			pthread_mutex_unlock(&mutex_lista_cpu);
+			enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
+			//creo el hilo para atender los cpu
+			break;
+		default:
+			enviarPorSocket(socket_servidor, "No te conozco");
+			break;
+		}
+
+		free(buffer_header);
+		free(stream_handshake);
+		free(header_handshake);
+		buffer_header = NULL;
 	}
 
 	return EXIT_SUCCESS;
@@ -312,7 +351,7 @@ void reporte_contenido(char * arg) {
 
 void limpiar_tlb() {
 	puts("comando flush - tlb");
-	//list_clean(tlb);
+//list_clean(tlb);
 }
 
 void marcar_paginas(char * arg) {

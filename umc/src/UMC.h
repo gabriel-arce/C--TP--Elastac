@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/types.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
@@ -51,9 +52,14 @@ typedef struct {
 } t_umc_config;
 
 typedef struct {
-	int identificador;
-	char * mensaje;
-} t_handshake;
+	int8_t identificador;
+	int32_t tamanio;
+}__attribute__((packed)) t_header;
+
+typedef struct {
+	char * data;
+	int size;
+}__attribute__((packed)) t_stream;
 
 typedef struct {
 	int socket_nucleo;
@@ -94,6 +100,10 @@ int tlb_habilitada();
 void inicializar_memoria();
 void crear_archivo_reporte();
 void crear_archivo_log();
+// begin serializacion
+t_stream * serializar_header(t_header * unHeader);
+t_header * deserializar_header(t_stream * unStream);
+// end serializacion
 void * lanzar_consola();
 void * escucha_conexiones();
 void * conecta_swap();
