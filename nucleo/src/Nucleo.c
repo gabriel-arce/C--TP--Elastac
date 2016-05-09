@@ -186,12 +186,13 @@ void escuchar_procesos(){
 						{
 							char buff[MAXIMO_BUFFER];
 							strcpy(buff,buffer);
+							printf("%s\n", buffer);
 
-							tipoProceso = buffer[3];
+/*							tipoProceso = buffer[3];
 							switch(tipoProceso){
 								case PROCESO_CONSOLA: { printf("%s\n", buffer); break; }
 								case PROCESO_CPU: { printf("CPU"); break; }
-							}
+							}*/
 
 
 						}

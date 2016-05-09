@@ -9,10 +9,10 @@
 #include <elestac_sockets.h>
 
 
-int main(int argc, char **argv){
+int main(void){
 
-	int socketConsola;		//Descriptor de consola
-	int socketEscucha;		//Descriptor de escucha
+	int socketConsola = 0;		//Descriptor de consola
+	int socketEscucha = 0;		//Descriptor de escucha
 
 	//Cargar configuracion
 	printf("Inicializando Consola..\n");
@@ -23,31 +23,10 @@ int main(int argc, char **argv){
 
 	printf("IP Nucleo: %s\n", consola->ip_nucleo);
 	printf("Puerto Nucleo: %d\n", consola->puerto_nucleo);
+	printf("Programa ANSISOP: %s\n", consola->programa_ansisop);
 
 
 	//Luego de enviar, queda a la espera de la respuesta del nucleo
-
-
-	// Verifica sin argumentos
-	if (argc == 1){
-		MostrarAyuda();
-		return EXIT_SUCCESS;
-		}
-
-	// Verifica cantidad de argumentos
-	if (argc != 2){
-		MostrarMensajeDeError(CantidadArgumentosIncorrecta);
-		return EXIT_FAILURE;
-		}
-
-
-	// Abrir Script
-	if ( (in = fopen(argv[1],"rb")) == NULL ) {
-		MostrarMensajeDeError(NoSePudoAbrirIn);
-		return EXIT_FAILURE;
-		}
-
-
 	//Leer un archivo que contiene el programa ansisop y envia al nucleo
 
 	//Crear socket al nucleo
@@ -56,21 +35,29 @@ int main(int argc, char **argv){
 		return EXIT_FAILURE;
 	}
 
-	proceso = malloc(sizeof(t_proceso));
+	if ((proceso = malloc(sizeof(t_proceso))) == NULL){
+		return EXIT_FAILURE;
+	}
 
 	strcpy(proceso->tipoProceso, "CON");
-	strcpy(proceso->contenido, in);
+	strcpy(proceso->contenido, consola->programa_ansisop);
+
+	printf("%s\n", proceso->tipoProceso);
+	printf("%s\n", proceso->contenido);
+
 
 	if ((enviarPorSocket(socketConsola, "Hola! Soy una consola!..")) == -1){
 		MostrarMensajeDeError(NoSePudoEnviarSocket);
 		return EXIT_FAILURE;
 	};
 
+
 	if ((enviarPorSocket(socketConsola, proceso)) == -1){
 		MostrarMensajeDeError(NoSePudoEnviarSocket);
 		return EXIT_FAILURE;
 	};
 
+	/*
 	//Crear socket desde el nucleo
 	if((socketEscucha = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1){
 		MostrarMensajeDeError(NoSePudoCrearSocket);
@@ -78,6 +65,7 @@ int main(int argc, char **argv){
 	}
 
 	escucharEn(socketEscucha);
+*/
 
 	return EXIT_SUCCESS;
 }

@@ -18,8 +18,8 @@
 #include <sys/socket.h>
 #include <elestac_config.h>
 
-//#define CONFIG_PATH "consola.conf"
-#define CONFIG_PATH "../consola/src/consola.conf"
+#define CONFIG_PATH "consola.conf"
+//#define CONFIG_PATH "../consola/src/consola.conf"
 
 typedef struct {
 	int puerto_nucleo;
