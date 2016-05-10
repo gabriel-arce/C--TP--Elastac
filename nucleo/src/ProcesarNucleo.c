@@ -19,7 +19,7 @@ int main(void) {
 	cargar_conf();
 
 	//Escuchar procesos consolas o cpus
-	escuchar_procesos();
+	//escuchar_procesos();
 
 	//Mientras haya al menos haya un cpu, planifica..
 
@@ -30,12 +30,12 @@ int main(void) {
 
 	//Crear socket al nucleo
 	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1){
-		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoCrearSocket);
+//		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoCrearSocket);
 		return EXIT_FAILURE;
 	}
 
 	if ((enviarPorSocket(socketNucleo, "Hola! Soy nucleo!..")) == -1){
-		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoEnviarSocket);
+//		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoEnviarSocket);
 		return EXIT_FAILURE;
 	};
 
