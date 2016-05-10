@@ -27,6 +27,19 @@ int main(void) {
 
 	//planificar_procesos();
 
+
+	//Crear socket al nucleo
+	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1){
+		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoCrearSocket);
+		return EXIT_FAILURE;
+	}
+
+	if ((enviarPorSocket(socketNucleo, "Hola! Soy nucleo!..")) == -1){
+		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoEnviarSocket);
+		return EXIT_FAILURE;
+	};
+
+
 	return EXIT_SUCCESS;
 }
 

@@ -17,14 +17,15 @@
 #include <signal.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
+#include <elestac_global.h>
 
 //#define CONFIG_NUCLEO	"nucleo.conf"
 #define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define MAXIMO_BUFFER	2000
 #define PUERTO_NUCLEO	7200
 #define MAX_CLIENTES 10
-#define PROCESO_CONSOLA		0
-#define PROCESO_CPU					1
+#define ETIQUETA_NUCLEO	"[NUCLEO]"
+
 
 typedef enum {
 	Listo,
@@ -36,6 +37,7 @@ typedef enum {
 typedef struct {
 	int puerto_programas;
 	int puerto_cpu;
+	int puerto_umc;
 	int quantum;
 	int quantum_sleep;
 	t_list *sem_ids;
@@ -43,6 +45,7 @@ typedef struct {
 	t_list *io_ids;
 	t_list *io_sleep;
 	t_list *shared_vars;
+	char *ip_umc;
 } t_nucleo;
 
 typedef struct {
@@ -61,6 +64,7 @@ typedef struct {
 
 t_nucleo *nucleo;
 t_config  *config;
+int socketNucleo;
 
 t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
 sem_t *mutex;
