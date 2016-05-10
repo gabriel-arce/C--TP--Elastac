@@ -21,10 +21,10 @@
 #include <commons/log.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <elestac_config.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
-#include <elestac_mensajes.h>
 
 #define CONFIG_PATH "umc.conf" //para runear en terminal
 //#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
@@ -35,6 +35,10 @@
 #define PROMPT "#>"
 #define LENGTH_MAX_COMANDO 7
 #define MENSAJE_HANDSHAKE "Hola soy umc"
+#define ID_NUCLEO 2
+#define ID_UMC 3
+#define ID_SWAP 4
+#define ID_CPU 5
 
 typedef struct {
 	int puerto_escucha;
@@ -62,6 +66,16 @@ typedef struct {
 	int pid;
 	int libre;
 } t_mem_frame;
+
+typedef struct {
+	int8_t identificador;
+	int32_t tamanio;
+}__attribute__((packed)) t_header;
+
+typedef struct {
+	char * data;
+	int size;
+}__attribute__((packed)) t_stream;
 
 t_umc_config * umc_config;
 int contador_hilos;
@@ -101,5 +115,7 @@ void * solicitar_bytes(int nro_pagina, int offset, int tamanio); //cuidado que d
 void * almacenar_bytes(int nro_pagina, int offset, int tamanio, char * buffer);
 void * finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
+t_stream * serializar_header(t_header * unHeader);
+t_header * deserializar_header(t_stream * unStream);
 
 #endif /* UMC_H_ */
