@@ -26,7 +26,8 @@
 #define PUERTO_NUCLEO	7200
 #define MAX_CLIENTES 10
 #define ETIQUETA_NUCLEO	"[NUCLEO]"
-
+#define HANDSHAKE					 "Hola! Soy nucleo!.."
+#define SERIALIZADOR				"$$"
 
 typedef enum {
 	Listo,
@@ -67,7 +68,9 @@ t_nucleo *nucleo;
 t_config  *config;
 int socketNucleo;
 
-t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
+//t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
+t_list *lista_pcb, *lista_listos, *lista_bloqueados, *lista_ejecutando;
+
 sem_t *mutex;
 
 void *cargar_conf();
@@ -75,8 +78,13 @@ int get_quantum(t_nucleo *nucleo);
 int get_quantum_sleep(t_nucleo *nucleo);
 void escuchar_procesos();
 void planificar_procesos();
+void crear_listas();
+void crear_semaforos();
+
 
 t_pcb *crear_lista_pcb();
+t_pcb *crear_pcb();
 void destruir_pcb(t_pcb *pcb);
+char* serializarPCB (t_pcb* pcb);
 
 #endif /* NUCLEO_H_ */

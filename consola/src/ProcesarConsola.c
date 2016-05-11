@@ -39,11 +39,11 @@ int main(void){
 		return EXIT_FAILURE;
 	}
 
-	strcpy(proceso->tipoProceso, "CON");
+/*	strcpy(proceso->tipoProceso, "CON");
 	strcpy(proceso->contenido, consola->programa_ansisop);
 
 	printf("%s\n", proceso->tipoProceso);
-	printf("%s\n", proceso->contenido);
+	printf("%s\n", proceso->contenido);*/
 
 
 	if ((enviarPorSocket(socketConsola, "Hola! Soy una consola!..")) == -1){
@@ -52,10 +52,10 @@ int main(void){
 	};
 
 
-	if ((enviarPorSocket(socketConsola, proceso)) == -1){
+/*	if ((enviarPorSocket(socketConsola, proceso)) == -1){
 		MostrarMensajeDeError(NoSePudoEnviarSocket);
 		return EXIT_FAILURE;
-	};
+	};*/
 
 	/*
 	//Crear socket desde el nucleo
