@@ -109,7 +109,8 @@ void escuchar_procesos(){
 	 int reuse;
 	 char buffer[MAXIMO_BUFFER];
 	 char tipoProceso;
-
+	 char buff[MAXIMO_BUFFER];
+	 t_pcb *pcb_aux;
 
 	 fd_set master;				// conjunto maestro de descriptores de fichero
 	 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
@@ -143,9 +144,12 @@ void escuchar_procesos(){
 
 	maximo = listener; // por ahora es éste
 
+	crear_listas();		//Crear las listas
+
 	while(1){
 
-		read_fds = master; // cópialo
+		memset(buff,'\0',sizeof(buff));		//Limpiar buffer
+		read_fds = master; 								// cópialo
 
 		if (select(maximo+1, &read_fds, NULL, NULL, NULL) == -1){
 			perror("select");
@@ -157,46 +161,60 @@ void escuchar_procesos(){
 
 			if (FD_ISSET(i, &read_fds)){
 				// ¡¡tenemos datos!!
+
 				if (i == listener){
-					// gestionar nuevas conexiones
-					if ((newfd = aceptarEntrantes(listener)) == -1)	{
+
+					if ((newfd = aceptarEntrantes(listener)) == -1)						// gestionar nuevas conexiones
 						perror("accept");
-					} else {
-						FD_SET(newfd, &master); // añadir al conjunto maestro
+					else {
+						FD_SET(newfd, &master);														// añadir al conjunto maestro
 						if (newfd > maximo)
-							maximo = newfd;		// actualizar el máximo
+							maximo = newfd;																	// actualizar el máximo
 					}
+
 				} else	{
-					// gestionar datos de un cliente
-					if ((nbytes = recv(i, buffer, sizeof(buffer), 0)) <= 0){
+
+					if ((nbytes = recv(i, buffer, sizeof(buffer), 0)) <= 0){			// gestionar datos de un cliente
 						// error o conexión cerrada por el cliente
-						if (nbytes == 0)
-						{
-							// conexión cerrada
+						if (nbytes == 0)																			// conexión cerrada
 							printf("[NUCLEO] socket %d desconectado\n", i);
-						}
 						else
-						{
 							perror("recv");
-						}
-						close(i); // ¡Hasta luego!
-						FD_CLR(i, &master); // eliminar del conjunto maestro
-					}
-					else
-					{
+
+						close(i); 																						// ¡Hasta luego!
+						FD_CLR(i, &master); 																	// eliminar del conjunto maestro
+
+					} else {
 					// tenemos datos de algún cliente
 						if (FD_ISSET(i, &master))
 						{
-							char buff[MAXIMO_BUFFER];
+
 							strcpy(buff,buffer);
 							printf("%s\n", buffer);
 
-/*							tipoProceso = buffer[3];
-							switch(tipoProceso){
-								case PROCESO_CONSOLA: { printf("%s\n", buffer); break; }
-								case PROCESO_CPU: { printf("CPU"); break; }
-							}*/
+							char *estructura = string_new();
+							string_append(&estructura,string_itoa(i));
+							string_append(&estructura,"##");
+							string_append(&estructura,buff);
 
+
+							//Crear PCB por consola entrante
+							printf("Creando PCB.. \n");
+							pcb_aux = malloc(sizeof(t_pcb));
+							pcb_aux = crear_pcb();
+							printf("PCB creado..\n");
+							printf("PID: %d\n", pcb_aux->pcb_pid);
+							printf("PC: %d\n", pcb_aux->pcb_pc);
+							printf("SP: %d\n", pcb_aux->pcb_sp);
+							printf("Indice Etiquetas: %d\n", pcb_aux->indice_etiquetas);
+							printf("Paginas de Codigo: %d\n", pcb_aux->paginas_codigo);
+							printf("Indice de Codigo: %s, %s\n", pcb_aux->indice_codigo.posicion, pcb_aux->indice_codigo.tamanio);
+
+							//Crear socket al UMC
+							socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc);
+
+							//Enviar
+							enviarPorSocket(socketNucleo, serializarPCB(pcb_aux));
 
 						}
 					}
@@ -208,10 +226,10 @@ void escuchar_procesos(){
 
 void planificar_procesos(){
 	crear_semaforos();
-	crear_colas();
+	crear_listas();
 }
 
-t_pcb *crear_pcb(char *buffer){
+t_pcb *crear_pcb(){
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 
 	pcb->pcb_pid	= crear_id();
@@ -226,20 +244,14 @@ t_pcb *crear_pcb(char *buffer){
 }
 
 int crear_id(){
-	waitSemaforo(mutex);
+//	waitSemaforo(mutex);
 
-	if( cantidadElementos(cola_pcb) == 0)
+	if( list_is_empty(lista_pcb))
 		return 1;
-	return cantidadElementos(cola_pcb) + 1;
+	return list_size(lista_pcb) + 1;
 
-	signalSemaforo(mutex);
+//	signalSemaforo(mutex);
 
-}
-
-int cantidadElementos(t_list lista){
-	int i;
-	for( i = 0; i <= sizeof(lista); i++);
-	return i;
 }
 
 void crear_semaforos(){
@@ -250,10 +262,39 @@ void destruir_pcb(t_pcb *pcb){
 	free(pcb);
 }
 
-void crear_colas(){
+void crear_listas(){
+/*
 	cola_pcb 					= queue_create();
 	cola_listos 				= queue_create();
 	cola_bloqueados	= queue_create();
 	cola_ejecutando	= queue_create();
+*/
 
+	lista_pcb					=	list_create();
+	lista_listos				=	list_create();
+	lista_bloqueados	=	list_create();
+	lista_ejecutando	=	list_create();
+
+}
+
+char* serializarPCB (t_pcb* pcb)
+{
+	char* serial = string_new();
+	string_append(&serial,"0");											//Tipo de Proceso
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->pcb_pid));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->pcb_pc));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->pcb_sp));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->paginas_codigo));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->indice_etiquetas));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->indice_codigo.posicion));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
+
+	return serial;
 }

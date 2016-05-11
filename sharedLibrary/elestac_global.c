@@ -20,22 +20,22 @@ void MostrarMensajeDeError(char *proceso, Error e){
 		}
 
 	  case NoSePudoAbrirIn: {
-		  puts("[CONSOLA] No Se Pudo Abrir Archivo Script.\n");
+		  puts(concat(proceso, "No Se Pudo Abrir Archivo Script.\n"));
 		  break;
 	   }
 
 	  case NoSePudoCrearSocket: {
-		  puts("[CONSOLA] No Se Pudo Crear Socket.\n");
+		  puts(concat(proceso, "No Se Pudo Crear Socket.\n"));
 		  break;
 	  }
 
 	  case NoSePudoEnviarSocket: {
-		  puts("[CONSOLA] No Se Pudo Enviar Socket Al Nucleo.\n");
+		  puts(concat(proceso, "No Se Pudo Enviar Socket Al Nucleo.\n"));
 		  break;
 	  }
 
 	  case OtroError: {
-		  puts("[CONSOLA] Error Desconocido.\n");
+		  puts(concat(proceso,	"Error Desconocido.\n"));
 		  break;
 	  }
 	}
