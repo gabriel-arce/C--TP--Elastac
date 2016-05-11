@@ -28,6 +28,8 @@ void *cargar_conf(){
 
 	nucleo->puerto_programas	= getIntProperty(config, "PUERTO_PROG");
 	nucleo->puerto_cpu					= getIntProperty(config, "PUERTO_CPU");
+	nucleo->puerto_umc				= getIntProperty(config, "PUERTO_UMC");
+	nucleo->ip_umc							= getStringProperty(config, "IP_UMC");
 	nucleo->quantum						= getIntProperty(config, "QUANTUM");
 	nucleo->quantum_sleep			= getIntProperty(config, "QUANTUM_SLEEP");
 	nucleo->sem_ids						= getListProperty(config, "SEM_IDS");
@@ -35,6 +37,7 @@ void *cargar_conf(){
 	nucleo->io_ids							= getListProperty(config, "IO_IDS");
 	nucleo->io_sleep						= getListProperty(config, "IO_SLEEP");
 	nucleo->shared_vars				= getListProperty(config, "SHARED_VARS");
+
 
 	config_destroy(config);
 
@@ -225,8 +228,8 @@ t_pcb *crear_pcb(char *buffer){
 int crear_id(){
 	waitSemaforo(mutex);
 
-	if( cantidadElementos(cola_pcb) == 0){
-		return 1;}
+	if( cantidadElementos(cola_pcb) == 0)
+		return 1;
 	return cantidadElementos(cola_pcb) + 1;
 
 	signalSemaforo(mutex);
