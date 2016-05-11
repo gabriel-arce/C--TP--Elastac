@@ -282,40 +282,39 @@ void * escucha_conexiones() {
 		contador_hilos++;
 		pthread_mutex_unlock(&mutex_hilos);
 
-		// armo el handshake de entrada
 		t_header * handshake_in = malloc(sizeof(t_header));
 
-		recibido = recv(socket_nuevo, handshake_in, sizeof(t_header),
-				MSG_WAITALL);
-
-		if (recibido == -1) {
-			printf("Error en el recv.\n");
-		}
+		recibido = recibir_handshake(socket_nuevo, handshake_in);
 
 		switch (handshake_in->identificador) {
-		case NUCLEO:
+		case 2:
 			new_line();
 			printf("Se conecto Nucleo \n");
 			t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
 			nucleo->socket_nucleo = socket_nuevo;
 
-			t_header * response = malloc(sizeof(t_header));
-			response->identificador = UMC;
-			response->tamanio = sizeof(t_PID);
-			send(nucleo->socket_nucleo, response, sizeof(t_header), 0);
-			free(response);
+			if (enviar_handshake(nucleo->socket_nucleo, 3, 0) == -1) {
+				printf("No se pudo responder el handshake a nucleo. \n");
+			}
+			printf("Handshake con nucleo exitoso \n");
+
 			//creo el hilo para atender el nucleo
 			break;
-		case CPU:
+		case 5:
 			new_line();
 			printf("Se conecto una CPU \n");
 			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
 			cpu->socket_cpu = socket_nuevo;
-			cpu->id_cpu = ++id_cpu;
 			pthread_mutex_lock(&mutex_lista_cpu);
+			cpu->id_cpu = ++id_cpu;
 			list_add(cpu_conectadas, cpu);
 			pthread_mutex_unlock(&mutex_lista_cpu);
-			enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
+
+			if (enviar_handshake(nucleo->socket_nucleo, 3, umc_config->frames_size) == -1) {
+				printf("No se pudo responder el handshake a cpu \n");
+			}
+			printf("Handshake con cpu #%d exitoso \n", cpu->id_cpu);
+
 			//creo el hilo para atender los cpu
 			break;
 		default:

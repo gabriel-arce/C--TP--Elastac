@@ -13,28 +13,22 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
-
-typedef enum {
-	CONSOLA,
-	NUCLEO,
-	UMC,
-	SWAP,
-	CPU
-} t_PID;
+#include <sys/socket.h>
 
 typedef struct {
-	t_PID identificador;
+	uint8_t identificador;
 	uint32_t tamanio;
 }__attribute__((packed)) t_header;
 
 typedef struct {
-	char * data;
+	void * data;
 	int size;
 }__attribute__((packed)) t_stream;
 
-
 t_stream * serializar_header(t_header * unHeader);
 t_header * deserializar_header(t_stream * unStream);
+int recibir_handshake(int sock_fd, t_header * handshake_in);
+int enviar_handshake(int sock_fd, uint8_t id_proc, uint32_t size);
 
 
 #endif /* ELESTAC_PAQUETES_H_ */

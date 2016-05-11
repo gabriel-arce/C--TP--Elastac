@@ -19,7 +19,7 @@ int main(void) {
 	cargar_conf();
 
 	//Escuchar procesos consolas o cpus
-	escuchar_procesos();
+	//escuchar_procesos();
 
 	//Mientras haya al menos haya un cpu, planifica..
 
@@ -33,34 +33,22 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
-	t_header * handshake = malloc(sizeof(t_header));
-	handshake->identificador = NUCLEO;
-
-	if (send(socketNucleo, handshake, sizeof(t_header), 0)
-			== -1) {
-		printf("No se pudo enviar el handshake a UMC.\n");
-		return EXIT_FAILURE;
+	if (enviar_handshake(socketNucleo, 2, 0) == -1) {
+		printf("No se pudo enviar el handshake a umc. \n");
 	}
 
-	free(handshake);
+	t_header * handshake_in = malloc(sizeof(t_header));
 
-	t_header * buffer_in = malloc(sizeof(t_header));
+	recibir_handshake(socketNucleo, handshake_in);
 
-	if (recv(socketNucleo, buffer_in, sizeof(t_header), MSG_WAITALL) == -1) {
-		printf("No se pudo recibir el handshake de UMC.\n");
-		return EXIT_FAILURE;
-	}
-
-	printf("%d\n", buffer_in->identificador);
-
-	if (buffer_in->identificador == UMC) {
+	if (handshake_in->identificador == 3) {
 		//creo el hilo para atender a UMC
 		printf("Se conecto umc.\n");
 	} else {
 		return EXIT_FAILURE;
 	}
 
-	free(buffer_in);
+	free(handshake_in);
 
 	return EXIT_SUCCESS;
 }
