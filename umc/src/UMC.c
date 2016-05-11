@@ -213,13 +213,13 @@ void * conecta_swap() {
 	free(stream_handshake);
 
 	t_stream * stream_in = malloc(sizeof(t_stream));
-	t_header * handshake_in= NULL;
+	t_header * handshake_in = NULL;
 	int buffer_size = sizeof(t_PID) + sizeof(uint32_t);
 	char * buffer_in = malloc(buffer_size);
 
 	if (recv(socket_cliente, buffer_in, buffer_size, MSG_WAITALL) == -1) {
 		printf("No se pudo recibir el handshake de swap.\n");
-		return EXIT_FAILURE;
+		//return EXIT_FAILURE;
 	}
 
 	stream_in->data = buffer_in;
@@ -229,8 +229,9 @@ void * conecta_swap() {
 
 	if (handshake_in->identificador == SWAP) {
 		//creo el hilo para atender a swap
+		printf("Se conecto SWAP.\n");
 	} else {
-		return EXIT_FAILURE;
+		//return EXIT_FAILURE;
 	}
 
 	free(stream_in);
@@ -265,14 +266,15 @@ void * escucha_conexiones() {
 	int socket_nuevo = 0;
 	int recibido = 1;
 
-	char * buffer_header = NULL;
-	t_header * header_handshake = NULL;
-	t_stream * stream_handshake = NULL;
-
 	while (recibido > 0) {
 
 		socket_nuevo = accept(socket_servidor,
 				(struct sockaddr*) &direccion_cliente, &addrlen);
+
+		if (socket_nuevo == -1) {
+			printf("Error en el accept.\n");
+		}
+
 		setsockopt(socket_nuevo, SOL_SOCKET, SO_REUSEADDR, &optval,
 				sizeof(optval));
 
@@ -280,17 +282,17 @@ void * escucha_conexiones() {
 		contador_hilos++;
 		pthread_mutex_unlock(&mutex_hilos);
 
-		buffer_header = malloc(5);
+		// armo el handshake de entrada
+		t_header * handshake_in = malloc(sizeof(t_header));
 
-		recibido = recv(socket_nuevo, buffer_header, 5, MSG_WAITALL);
+		recibido = recv(socket_nuevo, handshake_in, sizeof(t_header),
+				MSG_WAITALL);
 
-		stream_handshake = malloc(sizeof(t_stream));
-		stream_handshake->data = buffer_header;
-		stream_handshake->size = 5;
+		if (recibido == -1) {
+			printf("Error en el recv.\n");
+		}
 
-		header_handshake = deserializar_header(stream_handshake);
-
-		switch (header_handshake->identificador) {
+		switch (handshake_in->identificador) {
 		case NUCLEO:
 			new_line();
 			printf("Se conecto Nucleo \n");
@@ -299,9 +301,9 @@ void * escucha_conexiones() {
 
 			t_header * response = malloc(sizeof(t_header));
 			response->identificador = UMC;
-			response->tamanio = sizeof(t_PID) + sizeof(uint32_t);
-			send(nucleo->socket_nucleo, serializar_header(response),
-					response->tamanio, 0);
+			response->tamanio = sizeof(t_PID);
+			send(nucleo->socket_nucleo, response, sizeof(t_header), 0);
+			free(response);
 			//creo el hilo para atender el nucleo
 			break;
 		case CPU:
@@ -317,14 +319,11 @@ void * escucha_conexiones() {
 			//creo el hilo para atender los cpu
 			break;
 		default:
-			enviarPorSocket(socket_servidor, "No te conozco");
+			printf("Se conecto alguien desconocido.\n");
 			break;
 		}
 
-		free(buffer_header);
-		free(stream_handshake);
-		free(header_handshake);
-		buffer_header = NULL;
+		free(handshake_in);
 	}
 
 	return EXIT_SUCCESS;

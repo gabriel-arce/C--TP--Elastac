@@ -17,8 +17,8 @@ int main() {
 	imprimir_config();
 
 	//creo estructuras
-	crear_archivo_log();
-	inicializar_memoria();
+	//crear_archivo_log();
+	//inicializar_memoria();
 	//crear_archivo_reporte();
 
 	cpu_conectadas = list_create();
@@ -36,14 +36,14 @@ int main() {
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
 	pthread_join(hilo_server, NULL);
 
-	pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
-	pthread_join(hiloConsola, NULL);
+	//pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
+	//pthread_join(hiloConsola, NULL);
 
-	pthread_detach(hiloConsola);
+	//pthread_detach(hiloConsola);
 	pthread_detach(hilo_server);
 
 	list_destroy(cpu_conectadas);
-	free(memoria_principal);
+	//free(memoria_principal);
 	free(umc_config);
 
 	return EXIT_SUCCESS;
