@@ -151,8 +151,9 @@ int no_es_comando(char * com) {
 }
 
 void inicializar_memoria() {
-	memoria_size = umc_config->frames_size * umc_config->cant_frames;
-	memoria_principal = malloc(memoria_size);
+
+	memoria_principal = malloc(
+			umc_config->frames_size * umc_config->cant_frames);
 	memset(memoria_principal, 0, memoria_size);
 
 	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
@@ -189,38 +190,8 @@ void crear_archivo_reporte() {
 }
 
 void crear_archivo_log() {
-	remove(archivo_log);
-	logger = log_create(archivo_log, "UMC log", false, LOG_LEVEL_TRACE);
+	logger = log_create(LOG_FILE, "UMC log", false, LOG_LEVEL_TRACE);
 	log_info(logger, "UMC iniciado.");
-}
-
-t_stream * serializar_header(t_header * unHeader) {
-	t_stream * unStream = NULL;
-	unStream = malloc(sizeof(t_stream));
-	int32_t offset = 0, tmp_size = 0;
-
-	unStream->data = malloc(
-			sizeof(unHeader->identificador) + sizeof(unHeader->tamanio));
-	memcpy(unStream->data + offset, &unHeader->identificador, tmp_size =
-			sizeof(unHeader->identificador));
-	offset += tmp_size;
-	memcpy(unStream->data + offset, &unHeader->tamanio, tmp_size =
-			sizeof(unHeader->tamanio));
-	unStream->size = offset + tmp_size;
-	return unStream;
-}
-
-t_header * deserializar_header(t_stream * unStream) {
-	t_header * unHeader = NULL;
-	unHeader = malloc(sizeof(t_header));
-	int32_t offset = 0, tmp_size = 0;
-
-	memcpy(&unHeader->identificador, unStream->data + offset, tmp_size =
-			sizeof(unHeader->identificador));
-	offset += tmp_size;
-	memcpy(&unHeader->tamanio, unStream->data + offset, tmp_size =
-			sizeof(unHeader->tamanio));
-	return unHeader;
 }
 
 void * conecta_swap() {
@@ -228,12 +199,43 @@ void * conecta_swap() {
 			umc_config->puerto_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	if (enviarPorSocket(socket_cliente, string_itoa(3)) == -1) {
-		puts("No se pudo enviar");
-		exit(EXIT_FAILURE);
+	t_header * handshake = malloc(sizeof(t_header));
+	handshake->identificador = UMC;
+	t_stream * stream_handshake = serializar_header(handshake);
+
+	if (send(socket_cliente, stream_handshake, stream_handshake->size, 0)
+			== -1) {
+		printf("No se pudo enviar el handshake a swap.\n");
+		return EXIT_FAILURE;
 	}
 
-	//creo el hilo para atender a swap
+	free(handshake);
+	free(stream_handshake);
+
+	t_stream * stream_in = malloc(sizeof(t_stream));
+	t_header * handshake_in= NULL;
+	int buffer_size = sizeof(t_PID) + sizeof(uint32_t);
+	char * buffer_in = malloc(buffer_size);
+
+	if (recv(socket_cliente, buffer_in, buffer_size, MSG_WAITALL) == -1) {
+		printf("No se pudo recibir el handshake de swap.\n");
+		return EXIT_FAILURE;
+	}
+
+	stream_in->data = buffer_in;
+	stream_in->size = buffer_size;
+
+	handshake_in = deserializar_header(stream_in);
+
+	if (handshake_in->identificador == SWAP) {
+		//creo el hilo para atender a swap
+	} else {
+		return EXIT_FAILURE;
+	}
+
+	free(stream_in);
+	free(handshake_in);
+	free(buffer_in);
 
 	return EXIT_SUCCESS;
 }
@@ -289,15 +291,20 @@ void * escucha_conexiones() {
 		header_handshake = deserializar_header(stream_handshake);
 
 		switch (header_handshake->identificador) {
-		case ID_NUCLEO:
+		case NUCLEO:
 			new_line();
 			printf("Se conecto Nucleo \n");
 			t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
 			nucleo->socket_nucleo = socket_nuevo;
-			enviarPorSocket(socket_servidor, MENSAJE_HANDSHAKE);
+
+			t_header * response = malloc(sizeof(t_header));
+			response->identificador = UMC;
+			response->tamanio = sizeof(t_PID) + sizeof(uint32_t);
+			send(nucleo->socket_nucleo, serializar_header(response),
+					response->tamanio, 0);
 			//creo el hilo para atender el nucleo
 			break;
-		case ID_CPU:
+		case CPU:
 			new_line();
 			printf("Se conecto una CPU \n");
 			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));

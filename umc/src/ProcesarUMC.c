@@ -12,17 +12,14 @@ int main() {
 	printf("***Proceso UMC***\n");
 	new_line();
 
-	archivo_log  = "umc.log";
-	contador_hilos = 0;
-
-	//creo estructuras
-	inicializar_memoria();
-	crear_archivo_reporte();
-	crear_archivo_log();
-
 	//carga archivo de configuracion y sus parametros
 	cargar_config();
 	imprimir_config();
+
+	//creo estructuras
+	crear_archivo_log();
+	inicializar_memoria();
+	//crear_archivo_reporte();
 
 	cpu_conectadas = list_create();
 	lista_frames = list_create();

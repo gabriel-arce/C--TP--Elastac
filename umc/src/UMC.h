@@ -25,20 +25,18 @@
 #include <elestac_config.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
+#include <elestac_paquetes.h>
 
-#define CONFIG_PATH "umc.conf" //para runear en terminal
-//#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
-#define REPORT_PATH "reporte.txt"
-//#define REPORT_PATH "../umc/src/reporte.txt"
+//#define CONFIG_PATH "umc.conf" //para runear en terminal
+#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
+//#define REPORT_PATH "reporte.txt"
+#define REPORT_PATH "../umc/src/reporte.txt"
+#define LOG_FILE "../umc/src/umc.log"
 #define MSJ_ERROR1 "Error en sintaxis del comando\n"
 #define MSJ_ERROR2 "Error en # de variable"
 #define PROMPT "#>"
 #define LENGTH_MAX_COMANDO 7
-#define MENSAJE_HANDSHAKE "Hola soy umc"
-#define ID_NUCLEO 2
-#define ID_UMC 3
-#define ID_SWAP 4
-#define ID_CPU 5
+#define MENSAJE_HANDSHAKE "Hola soy umc \n"
 
 typedef struct {
 	int puerto_escucha;
@@ -67,16 +65,6 @@ typedef struct {
 	int libre;
 } t_mem_frame;
 
-typedef struct {
-	int8_t identificador;
-	int32_t tamanio;
-}__attribute__((packed)) t_header;
-
-typedef struct {
-	char * data;
-	int size;
-}__attribute__((packed)) t_stream;
-
 t_umc_config * umc_config;
 int contador_hilos;
 int socket_cliente, socket_servidor;
@@ -84,9 +72,8 @@ pthread_t hiloConsola, hilo_server, hilo_cliente;
 int id_cpu;
 t_list * cpu_conectadas;
 pthread_mutex_t mutex_hilos, mutex_lista_cpu;
-unsigned long memoria_size;
+int memoria_size;
 char * memoria_principal;
-char * archivo_log;
 t_log * logger;
 FILE * archivo_reporte;
 t_list * tlb;
@@ -115,7 +102,5 @@ void * solicitar_bytes(int nro_pagina, int offset, int tamanio); //cuidado que d
 void * almacenar_bytes(int nro_pagina, int offset, int tamanio, char * buffer);
 void * finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
-t_stream * serializar_header(t_header * unHeader);
-t_header * deserializar_header(t_stream * unStream);
 
 #endif /* UMC_H_ */
