@@ -199,46 +199,24 @@ void * conecta_swap() {
 			umc_config->puerto_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	t_header * handshake = malloc(sizeof(t_header));
-	handshake->identificador = UMC;
-	t_stream * stream_handshake = serializar_header(handshake);
+	if (enviar_handshake(socket_cliente, 3, 0))
+		printf("No se pudo enviar el handshake a swap\n");
 
-	if (send(socket_cliente, stream_handshake, stream_handshake->size, 0)
-			== -1) {
-		printf("No se pudo enviar el handshake a swap.\n");
-		return EXIT_FAILURE;
-	}
+	t_header * handshake_in = malloc(sizeof(t_header));
 
-	free(handshake);
-	free(stream_handshake);
+	recibir_handshake(socket_cliente, handshake_in);
 
-	t_stream * stream_in = malloc(sizeof(t_stream));
-	t_header * handshake_in = NULL;
-	int buffer_size = sizeof(t_PID) + sizeof(uint32_t);
-	char * buffer_in = malloc(buffer_size);
-
-	if (recv(socket_cliente, buffer_in, buffer_size, MSG_WAITALL) == -1) {
-		printf("No se pudo recibir el handshake de swap.\n");
-		//return EXIT_FAILURE;
-	}
-
-	stream_in->data = buffer_in;
-	stream_in->size = buffer_size;
-
-	handshake_in = deserializar_header(stream_in);
-
-	if (handshake_in->identificador == SWAP) {
+	if (handshake_in->identificador == 4) {
 		//creo el hilo para atender a swap
 		printf("Se conecto SWAP.\n");
 	} else {
-		//return EXIT_FAILURE;
+		printf("Se conecto alguien desconocido\n");
 	}
 
-	free(stream_in);
 	free(handshake_in);
-	free(buffer_in);
 
 	return EXIT_SUCCESS;
+
 }
 
 void * escucha_conexiones() {
@@ -310,11 +288,11 @@ void * escucha_conexiones() {
 			list_add(cpu_conectadas, cpu);
 			pthread_mutex_unlock(&mutex_lista_cpu);
 
-			if (enviar_handshake(nucleo->socket_nucleo, 3, umc_config->frames_size) == -1) {
-				printf("No se pudo responder el handshake a cpu \n");
+			if (enviar_handshake(cpu->socket_cpu, 3, umc_config->frames_size)
+					== -1) {
+				printf("No se pudo enviar el handshake a cpu \n");
 			}
 			printf("Handshake con cpu #%d exitoso \n", cpu->id_cpu);
-
 			//creo el hilo para atender los cpu
 			break;
 		default:

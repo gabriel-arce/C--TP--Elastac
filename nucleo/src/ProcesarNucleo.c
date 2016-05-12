@@ -43,7 +43,7 @@ int main(void) {
 
 	if (handshake_in->identificador == 3) {
 		//creo el hilo para atender a UMC
-		printf("Se conecto umc.\n");
+		printf("Se conecto umc\n");
 	} else {
 		return EXIT_FAILURE;
 	}
