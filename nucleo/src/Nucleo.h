@@ -29,6 +29,9 @@
 #define HANDSHAKE					 "Hola! Soy nucleo!.."
 #define SERIALIZADOR				"$$"
 
+//Cabeceras
+#define Tamanio_pagina 31
+
 typedef enum {
 	Listo,
 	Corriendo,
@@ -67,6 +70,7 @@ typedef struct {
 t_nucleo *nucleo;
 t_config  *config;
 int socketNucleo;
+int tamanio_pagina;
 
 //t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
 t_list *lista_pcb, *lista_listos, *lista_bloqueados, *lista_ejecutando;

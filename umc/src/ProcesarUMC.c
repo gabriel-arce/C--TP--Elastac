@@ -9,6 +9,10 @@
 
 int main() {
 
+	socket_nucleo = -1;
+	socket_cliente = -1;
+	socket_servidor = -1;
+
 	printf("***Proceso UMC***\n");
 	new_line();
 

@@ -219,6 +219,27 @@ void * conecta_swap() {
 
 }
 
+void enviar_pagina_size(int sock_fd) {
+
+	void * buffer_out = malloc(5);
+	t_header * head_out = malloc(sizeof(t_header));
+
+	//luego del handshake le mando el tamaño de pagina a nucleo
+	head_out->identificador = Tamanio_pagina;
+	head_out->tamanio = umc_config->frames_size;
+
+	memcpy(buffer_out, &head_out->identificador, sizeof(uint8_t));
+	memcpy(buffer_out + sizeof(uint8_t), &head_out->tamanio, sizeof(uint32_t));
+
+	if (send(sock_fd, buffer_out, 5, 0) == -1) {
+		printf("No se pudo responder el handshake a nucleo. \n");
+	}
+	printf("Se ha enviado el tamanio de pagina \n");
+
+	free(buffer_out);
+	free(head_out);
+}
+
 void * escucha_conexiones() {
 
 	int optval = 1;
@@ -261,21 +282,23 @@ void * escucha_conexiones() {
 		pthread_mutex_unlock(&mutex_hilos);
 
 		t_header * handshake_in = malloc(sizeof(t_header));
+		void * buffer_in = malloc(5);
 
-		recibido = recibir_handshake(socket_nuevo, handshake_in);
+		if (recv(socket_nuevo, buffer_in, 5, 0) == -1) {
+			printf("Error en el recv.");
+		}
+
+		memcpy(&handshake_in->identificador, buffer_in, sizeof(uint8_t));
+		memcpy(&handshake_in->tamanio, buffer_in + sizeof(uint8_t), sizeof(uint32_t));
 
 		switch (handshake_in->identificador) {
 		case 2:
 			new_line();
 			printf("Se conecto Nucleo \n");
-			t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
-			nucleo->socket_nucleo = socket_nuevo;
 
-			if (enviar_handshake(nucleo->socket_nucleo, 3, 0) == -1) {
-				printf("No se pudo responder el handshake a nucleo. \n");
-			}
-			printf("Handshake con nucleo exitoso \n");
+			socket_nucleo = socket_nuevo;
 
+			enviar_pagina_size(socket_nuevo);
 			//creo el hilo para atender el nucleo
 			break;
 		case 5:
@@ -288,11 +311,7 @@ void * escucha_conexiones() {
 			list_add(cpu_conectadas, cpu);
 			pthread_mutex_unlock(&mutex_lista_cpu);
 
-			if (enviar_handshake(cpu->socket_cpu, 3, umc_config->frames_size)
-					== -1) {
-				printf("No se pudo enviar el handshake a cpu \n");
-			}
-			printf("Handshake con cpu #%d exitoso \n", cpu->id_cpu);
+			enviar_pagina_size(socket_nuevo);
 			//creo el hilo para atender los cpu
 			break;
 		default:
@@ -301,6 +320,7 @@ void * escucha_conexiones() {
 		}
 
 		free(handshake_in);
+		free(buffer_in);
 	}
 
 	return EXIT_SUCCESS;

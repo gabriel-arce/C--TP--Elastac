@@ -38,6 +38,9 @@
 #define LENGTH_MAX_COMANDO 7
 #define MENSAJE_HANDSHAKE "Hola soy umc \n"
 
+//Cabeceras
+#define Tamanio_pagina 31
+
 typedef struct {
 	int puerto_escucha;
 	int puerto_swap;
@@ -48,10 +51,6 @@ typedef struct {
 	int entradas_tlb;
 	int retardo;
 } t_umc_config;
-
-typedef struct {
-	int socket_nucleo;
-} t_sesion_nucleo;
 
 typedef struct {
 	int socket_cpu;
@@ -66,6 +65,7 @@ typedef struct {
 } t_mem_frame;
 
 t_umc_config * umc_config;
+int socket_nucleo;
 int contador_hilos;
 int socket_cliente, socket_servidor;
 pthread_t hiloConsola, hilo_server, hilo_cliente;
@@ -96,6 +96,7 @@ void reporte_estructuras(char * arg);
 void reporte_contenido(char * arg);
 void limpiar_tlb();
 void marcar_paginas();
+void enviar_pagina_size(int sock_fd);
 // begin OPERACIONES PRINCIPALES
 void * inicializar_programa(int id_programa, int paginas_requeridas);
 void * solicitar_bytes(int nro_pagina, int offset, int tamanio); //cuidado que devuelve algo!!
