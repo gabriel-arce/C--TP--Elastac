@@ -59,7 +59,6 @@ void * lanzar_consola() {
 
 	char * buffer_in = malloc(100);
 	int fin = 0;
-	char cadFin[] = "fin";
 
 	while (fin == 0) {
 		new_line();
@@ -75,7 +74,7 @@ void * lanzar_consola() {
 		new_line();
 
 		printf(PROMPT);
-		scanf("%[^\n]%*c", buffer_in);
+		fgets(buffer_in, 100, stdin);
 		new_line();
 
 		char ** substrings = string_split(buffer_in, " ");
@@ -86,24 +85,23 @@ void * lanzar_consola() {
 			i++;
 		}
 
-		if (i == 0) {
-			printf("Debe ingresar un comando\n");
+		if (i > 2) {
+			printf("Incorrecta cantidad de argumentos permitidos\n");
 			continue;
 		}
 
-		if (i > 3) {
-			printf("Incorrecta cantidad de argumentos permitidos");
-			continue;
-		}
+		char * cmd_in = NULL;
+		cmd_in = substrings[0];
+		int opt_var = -1;
 
-		char * cmd_in = (i >= 1) ? substrings[0] : " ";
-		int opt_var = (i >= 2) ? strtol(substrings[1], NULL, 10) : 0;
-		char * snd_arg = (i == 3) ? substrings[2]: " ";
+		if (substrings[1] != NULL)
+			opt_var = strtol(substrings[1], NULL, 10);
 
 		//log_trace(logger, "Comando ingresado: %s %d %s", cmd_in, opt_var, snd_arg);
 
-		if (string_equals_ignore_case(cmd_in, cadFin)) {
+		if (string_equals_ignore_case(cmd_in, "fin")) {
 			fin = 1;
+			printf("Fin de la consola\n");
 			continue;
 		}
 
@@ -120,10 +118,10 @@ void * lanzar_consola() {
 		if (string_equals_ignore_case(cmd_in, "dump")) {
 			switch (opt_var) {
 			case 1:
-				reporte_estructuras(snd_arg);
+				reporte_estructuras();
 				break;
 			case 2:
-				reporte_contenido(snd_arg);
+				reporte_contenido();
 				break;
 
 			default:
@@ -138,7 +136,7 @@ void * lanzar_consola() {
 				limpiar_tlb();
 				break;
 			case 2:
-				marcar_paginas(snd_arg);
+				marcar_paginas();
 				break;
 			default:
 				puts(MSJ_ERROR2);
@@ -156,11 +154,11 @@ void * lanzar_consola() {
 
 int no_es_comando(char * com) {
 
-	char * comandos[3] = { "retardo", "dump", "flush" };
+	char * comandos[4] = { "retardo", "dump", "flush", "fin" };
 
 	int i;
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		if (string_equals_ignore_case(com, (char *) comandos[i])) {
 			return false;
 		}
@@ -305,7 +303,8 @@ void * escucha_conexiones() {
 		}
 
 		memcpy(&handshake_in->identificador, buffer_in, sizeof(uint8_t));
-		memcpy(&handshake_in->tamanio, buffer_in + sizeof(uint8_t), sizeof(uint32_t));
+		memcpy(&handshake_in->tamanio, buffer_in + sizeof(uint8_t),
+				sizeof(uint32_t));
 
 		switch (handshake_in->identificador) {
 		case 2:
@@ -347,25 +346,12 @@ void modificar_retardo(int ret) {
 	umc_config->retardo = ret;
 }
 
-void reporte_estructuras(char * arg) {
+void reporte_estructuras() {
 	puts("comando dump - estructuras");
-
-	if (string_equals_ignore_case(arg, "todo")) {
-		puts("dump - estructuras - todo");
-	} else {
-		puts("dump - estructuras - proceso en particular");
-	}
-
 }
 
-void reporte_contenido(char * arg) {
+void reporte_contenido() {
 	puts("comando dump - contenido");
-
-	if (string_equals_ignore_case(arg, "todo")) {
-		puts("dump - contenido - todo");
-	} else {
-		puts("dump - contenido - proceso en particular");
-	}
 }
 
 void limpiar_tlb() {
@@ -373,6 +359,6 @@ void limpiar_tlb() {
 //list_clean(tlb);
 }
 
-void marcar_paginas(char * arg) {
-	printf("comando flush - memory - %s\n", arg);
+void marcar_paginas() {
+	printf("comando flush - memory\n");
 }
