@@ -36,10 +36,15 @@
 #define MSJ_ERROR2 "Error en # de variable"
 #define PROMPT "#>"
 #define LENGTH_MAX_COMANDO 7
-#define MENSAJE_HANDSHAKE "Hola soy umc \n"
+#define NUCLEO 2
+#define CPU 5
 
 //Cabeceras
 #define Tamanio_pagina 31
+#define Inicializar_programa 32
+#define Solicitar_bytes 33
+#define Almacenar_bytes 34
+#define Finalizar_programa 35
 
 typedef struct {
 	int puerto_escucha;
@@ -63,6 +68,13 @@ typedef struct {
 	int pid;
 	int libre;
 } t_mem_frame;
+
+typedef struct {
+	int pid;
+	int tamanio_pid;
+	int paginas_requeridas;
+	int tamanio_paginas_requeridas;
+} t_paquete_inicializar_programa;
 
 t_umc_config * umc_config;
 int socket_nucleo;
@@ -103,5 +115,7 @@ void * solicitar_bytes(int nro_pagina, int offset, int tamanio); //cuidado que d
 void * almacenar_bytes(int nro_pagina, int offset, int tamanio, char * buffer);
 void * finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
+void * atiende_nucleo();
+void * atende_cpu();
 
 #endif /* UMC_H_ */

@@ -307,16 +307,19 @@ void * escucha_conexiones() {
 				sizeof(uint32_t));
 
 		switch (handshake_in->identificador) {
-		case 2:
+		case NUCLEO:
 			new_line();
 			printf("Se conecto Nucleo \n");
 
 			socket_nucleo = socket_nuevo;
 
 			enviar_pagina_size(socket_nuevo);
-			//creo el hilo para atender el nucleo
+
+			pthread_t hilo_atiende_nucleo;
+			pthread_create(&hilo_atiende_nucleo, NULL, atiende_nucleo, NULL);
+
 			break;
-		case 5:
+		case CPU:
 			new_line();
 			printf("Se conecto una CPU \n");
 			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
@@ -361,4 +364,110 @@ void limpiar_tlb() {
 
 void marcar_paginas() {
 	printf("comando flush - memory\n");
+}
+
+void * atiende_nucleo() {
+
+	int recibido = 1;
+	void * buffer_in = malloc(5);
+
+	while (recibido > 1) {
+
+		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
+			printf("Error en el recv del header en atiende nucleo\n");
+			continue;
+		}
+
+		t_header * head_in = malloc(sizeof(t_header));
+		memcpy(&head_in->identificador, buffer_in, 1);
+		memcpy(&head_in->tamanio, buffer_in + 1, 4);
+
+		switch (head_in->identificador) {
+		case Inicializar_programa:
+			new_line();
+			void * buffer_stream = malloc(head_in->tamanio);
+
+			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
+					0)) == -1) {
+				printf("Error en el recv del header en atiende nucleo");
+				continue;
+			}
+
+			t_paquete_inicializar_programa * payload = malloc(
+					sizeof(t_paquete_inicializar_programa));
+
+			memcpy(&payload->pid, buffer_stream, 4);
+			memcpy(&payload->tamanio_paginas_requeridas, buffer_stream + 4, 4);
+
+			printf("Inicializo programa...\n");
+			//puede que lo inicialice en un hilo
+			inicializar_programa(payload->pid, payload->paginas_requeridas);
+
+			free(buffer_stream);
+			free(payload);
+
+			break;
+		case Finalizar_programa:
+			printf("Finalizo programa\n");
+			//al igual que inicializar, quizas deba hacerlo mediante hilos
+			finalizar_programa(
+					head_in->tamanio/*en nucleo setea el pid en el tamaño*/);
+			break;
+		default:
+			printf("Cabecera desconocida\n");
+			break;
+		}
+
+		free(head_in);
+	}
+
+	free(buffer_in);
+
+	return EXIT_SUCCESS;
+}
+
+void * atiende_cpu() {
+
+	int recibido = 1;
+	void * buffer_in = malloc(5);
+
+	while (recibido > 1) {
+
+		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
+			printf("Error en el recv de atiende cpu");
+			continue;
+		}
+
+		t_header * head_in = malloc(sizeof(t_header));
+		memcpy(&head_in->identificador, buffer_in, 1);
+		memcpy(&head_in->tamanio, buffer_in + 1, 4);
+
+		switch (head_in->identificador) {
+		case Solicitar_bytes:
+			printf("Lectura de bytes\n");
+			break;
+		case Almacenar_bytes:
+			printf("Almaceno bytes\n");
+			break;
+		default:
+			printf("Cabecera desconocida\n");
+			break;
+		}
+
+		free(head_in);
+	}
+
+	free(buffer_in);
+
+	return EXIT_SUCCESS;
+}
+
+void * inicializar_programa(int id_programa, int paginas_requeridas) {
+	printf("Programa iniciado.\n");
+	return EXIT_SUCCESS;
+}
+
+void * finalizar_programa(int id_programa) {
+	printf("Programa finalizado.\n");
+	return EXIT_SUCCESS;
 }
