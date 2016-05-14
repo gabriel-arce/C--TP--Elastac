@@ -21,6 +21,7 @@
 #include <elestac_config.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
+#include <elestac_paquetes.h>
 
 #define CONFIG_PATH "swap.conf"
 //#define CONFIG_PATH "../swap/src/swap.conf"

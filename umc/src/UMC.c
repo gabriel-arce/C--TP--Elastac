@@ -79,15 +79,32 @@ void * lanzar_consola() {
 		new_line();
 
 		char ** substrings = string_split(buffer_in, " ");
-		char * cmd_in = substrings[0];
-		int opt_var = strtol(substrings[1], NULL, 10);
-		char * snd_arg = substrings[2];
+
+		int i = 0;
+
+		while (substrings[i] != NULL) {
+			i++;
+		}
+
+		if (i == 0) {
+			printf("Debe ingresar un comando\n");
+			continue;
+		}
+
+		if (i > 3) {
+			printf("Incorrecta cantidad de argumentos permitidos");
+			continue;
+		}
+
+		char * cmd_in = (i >= 1) ? substrings[0] : " ";
+		int opt_var = (i >= 2) ? strtol(substrings[1], NULL, 10) : 0;
+		char * snd_arg = (i == 3) ? substrings[2]: " ";
 
 		//log_trace(logger, "Comando ingresado: %s %d %s", cmd_in, opt_var, snd_arg);
 
 		if (string_equals_ignore_case(cmd_in, cadFin)) {
 			fin = 1;
-			free(buffer_in);
+			continue;
 		}
 
 		if (no_es_comando(cmd_in)) {
@@ -130,6 +147,8 @@ void * lanzar_consola() {
 		}
 
 	}
+
+	free(buffer_in);
 
 	return EXIT_SUCCESS;
 
@@ -199,21 +218,18 @@ void * conecta_swap() {
 			umc_config->puerto_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	if (enviar_handshake(socket_cliente, 3, 0))
-		printf("No se pudo enviar el handshake a swap\n");
+	void * buffer_out = malloc(5);
+	t_header * handshake_out = malloc(sizeof(t_header));
 
-	t_header * handshake_in = malloc(sizeof(t_header));
+	handshake_out->identificador = 3;
+	handshake_out->tamanio = 0;
 
-	recibir_handshake(socket_cliente, handshake_in);
+	memcpy(buffer_out, &handshake_out->identificador, sizeof(uint8_t));
+	memcpy(buffer_out + 1, &handshake_out->tamanio, sizeof(uint32_t));
 
-	if (handshake_in->identificador == 4) {
-		//creo el hilo para atender a swap
-		printf("Se conecto SWAP.\n");
-	} else {
-		printf("Se conecto alguien desconocido\n");
+	if (send(socket_cliente, buffer_out, 5, 0) == -1) {
+		printf("Error en el send\n");
 	}
-
-	free(handshake_in);
 
 	return EXIT_SUCCESS;
 
