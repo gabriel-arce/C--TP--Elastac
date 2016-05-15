@@ -9,6 +9,10 @@
 
 int main() {
 
+	socket_nucleo = -1;
+	socket_cliente = -1;
+	socket_servidor = -1;
+
 	printf("***Proceso UMC***\n");
 	new_line();
 
@@ -32,14 +36,13 @@ int main() {
 	pthread_mutex_init(&mutex_hilos, 0);
 	pthread_mutex_init(&mutex_lista_cpu, 0);
 
-
+	conecta_swap();
+	pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
+
+	pthread_join(hiloConsola, NULL);
+	pthread_detach(hiloConsola);
 	pthread_join(hilo_server, NULL);
-
-	//pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
-	//pthread_join(hiloConsola, NULL);
-
-	//pthread_detach(hiloConsola);
 	pthread_detach(hilo_server);
 
 	list_destroy(cpu_conectadas);

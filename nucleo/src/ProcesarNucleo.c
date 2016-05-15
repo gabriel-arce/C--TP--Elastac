@@ -33,22 +33,38 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
-	if (enviar_handshake(socketNucleo, 2, 0) == -1) {
-		printf("No se pudo enviar el handshake a umc. \n");
+	t_header * handshake = malloc(sizeof(t_header));
+	void * buffer_out = malloc(5);
+
+	handshake->identificador = 2;
+	handshake->tamanio = 0;
+
+	memcpy(buffer_out, &handshake->identificador, sizeof(uint8_t));
+	memcpy(buffer_out + sizeof(uint8_t) , &handshake->tamanio, sizeof(uint32_t));
+
+	if (send(socketNucleo, buffer_out, 5, 0) == -1) {
+		printf("Error en el send\n");
+		exit(EXIT_FAILURE);
+	}
+	printf("Conexion con umc\n");
+
+	free(buffer_out);
+	free(handshake);
+
+	void * buffer_in = malloc(5);
+	t_header * head_in = malloc(sizeof(t_header));
+
+	if (recv(socketNucleo, buffer_in, 5, 0) == -1) {
+		printf("Error en el recv\n");
 	}
 
-	t_header * handshake_in = malloc(sizeof(t_header));
+	memcpy(&head_in->identificador, buffer_in, sizeof(uint8_t));
+	memcpy(&head_in->tamanio, buffer_in + sizeof(uint8_t), sizeof(uint32_t));
 
-	recibir_handshake(socketNucleo, handshake_in);
-
-	if (handshake_in->identificador == 3) {
-		//creo el hilo para atender a UMC
-		printf("Se conecto umc\n");
-	} else {
-		return EXIT_FAILURE;
+	if (head_in->identificador == Tamanio_pagina) {
+		tamanio_pagina = head_in->tamanio;
+		printf("Tamaño de pagina: %d\n", tamanio_pagina);
 	}
-
-	free(handshake_in);
 
 	return EXIT_SUCCESS;
 }

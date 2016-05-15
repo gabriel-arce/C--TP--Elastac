@@ -17,6 +17,11 @@ int main() {
 	int socket_swap = crearSocket();
 	int socket_umc = -1;
 
+	int optval = 1;
+
+	setsockopt(socket_swap, SOL_SOCKET, SO_REUSEADDR, &optval,
+			sizeof(optval));
+
 	if (bindearSocket(socket_swap, swap_config->puerto_escucha) == -1)
 		exit(EXIT_FAILURE);
 
@@ -31,23 +36,23 @@ int main() {
 	if ((socket_umc = aceptarEntrantes(socket_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	char * buffer_in = malloc(1000);
+	void * buffer_in = malloc(5);
+	t_header * handshake_in = malloc(sizeof(t_header));
 
-	int bytes_recibidos = recv(socket_umc, buffer_in, 1000, 0);
-
-	if (bytes_recibidos == -1) {
-		perror("Se desconecto UMC\n");
+	if (recv(socket_umc, buffer_in, 5, 0) == -1) {
+		perror("Error en el recv\n");
 		exit(EXIT_FAILURE);
 	}
 
-	int id_umc = atoi(buffer_in);
+	memcpy(&handshake_in->identificador, buffer_in, sizeof(uint8_t));
+	memcpy(&handshake_in->tamanio, buffer_in + sizeof(uint8_t), sizeof(uint32_t));
 
-	if (id_umc == ID_UMC) {
+	if (handshake_in->identificador == ID_UMC) {
 		printf("Se conecto UMC\n");
 	}
 
 	free(buffer_in);
-
+	free(handshake_in);
 	close(socket_swap);
 
 	return EXIT_SUCCESS;

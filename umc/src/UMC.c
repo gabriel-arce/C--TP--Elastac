@@ -59,7 +59,6 @@ void * lanzar_consola() {
 
 	char * buffer_in = malloc(100);
 	int fin = 0;
-	char cadFin[] = "fin";
 
 	while (fin == 0) {
 		new_line();
@@ -75,19 +74,35 @@ void * lanzar_consola() {
 		new_line();
 
 		printf(PROMPT);
-		scanf("%[^\n]%*c", buffer_in);
+		fgets(buffer_in, 100, stdin);
 		new_line();
 
 		char ** substrings = string_split(buffer_in, " ");
-		char * cmd_in = substrings[0];
-		int opt_var = strtol(substrings[1], NULL, 10);
-		char * snd_arg = substrings[2];
+
+		int i = 0;
+
+		while (substrings[i] != NULL) {
+			i++;
+		}
+
+		if (i > 2) {
+			printf("Incorrecta cantidad de argumentos permitidos\n");
+			continue;
+		}
+
+		char * cmd_in = NULL;
+		cmd_in = substrings[0];
+		int opt_var = -1;
+
+		if (substrings[1] != NULL)
+			opt_var = strtol(substrings[1], NULL, 10);
 
 		//log_trace(logger, "Comando ingresado: %s %d %s", cmd_in, opt_var, snd_arg);
 
-		if (string_equals_ignore_case(cmd_in, cadFin)) {
+		if (string_equals_ignore_case(cmd_in, "fin")) {
 			fin = 1;
-			free(buffer_in);
+			printf("Fin de la consola\n");
+			continue;
 		}
 
 		if (no_es_comando(cmd_in)) {
@@ -103,10 +118,10 @@ void * lanzar_consola() {
 		if (string_equals_ignore_case(cmd_in, "dump")) {
 			switch (opt_var) {
 			case 1:
-				reporte_estructuras(snd_arg);
+				reporte_estructuras();
 				break;
 			case 2:
-				reporte_contenido(snd_arg);
+				reporte_contenido();
 				break;
 
 			default:
@@ -121,7 +136,7 @@ void * lanzar_consola() {
 				limpiar_tlb();
 				break;
 			case 2:
-				marcar_paginas(snd_arg);
+				marcar_paginas();
 				break;
 			default:
 				puts(MSJ_ERROR2);
@@ -131,17 +146,19 @@ void * lanzar_consola() {
 
 	}
 
+	free(buffer_in);
+
 	return EXIT_SUCCESS;
 
 }
 
 int no_es_comando(char * com) {
 
-	char * comandos[3] = { "retardo", "dump", "flush" };
+	char * comandos[4] = { "retardo", "dump", "flush", "fin" };
 
 	int i;
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		if (string_equals_ignore_case(com, (char *) comandos[i])) {
 			return false;
 		}
@@ -199,24 +216,42 @@ void * conecta_swap() {
 			umc_config->puerto_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	if (enviar_handshake(socket_cliente, 3, 0))
-		printf("No se pudo enviar el handshake a swap\n");
+	void * buffer_out = malloc(5);
+	t_header * handshake_out = malloc(sizeof(t_header));
 
-	t_header * handshake_in = malloc(sizeof(t_header));
+	handshake_out->identificador = 3;
+	handshake_out->tamanio = 0;
 
-	recibir_handshake(socket_cliente, handshake_in);
+	memcpy(buffer_out, &handshake_out->identificador, sizeof(uint8_t));
+	memcpy(buffer_out + 1, &handshake_out->tamanio, sizeof(uint32_t));
 
-	if (handshake_in->identificador == 4) {
-		//creo el hilo para atender a swap
-		printf("Se conecto SWAP.\n");
-	} else {
-		printf("Se conecto alguien desconocido\n");
+	if (send(socket_cliente, buffer_out, 5, 0) == -1) {
+		printf("Error en el send\n");
 	}
-
-	free(handshake_in);
 
 	return EXIT_SUCCESS;
 
+}
+
+void enviar_pagina_size(int sock_fd) {
+
+	void * buffer_out = malloc(5);
+	t_header * head_out = malloc(sizeof(t_header));
+
+	//luego del handshake le mando el tamaño de pagina a nucleo
+	head_out->identificador = Tamanio_pagina;
+	head_out->tamanio = umc_config->frames_size;
+
+	memcpy(buffer_out, &head_out->identificador, sizeof(uint8_t));
+	memcpy(buffer_out + sizeof(uint8_t), &head_out->tamanio, sizeof(uint32_t));
+
+	if (send(sock_fd, buffer_out, 5, 0) == -1) {
+		printf("No se pudo responder el handshake a nucleo. \n");
+	}
+	printf("Se ha enviado el tamanio de pagina \n");
+
+	free(buffer_out);
+	free(head_out);
 }
 
 void * escucha_conexiones() {
@@ -261,24 +296,30 @@ void * escucha_conexiones() {
 		pthread_mutex_unlock(&mutex_hilos);
 
 		t_header * handshake_in = malloc(sizeof(t_header));
+		void * buffer_in = malloc(5);
 
-		recibido = recibir_handshake(socket_nuevo, handshake_in);
+		if (recv(socket_nuevo, buffer_in, 5, 0) == -1) {
+			printf("Error en el recv.");
+		}
+
+		memcpy(&handshake_in->identificador, buffer_in, sizeof(uint8_t));
+		memcpy(&handshake_in->tamanio, buffer_in + sizeof(uint8_t),
+				sizeof(uint32_t));
 
 		switch (handshake_in->identificador) {
-		case 2:
+		case NUCLEO:
 			new_line();
 			printf("Se conecto Nucleo \n");
-			t_sesion_nucleo * nucleo = malloc(sizeof(t_sesion_nucleo));
-			nucleo->socket_nucleo = socket_nuevo;
 
-			if (enviar_handshake(nucleo->socket_nucleo, 3, 0) == -1) {
-				printf("No se pudo responder el handshake a nucleo. \n");
-			}
-			printf("Handshake con nucleo exitoso \n");
+			socket_nucleo = socket_nuevo;
 
-			//creo el hilo para atender el nucleo
+			enviar_pagina_size(socket_nuevo);
+
+			pthread_t hilo_atiende_nucleo;
+			pthread_create(&hilo_atiende_nucleo, NULL, atiende_nucleo, NULL);
+
 			break;
-		case 5:
+		case CPU:
 			new_line();
 			printf("Se conecto una CPU \n");
 			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
@@ -288,11 +329,7 @@ void * escucha_conexiones() {
 			list_add(cpu_conectadas, cpu);
 			pthread_mutex_unlock(&mutex_lista_cpu);
 
-			if (enviar_handshake(cpu->socket_cpu, 3, umc_config->frames_size)
-					== -1) {
-				printf("No se pudo enviar el handshake a cpu \n");
-			}
-			printf("Handshake con cpu #%d exitoso \n", cpu->id_cpu);
+			enviar_pagina_size(socket_nuevo);
 			//creo el hilo para atender los cpu
 			break;
 		default:
@@ -301,6 +338,7 @@ void * escucha_conexiones() {
 		}
 
 		free(handshake_in);
+		free(buffer_in);
 	}
 
 	return EXIT_SUCCESS;
@@ -311,25 +349,12 @@ void modificar_retardo(int ret) {
 	umc_config->retardo = ret;
 }
 
-void reporte_estructuras(char * arg) {
+void reporte_estructuras() {
 	puts("comando dump - estructuras");
-
-	if (string_equals_ignore_case(arg, "todo")) {
-		puts("dump - estructuras - todo");
-	} else {
-		puts("dump - estructuras - proceso en particular");
-	}
-
 }
 
-void reporte_contenido(char * arg) {
+void reporte_contenido() {
 	puts("comando dump - contenido");
-
-	if (string_equals_ignore_case(arg, "todo")) {
-		puts("dump - contenido - todo");
-	} else {
-		puts("dump - contenido - proceso en particular");
-	}
 }
 
 void limpiar_tlb() {
@@ -337,6 +362,112 @@ void limpiar_tlb() {
 //list_clean(tlb);
 }
 
-void marcar_paginas(char * arg) {
-	printf("comando flush - memory - %s\n", arg);
+void marcar_paginas() {
+	printf("comando flush - memory\n");
+}
+
+void * atiende_nucleo() {
+
+	int recibido = 1;
+	void * buffer_in = malloc(5);
+
+	while (recibido > 1) {
+
+		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
+			printf("Error en el recv del header en atiende nucleo\n");
+			continue;
+		}
+
+		t_header * head_in = malloc(sizeof(t_header));
+		memcpy(&head_in->identificador, buffer_in, 1);
+		memcpy(&head_in->tamanio, buffer_in + 1, 4);
+
+		switch (head_in->identificador) {
+		case Inicializar_programa:
+			new_line();
+			void * buffer_stream = malloc(head_in->tamanio);
+
+			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
+					0)) == -1) {
+				printf("Error en el recv del header en atiende nucleo");
+				continue;
+			}
+
+			t_paquete_inicializar_programa * payload = malloc(
+					sizeof(t_paquete_inicializar_programa));
+
+			memcpy(&payload->pid, buffer_stream, 4);
+			memcpy(&payload->tamanio_paginas_requeridas, buffer_stream + 4, 4);
+
+			printf("Inicializo programa...\n");
+			//puede que lo inicialice en un hilo
+			inicializar_programa(payload->pid, payload->paginas_requeridas);
+
+			free(buffer_stream);
+			free(payload);
+
+			break;
+		case Finalizar_programa:
+			printf("Finalizo programa\n");
+			//al igual que inicializar, quizas deba hacerlo mediante hilos
+			finalizar_programa(
+					head_in->tamanio/*en nucleo setea el pid en el tamaño*/);
+			break;
+		default:
+			printf("Cabecera desconocida\n");
+			break;
+		}
+
+		free(head_in);
+	}
+
+	free(buffer_in);
+
+	return EXIT_SUCCESS;
+}
+
+void * atiende_cpu() {
+
+	int recibido = 1;
+	void * buffer_in = malloc(5);
+
+	while (recibido > 1) {
+
+		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
+			printf("Error en el recv de atiende cpu");
+			continue;
+		}
+
+		t_header * head_in = malloc(sizeof(t_header));
+		memcpy(&head_in->identificador, buffer_in, 1);
+		memcpy(&head_in->tamanio, buffer_in + 1, 4);
+
+		switch (head_in->identificador) {
+		case Solicitar_bytes:
+			printf("Lectura de bytes\n");
+			break;
+		case Almacenar_bytes:
+			printf("Almaceno bytes\n");
+			break;
+		default:
+			printf("Cabecera desconocida\n");
+			break;
+		}
+
+		free(head_in);
+	}
+
+	free(buffer_in);
+
+	return EXIT_SUCCESS;
+}
+
+void * inicializar_programa(int id_programa, int paginas_requeridas) {
+	printf("Programa iniciado.\n");
+	return EXIT_SUCCESS;
+}
+
+void * finalizar_programa(int id_programa) {
+	printf("Programa finalizado.\n");
+	return EXIT_SUCCESS;
 }
