@@ -27,7 +27,7 @@
 #define MAX_CLIENTES 10
 #define ETIQUETA_NUCLEO	"[NUCLEO]"
 #define HANDSHAKE					 "Hola! Soy nucleo!.."
-#define SERIALIZADOR				"$$"
+#define SERIALIZADOR				"##"
 
 typedef enum {
 	Listo,
@@ -51,17 +51,17 @@ typedef struct {
 } t_nucleo;
 
 typedef struct {
-	unsigned int posicion;			//Posicion de comienzo
-	unsigned int tamanio;			//Tamanio de instruccion
+	uint8_t posicion;			//Posicion de comienzo
+	uint8_t tamanio;			//Tamanio de instruccion
 } t_indice;
 
 typedef struct {
-	int pcb_pid;									//Identificador unico
-	int pcb_pc;									//Program counter
-	int pcb_sp;									//Stack pointer
-	int paginas_codigo;					//Paginas del codigo
+	uint8_t pcb_pid;									//Identificador unico
+	uint8_t pcb_pc;									//Program counter
+	uint8_t pcb_sp;									//Stack pointer
+	uint8_t paginas_codigo;					//Paginas del codigo
 	t_indice indice_codigo;			//Indice del codigo
-	int indice_etiquetas;					//Indice de etiquetas
+	uint8_t indice_etiquetas;					//Indice de etiquetas
 } t_pcb;
 
 t_nucleo *nucleo;
