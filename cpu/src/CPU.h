@@ -42,7 +42,7 @@ typedef struct{
 t_CPU_config * cargar_config();
 
 
-//Primitivas
+//------------------Primitivas
 
 t_posicion definirVariable(t_nombre_variable identificador_variable);
 t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable);

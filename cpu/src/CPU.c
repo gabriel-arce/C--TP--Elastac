@@ -23,8 +23,8 @@ AnSISOP_funciones functions = {
 		.AnSISOP_imprimir				 = imprimir,
 		.AnSISOP_imprimirTexto			 = imprimirTexto,
 		.AnSISOP_entradaSalida           = entradaSalida,
-		//wait
-		//signal
+		//.AnSISOP_wait					 = wait,
+		//.AnSISOP_signal					 = signal,
 
 };
 
