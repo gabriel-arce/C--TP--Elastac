@@ -19,6 +19,10 @@ int main(void){
 	cpu = cargar_config();
 	printf("IP Nucleo: %s\n", cpu->ip_nucleo);
 	printf("Puerto Nucleo: %d\n", cpu->puerto_nucleo);
+	printf("IP UMC: %s\n", cpu->ip_UMC);
+	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
+	printf("Quantum: %d\n", cpu->quantum);
+
 
 	//Conectar al nucleo
 	if((socketCPU = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)

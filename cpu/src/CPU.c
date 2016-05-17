@@ -43,8 +43,9 @@ t_CPU_config *cargar_config() {
 	cpu_config->ip_UMC						= string_new();
 
 	cpu_config->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
-	cpu_config->puerto_nucleo = config_get_int_value(config, "PUERTO_NUCLEO");
-	//cpu_config->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
+	//cpu_config->puerto_nucleo = config_get_int_value(config, "PUERTO_NUCLEO");       // ¿a alguien le sirve esto? yo no lo puse
+	cpu_config->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
+	cpu_config->quantum       = getIntProperty(config, "QUANTUM");
 
 	string_append(&cpu_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
 	string_append(&cpu_config->ip_UMC, getStringProperty(config, "IP_UMC"));

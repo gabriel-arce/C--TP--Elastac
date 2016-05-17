@@ -25,6 +25,8 @@
 #define CONFIG_PATH "../cpu/src/CPU.conf"
 //#define CONFIG_PATH "CPU.conf"
 
+//------------------Estructuras
+
 typedef struct {
 	int puerto_nucleo;
 	char * ip_nucleo;
@@ -38,6 +40,8 @@ typedef struct{
 	int offset;
 	int size;
 } t_posicion;
+
+//------------------Funciones
 
 t_CPU_config * cargar_config();
 
