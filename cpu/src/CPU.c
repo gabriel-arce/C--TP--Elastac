@@ -17,7 +17,7 @@ AnSISOP_funciones functions = {
 		.AnSISOP_asignar				 = asignar,
 		.AnSISOP_obtenerValorCompartida  = obtenerValorCompartida,
 		.AnSISOP_asignarValorCompartida  = asignarValorCompartida,
-		.AnSISOP_irAlLabel 				 = irALabel,
+		.AnSISOP_irAlLabel 				 = irAlLabel,
 		.AnSISOP_llamarConRetorno        = llamarFuncion,
 		.AnSISOP_retornar				 = retornar,
 		.AnSISOP_imprimir				 = imprimir,
@@ -54,7 +54,7 @@ t_CPU_config *cargar_config() {
 	return cpu_config;
 }
 
-t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
+t_posicion definirVariable(t_nombre_variable identificador_variable) {
 
 }
 
@@ -70,6 +70,9 @@ void asignar(t_posicion direccion_variable, t_valor_variable valor) {
 
 }
 
+t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
+
+}
 
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
 

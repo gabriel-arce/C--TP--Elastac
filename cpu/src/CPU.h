@@ -30,17 +30,25 @@ typedef struct {
 	char * ip_nucleo;
 	int puerto_UMC;
 	char * ip_UMC;
+	int quantum;
 } t_CPU_config;
+
+typedef struct{
+	int pagina;
+	int offset;
+	int size;
+} t_posicion;
 
 t_CPU_config * cargar_config();
 
 
 //Primitivas
 
-t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable);
+t_posicion definirVariable(t_nombre_variable identificador_variable);
 t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable);
 t_valor_variable dereferenciar(t_posicion direccion_variable);
 void asignar(t_posicion direccion_variable, t_valor_variable valor);
+t_valor_variable obtenerValorCompartida(t_nombre_compartida variable);
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor);
 t_puntero_instruccion irAlLabel(t_nombre_etiqueta etiqueta);
 t_puntero_instruccion llamarFuncion(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion);
