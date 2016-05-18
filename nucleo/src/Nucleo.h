@@ -17,21 +17,28 @@
 #include <signal.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
-#include <elestac_global.h>
 #include <elestac_paquetes.h>
+#include <pthread.h>
+#include <parser/metadata_program.h>
+#include <parser/parser.h>
 
-#define CONFIG_NUCLEO	"nucleo.conf"
-//#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+/****** Constantes ******/
+
+//#define CONFIG_NUCLEO	"nucleo.conf"
+#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define MAXIMO_BUFFER	2000
 #define PUERTO_NUCLEO	7200
 #define MAX_CLIENTES 10
 #define ETIQUETA_NUCLEO	"[NUCLEO]"
 #define HANDSHAKE					 "Hola! Soy nucleo!.."
 #define SERIALIZADOR				"##"
-
-//Cabeceras
 #define Tamanio_pagina 31
 
+#define CONSOLA	1
+#define CPU				5
+
+
+/****** Estructuras ******/
 typedef enum {
 	Listo,
 	Corriendo,
@@ -63,31 +70,68 @@ typedef struct {
 	uint8_t pcb_pc;									//Program counter
 	uint8_t pcb_sp;									//Stack pointer
 	uint8_t paginas_codigo;					//Paginas del codigo
-	t_indice indice_codigo;			//Indice del codigo
+	t_indice indice_codigo;					//Indice del codigo
 	uint8_t indice_etiquetas;					//Indice de etiquetas
 } t_pcb;
 
+typedef struct {
+	uint8_t fd;
+	uint8_t cpuID;
+	uint8_t disponible;
+} t_clienteCPU;
+
+/****** Variables Globales ******/
 t_nucleo *nucleo;
 t_config  *config;
 int socketNucleo;
 int tamanio_pagina;
 
-//t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
-t_list *lista_pcb, *lista_listos, *lista_bloqueados, *lista_ejecutando;
+t_queue *cola_listos;
+t_queue	*cola_bloqueados;
+//, *cola_ejecutando;
 
-sem_t *mutex;
+t_list *lista_ejecutando;
+t_list *lista_cpu;
 
-void *cargar_conf();
-int get_quantum(t_nucleo *nucleo);
-int get_quantum_sleep(t_nucleo *nucleo);
-void escuchar_procesos();
-void planificar_procesos();
-void crear_listas();
+sem_t *mutexListos;
+sem_t *mutexCPU;
+sem_t *mutexEjecutando;
+sem_t *cpuDisponible;
+sem_t *semListos;
+sem_t *semBloqueados;
+
+
+pthread_t pIDServerNucleo;
+pthread_t pIDProcesarMensaje;
+pthread_t pIDPlanificador;
+pthread_t hiloEjecucion;
+pthread_t hiloBloqueado;
+
+fd_set master;				// conjunto maestro de descriptores de fichero
+fd_set read_fds;				// conjunto temporal de descriptores de fichero para select()
+
+/****** Funciones ******/
+void cargar_conf();
+void crearListasYColas();
 void crear_semaforos();
+void salirPor(const char *msg);
+void crearServerNucleo();
+void crearClienteUMC();
+void hiloProcesarMensaje(char *datos);
+void procesarMensaje(int fd, char *buffer);
+void planificar_consolas();
+void crearHilosColas();
+void mainEjecucion();
+void mainBloqueado();
+void pasarAEjecutar();
+void enviarAEjecutar(t_pcb *pcb, int fd);
+void entradaSalida();
+void pasarAListos(t_pcb *pcb);
 
+t_clienteCPU *obtenerCPUDisponible();
+int CPUestaDisponible(t_clienteCPU *cpu);
 
-t_pcb *crear_lista_pcb();
-t_pcb *crear_pcb();
+t_pcb *crear_pcb(char *programa);
 void destruir_pcb(t_pcb *pcb);
 char* serializarPCB (t_pcb* pcb);
 

@@ -18,16 +18,35 @@ int main(void) {
 	//Cargar configuracion
 	cargar_conf();
 
-	//Escuchar procesos consolas o cpus
-	//escuchar_procesos();
+	//Crear las listas
+	crearListasYColas();
 
-	//Mientras haya al menos haya un cpu, planifica..
+	//Crear cliente para UMC
+	crearClienteUMC();
 
-	//while procesos_cpu > 1
+	//Crear semaforos
+	crear_semaforos();
 
-	//planificar_procesos();
+	//Crear servidor del nucleo
+	pthread_create(&pIDServerNucleo, NULL, (void *)crearServerNucleo, NULL );
+	pthread_join(pIDServerNucleo, NULL);
 
-	//Crear socket al nucleo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*	//Crear socket al nucleo
 	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1){
 //		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoCrearSocket);
 		return EXIT_FAILURE;
@@ -64,7 +83,7 @@ int main(void) {
 	if (head_in->identificador == Tamanio_pagina) {
 		tamanio_pagina = head_in->tamanio;
 		printf("Tamaño de pagina: %d\n", tamanio_pagina);
-	}
+	}*/
 
 	return EXIT_SUCCESS;
 }

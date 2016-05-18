@@ -44,8 +44,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/sharedElestac/Debug}&quot;"/>
 								</option>
 								<option id="gnu.c.link.option.libs.8626289" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="commons"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="sharedElestac"/>
+									<listOptionValue builtIn="false" value="commons"/>
+									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="sharedElestac"/>
 									<listOptionValue builtIn="false" value="cunit"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.797052446" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
@@ -83,6 +84,7 @@
 						<entry flags="RESOLVED" kind="libraryFile" name="commons" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
+				<externalSettings containerId="prueba parser;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
 			</storageModule>
 		</cconfiguration>
 		<cconfiguration id="cdt.managedbuild.config.gnu.exe.release.981471712">
