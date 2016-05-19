@@ -72,7 +72,7 @@ t_pcb *crear_pcb(char *programa){
 
 	//Obtener metadata del programa
 	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
-	//metadata = metadata_desde_literal(programa);
+	metadata = metadata_desde_literal(programa);
 
 	pcb->pcb_pid	= crear_id();
 	pcb->pcb_pc	= 0;
@@ -404,4 +404,86 @@ void pasarAListos(t_pcb *pcb){
 	//Incrementa la cantidad de pcb
 	signalSemaforo(semListos);
 
+}
+
+void crearServerConsola(){
+	 int listener;														//Descriptor de escucha
+	 int nbytes;
+	 int reuse;
+	 int newfd;
+	 char buffer[MAXIMO_BUFFER];
+	t_pcb *pcb_aux;
+
+	//Crear socket de escucha
+	listener = crearSocket();
+
+	//descriptor para enlace
+	if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1)
+		salirPor("[NUCLEO] No es posible reusar el socket\n");
+
+	//Enlazar
+	bindearSocket(listener, nucleo->puerto_programas);
+
+	//Escuchar
+	escucharEn(listener);
+
+	while(1){
+
+		if ((newfd = aceptarEntrantes(listener)) == -1)
+			salirPor("accept");
+
+		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0){
+			printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", listener);
+			}
+		if (nbytes == 0){
+				printf("[NUCLEO] Conexion con socket de consola nro. %d cerrada.\n", listener);
+		} else {
+			//Crear PCB por consola entrante
+			printf("Creando PCB.. \n");
+			pcb_aux = malloc(sizeof(t_pcb));
+			pcb_aux = crear_pcb(buffer);
+
+			//Agregar PCB a la cola de listos
+			queue_push(cola_listos, pcb_aux);
+			}
+
+	}
+}
+
+void crearServerCPU(){
+	 int listener;														//Descriptor de escucha
+	 int reuse;
+	 int newfd;
+
+	//Crear socket de escucha
+	listener = crearSocket();
+
+	//descriptor para enlace
+	if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1)
+		salirPor("[NUCLEO] No es posible reusar el socket\n");
+
+	//Enlazar
+	bindearSocket(listener, nucleo->puerto_cpu);
+
+	//Escuchar
+	escucharEn(listener);
+
+	while(1){
+
+		if ((newfd = aceptarEntrantes(listener)) == -1)
+			salirPor("accept");
+
+		//Crea una CPU
+		t_clienteCPU *nuevaCPU = malloc(sizeof(t_clienteCPU));
+		nuevaCPU->cpuID				= 1;
+		nuevaCPU->fd 					= newfd;
+		nuevaCPU->disponible	= 0;
+
+		//Agregar CPU a la lista
+		list_add(lista_cpu, nuevaCPU);
+
+		//Signal por CPU nueva
+		signalSemaforo(cpuDisponible);
+
+	}
 }

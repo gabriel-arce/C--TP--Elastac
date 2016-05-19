@@ -27,10 +27,18 @@ int main(void) {
 	//Crear semaforos
 	crear_semaforos();
 
-	//Crear servidor del nucleo
-	pthread_create(&pIDServerNucleo, NULL, (void *)crearServerNucleo, NULL );
-	pthread_join(pIDServerNucleo, NULL);
+	//Crear servidor de consolas
+	pthread_create(&pIDServerConsola, NULL, (void *)crearServerConsola, NULL);
 
+	//Crear servidor de cpus
+	pthread_create(&pIDServerCPU, NULL, (void *)crearServerCPU, NULL);
+
+	//Planificar consolas
+	pthread_create(&pIDPlanificador, NULL, (void *)planificar_consolas, NULL);
+
+	pthread_join(pIDServerConsola, NULL);
+	pthread_join(pIDServerCPU, NULL);
+	pthread_join(pIDPlanificador, NULL);
 
 
 

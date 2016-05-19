@@ -5,7 +5,7 @@
 	<projects>
 		<project>sharedElestac</project>
 		<project>commons</project>
-		<project>prueba parser</project>
+		<project>parser</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

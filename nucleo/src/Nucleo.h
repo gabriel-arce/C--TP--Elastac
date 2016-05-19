@@ -102,6 +102,8 @@ sem_t *semBloqueados;
 
 
 pthread_t pIDServerNucleo;
+pthread_t pIDServerConsola;
+pthread_t pIDServerCPU;
 pthread_t pIDProcesarMensaje;
 pthread_t pIDPlanificador;
 pthread_t hiloEjecucion;
@@ -116,6 +118,8 @@ void crearListasYColas();
 void crear_semaforos();
 void salirPor(const char *msg);
 void crearServerNucleo();
+void crearServerConsola();
+void crearServerCPU();
 void crearClienteUMC();
 void hiloProcesarMensaje(char *datos);
 void procesarMensaje(int fd, char *buffer);
