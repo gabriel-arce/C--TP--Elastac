@@ -75,7 +75,7 @@ t_pcb *crear_pcb(char *programa){
 	metadata = metadata_desde_literal(programa);
 
 	pcb->pcb_pid	= crear_id();
-	pcb->pcb_pc	= 0;
+	pcb->pcb_pc	= metadata->instruccion_inicio;
 	pcb->pcb_sp	= 0;
 	pcb->indice_etiquetas = 0;
 	pcb->paginas_codigo = 0;
@@ -94,11 +94,9 @@ t_pcb *crear_pcb(char *programa){
 }
 
 int crear_id(){
-
-//	if( list_is_empty(lista_pcb))
-//		return 1;
-//	return list_size(lista_pcb) + 1;
-	return 1;
+	if(queue_is_empty(cola_listos))
+		return 1;
+	return queue_size(cola_listos) + 1;
 }
 
 void crear_semaforos(){
