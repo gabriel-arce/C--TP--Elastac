@@ -11,7 +11,7 @@
 #include "Nucleo.h"
 
 
-void cargar_conf(){
+void cargarConfiguracion(){
 
 	config = config_create(CONFIG_NUCLEO);
 	nucleo = malloc(sizeof(t_nucleo));
@@ -65,7 +65,7 @@ int dameMaximo (int *tabla, int n)
 }
 
 
-t_pcb *crear_pcb(char *programa){
+t_pcb *crearPCB(char *programa){
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 
 	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
@@ -74,7 +74,7 @@ t_pcb *crear_pcb(char *programa){
 	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
 	metadata = metadata_desde_literal(programa);
 
-	pcb->pcb_pid	= crear_id();
+	pcb->pcb_pid	= crearPCBID();
 	pcb->pcb_pc	= metadata->instruccion_inicio;
 	pcb->pcb_sp	= 0;
 	pcb->indice_etiquetas = 0;
@@ -93,19 +93,19 @@ t_pcb *crear_pcb(char *programa){
 	return pcb;
 }
 
-int crear_id(){
+int crearPCBID(){
 	if(queue_is_empty(cola_listos))
 		return 1;
 	return queue_size(cola_listos) + 1;
 }
 
-void crear_semaforos(){
+void crearSemaforos(){
 	mutexListos		= crearMutex();
 	mutexCPU			= crearMutex();
 	cpuDisponible	= crearSemaforo(0);
 }
 
-void destruir_pcb(t_pcb *pcb){
+void destruirPCB(t_pcb *pcb){
 	free(pcb);
 }
 
@@ -271,7 +271,7 @@ void procesarMensaje(int fd, char *buffer){
 			//Crear PCB por consola entrante
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crear_pcb(buffer);
+			pcb_aux = crearPCB(buffer);
 
 			//Agregar PCB a la cola de listos
 			queue_push(cola_listos, pcb_aux);
@@ -439,7 +439,7 @@ void crearServerConsola(){
 			//Crear PCB por consola entrante
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crear_pcb(buffer);
+			pcb_aux = crearPCB(buffer);
 
 			//Agregar PCB a la cola de listos
 			queue_push(cola_listos, pcb_aux);
