@@ -58,6 +58,7 @@ typedef struct {
 	t_list *io_sleep;
 	t_list *shared_vars;
 	char *ip_umc;
+	int stack_size;
 } t_nucleo;
 
 typedef struct {
@@ -66,12 +67,21 @@ typedef struct {
 } t_indice;
 
 typedef struct {
+	char **args;
+	t_list vars;
+	uint8_t retPos;
+	t_size retVar;
+} t_stack;
+
+typedef struct {
 	uint8_t pcb_pid;									//Identificador unico
 	uint8_t pcb_pc;									//Program counter
 	uint8_t pcb_sp;									//Stack pointer
 	uint8_t paginas_codigo;					//Paginas del codigo
 	t_indice indice_codigo;					//Indice del codigo
-	uint8_t indice_etiquetas;					//Indice de etiquetas
+	char * indice_etiquetas;					//Indice de etiquetas
+	t_stack indice_stack;							//Indice del Stack
+	int quantum;										//quantum - privado
 } t_pcb;
 
 typedef struct {
@@ -96,7 +106,7 @@ t_list *lista_cpu;
 sem_t *mutexListos;
 sem_t *mutexCPU;
 sem_t *mutexEjecutando;
-sem_t *cpuDisponible;
+sem_t *semCpuDisponible;
 sem_t *semListos;
 sem_t *semBloqueados;
 
@@ -113,9 +123,9 @@ fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;				// conjunto temporal de descriptores de fichero para select()
 
 /****** Funciones ******/
-void cargar_conf();
+void cargarConfiguracion();
 void crearListasYColas();
-void crear_semaforos();
+void crearSemaforos();
 void salirPor(const char *msg);
 void crearServerNucleo();
 void crearServerConsola();
@@ -131,12 +141,14 @@ void pasarAEjecutar();
 void enviarAEjecutar(t_pcb *pcb, int fd);
 void entradaSalida();
 void pasarAListos(t_pcb *pcb);
+void destruirSemaforos();
+void sacarDeEjecutar(t_pcb *pcb);
 
 t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 
-t_pcb *crear_pcb(char *programa);
-void destruir_pcb(t_pcb *pcb);
+t_pcb *crearPCB(char *programa);
+void destruirPCB(t_pcb *pcb);
 char* serializarPCB (t_pcb* pcb);
 
 #endif /* NUCLEO_H_ */

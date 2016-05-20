@@ -16,7 +16,7 @@ int main(void) {
 	free(directorio);*/
 
 	//Cargar configuracion
-	cargar_conf();
+	cargarConfiguracion();
 
 	//Crear las listas
 	crearListasYColas();
@@ -25,7 +25,7 @@ int main(void) {
 	crearClienteUMC();
 
 	//Crear semaforos
-	crear_semaforos();
+	crearSemaforos();
 
 	//Crear servidor de consolas
 	pthread_create(&pIDServerConsola, NULL, (void *)crearServerConsola, NULL);
@@ -40,7 +40,13 @@ int main(void) {
 	pthread_join(pIDServerCPU, NULL);
 	pthread_join(pIDPlanificador, NULL);
 
+	//Liberar
+	pthread_detach(pIDServerConsola);
+	pthread_detach(pIDServerCPU);
+	pthread_detach(pIDPlanificador);
 
+	//Destruir semaforos
+	destruirSemaforos();
 
 
 

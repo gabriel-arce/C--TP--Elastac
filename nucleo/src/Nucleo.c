@@ -37,7 +37,7 @@ void cargarConfiguracion(){
 	nucleo->io_ids							= getListProperty(config, "IO_IDS");
 	nucleo->io_sleep						= getListProperty(config, "IO_SLEEP");
 	nucleo->shared_vars				= getListProperty(config, "SHARED_VARS");
-
+	nucleo->stack_size					= getIntProperty(config, "STACK_SIZE");
 
 	config_destroy(config);
 
@@ -72,23 +72,27 @@ t_pcb *crearPCB(char *programa){
 
 	//Obtener metadata del programa
 	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
-	metadata = metadata_desde_literal(programa);
+	metadata = metadata_desde_literal(PROGRAMA);
 
 	pcb->pcb_pid	= crearPCBID();
 	pcb->pcb_pc	= metadata->instruccion_inicio;
 	pcb->pcb_sp	= 0;
-	pcb->indice_etiquetas = 0;
-	pcb->paginas_codigo = 0;
-	pcb->indice_codigo.posicion = 0;
-	pcb->indice_codigo.tamanio = 0;
+	pcb->indice_etiquetas = metadata->etiquetas;
+	pcb->paginas_codigo = nucleo->stack_size;
+	pcb->indice_codigo.posicion	= metadata->instrucciones_serializado[0].start;
+	pcb->indice_codigo.tamanio	= metadata->instrucciones_serializado[0].offset ;
+	pcb->indice_stack.args = NULL;
+	pcb->indice_stack.retPos = 0;
+	pcb->indice_stack.retVar = 0;
+	pcb->quantum = 0;
 
 	printf("PCB creado..\n");
 	printf("PID: %d\n", pcb->pcb_pid);
 	printf("PC: %d\n", pcb->pcb_pc);
 	printf("SP: %d\n", pcb->pcb_sp);
-	printf("Indice Etiquetas: %d\n", pcb->indice_etiquetas);
+	printf("Indice Etiquetas: %s\n", pcb->indice_etiquetas);
 	printf("Paginas de Codigo: %d\n", pcb->paginas_codigo);
-	printf("Indice de Codigo: %s, %s\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
+	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
 
 	return pcb;
 }
@@ -100,9 +104,12 @@ int crearPCBID(){
 }
 
 void crearSemaforos(){
-	mutexListos		= crearMutex();
-	mutexCPU			= crearMutex();
-	cpuDisponible	= crearSemaforo(0);
+	mutexListos				= crearMutex();
+	mutexCPU					= crearMutex();
+	mutexEjecutando		= crearMutex();
+	semListos						= crearSemaforo(0);
+	semCpuDisponible	= crearSemaforo(0);
+	semBloqueados			= crearSemaforo(0);
 }
 
 void destruirPCB(t_pcb *pcb){
@@ -117,7 +124,7 @@ void crearListasYColas(){
 
 
 	lista_ejecutando	=	list_create();
-
+	lista_cpu					= list_create();
 }
 
 char* serializarPCB (t_pcb* pcb)
@@ -291,7 +298,7 @@ void procesarMensaje(int fd, char *buffer){
 			list_add(lista_cpu, nuevaCPU);
 
 			//Signal por CPU nueva
-			signalSemaforo(cpuDisponible);
+			signalSemaforo(semCpuDisponible);
 
 			break;
 			}
@@ -309,7 +316,7 @@ void crearClienteUMC(){
 
 void planificar_consolas(){
 	//Si hay al menos una CPU, que planifique
-	waitSemaforo(cpuDisponible);
+	waitSemaforo(semCpuDisponible);
 
 	//Crear los hilos para las colas de ejecucion y bloqueados
 	crearHilosColas();
@@ -324,7 +331,7 @@ void crearHilosColas(){
 void mainEjecucion(){
 	while(1){
 		waitSemaforo(semListos);
-		//waitSemaforo(cpuDisponible);
+		//waitSemaforo(semCpuDisponible);
 		pasarAEjecutar();
 	}
 }
@@ -336,34 +343,10 @@ void mainBloqueado(){
 	}
 }
 
-void pasarAEjecutar(){
-	t_pcb *pcbEjecutando;
-
-	waitSemaforo(mutexListos);
-
-	//Obtener una CPU disponible para procesar
-	t_clienteCPU *cpuDeEjecucion = obtenerCPUDisponible();
-
-	if(!cpuDeEjecucion){
-
-		//Se obtiene el PCB para la transicion
-		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
-
-		//Pasar a la lista de Ejecutando
-		waitSemaforo(mutexEjecutando);
-		list_add(lista_ejecutando, (void *)pcbEjecutando);
-		signalSemaforo(mutexEjecutando);
-
-		//Enviar a Ejecutar
-		enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
-	}
-
-	signalSemaforo(mutexListos);
-}
 
 t_clienteCPU *obtenerCPUDisponible(){
-	waitSemaforo(mutexCPU);
 
+	waitSemaforo(mutexCPU);
 	t_clienteCPU *cpuDisponible = list_find(lista_cpu, (void *)CPUestaDisponible);
 	signalSemaforo(mutexCPU);
 
@@ -375,7 +358,9 @@ int CPUestaDisponible(t_clienteCPU *cpu){
 }
 
 void enviarAEjecutar(t_pcb *pcb, int fd){
-	enviarPorSocket(fd, serializarPCB(pcb));
+	enviarPorSocket(fd, serializarPCB(pcb));			//Enviar al CPU
+	pcb->quantum += 1;													//Incrementar quantum
+	usleep(nucleo->quantum_sleep);						//Esperar para la ejecucion de la proxima instruccion;
 }
 
 void entradaSalida(){
@@ -391,6 +376,40 @@ void entradaSalida(){
 	pasarAListos(pcbBloqueado);
 
 }
+
+void pasarAEjecutar(){
+	t_pcb *pcbEjecutando;
+
+	waitSemaforo(mutexListos);
+
+	//Obtener una CPU disponible para procesar
+	t_clienteCPU *cpuDeEjecucion = obtenerCPUDisponible();
+
+	if(cpuDeEjecucion != NULL){
+
+		//Se obtiene el PCB para la transicion
+		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
+
+		//Mientras tenga quantum
+		while(pcbEjecutando->quantum != nucleo->quantum){
+			//Enviar a Ejecutar
+			waitSemaforo(mutexEjecutando);
+			enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
+			signalSemaforo(mutexEjecutando);
+		}
+
+		if(pcbEjecutando->quantum == nucleo->quantum){
+			pcbEjecutando->quantum = 0;						//Resetear quantum del pcb
+			sacarDeEjecutar(pcbEjecutando);				//Sacar de la lista de Ejecutando
+			pasarAListos(pcbEjecutando);						//Pasar a la cola de Listos
+		}
+
+
+	}
+
+	signalSemaforo(mutexListos);
+}
+
 
 void pasarAListos(t_pcb *pcb){
 
@@ -481,7 +500,22 @@ void crearServerCPU(){
 		list_add(lista_cpu, nuevaCPU);
 
 		//Signal por CPU nueva
-		signalSemaforo(cpuDisponible);
+		signalSemaforo(semCpuDisponible);
 
 	}
+}
+
+void destruirSemaforos(){
+	destruirSemaforo(mutexCPU);
+	destruirSemaforo(mutexEjecutando);
+	destruirSemaforo(mutexListos);
+	destruirSemaforo(semBloqueados);
+	destruirSemaforo(semListos);
+	destruirSemaforo(semCpuDisponible);
+}
+
+void sacarDeEjecutar(t_pcb *pcb){
+	waitSemaforo(mutexEjecutando);
+
+	signalSemaforo(mutexEjecutando);
 }
