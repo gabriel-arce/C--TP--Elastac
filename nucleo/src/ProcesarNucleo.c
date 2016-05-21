@@ -60,12 +60,7 @@ int main(void) {
 
 
 
-/*	//Crear socket al nucleo
-	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1){
-//		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoCrearSocket);
-		return EXIT_FAILURE;
-	}
-
+/*
 	t_header * handshake = malloc(sizeof(t_header));
 	void * buffer_out = malloc(5);
 

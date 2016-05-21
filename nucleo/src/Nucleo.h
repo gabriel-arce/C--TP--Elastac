@@ -42,8 +42,10 @@
 typedef enum {
 	Listo,
 	Corriendo,
-	Ejecutando,
 	Terminado,
+	Bloqueado,
+	Nuevo,
+	FinQuantum,
 } t_estado;
 
 typedef struct {
@@ -82,6 +84,8 @@ typedef struct {
 	char * indice_etiquetas;					//Indice de etiquetas
 	t_stack indice_stack;							//Indice del Stack
 	int quantum;										//quantum - privado
+	t_estado estado;								//Codigo interno para ver los estados del pcb
+	int consola;											//Consola
 } t_pcb;
 
 typedef struct {
@@ -102,13 +106,17 @@ t_queue	*cola_bloqueados;
 
 t_list *lista_ejecutando;
 t_list *lista_cpu;
+t_list *lista_finalizados;
 
 sem_t *mutexListos;
 sem_t *mutexCPU;
 sem_t *mutexEjecutando;
+sem_t *mutexFinalizados;
 sem_t *semCpuDisponible;
 sem_t *semListos;
 sem_t *semBloqueados;
+sem_t *semCPU;
+sem_t *semFinalizados;
 
 
 pthread_t pIDServerNucleo;
@@ -134,21 +142,21 @@ void crearClienteUMC();
 void hiloProcesarMensaje(char *datos);
 void procesarMensaje(int fd, char *buffer);
 void planificar_consolas();
-void crearHilosColas();
 void mainEjecucion();
 void mainBloqueado();
 void pasarAEjecutar();
-void enviarAEjecutar(t_pcb *pcb, int fd);
+t_pcb *enviarAEjecutar(t_pcb *pcb, int fd);
 void entradaSalida();
 void pasarAListos(t_pcb *pcb);
 void destruirSemaforos();
 void sacarDeEjecutar(t_pcb *pcb);
-
+int obtenerCPUID();
 t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 
-t_pcb *crearPCB(char *programa);
+t_pcb *crearPCB(char *programa, int fd);
 void destruirPCB(t_pcb *pcb);
 char* serializarPCB (t_pcb* pcb);
+t_pcb *convertirPCB(char *mensaje);
 
 #endif /* NUCLEO_H_ */
