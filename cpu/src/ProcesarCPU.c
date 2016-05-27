@@ -21,12 +21,13 @@ int main(void){
 	printf("Puerto Nucleo: %d\n", cpu->puerto_nucleo);
 	printf("IP UMC: %s\n", cpu->ip_UMC);
 	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
-	printf("Quantum: %d\n", cpu->quantum);
 
 
 	//Conectar al nucleo
 	if((socketCPU = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
 		exit(1);
+
+																					//Asignar el quantum
 
 	//conexion con umc
 	if((socketCPU = clienteDelServidor(cpu->ip_UMC, cpu->puerto_UMC)) == -1)
@@ -44,9 +45,14 @@ int main(void){
 	if (handshake_in->identificador == 3) {
 		printf("Se conecto umc\n");
 		printf("Tamanio de pagina: %d", handshake_in->tamanio);
+
+		tamanio_paginas= handshake_in->tamanio;    		 			        //Asignar el tamaño de paginas
+
 	} else {
 		return EXIT_FAILURE;
 	}
+
+
 
 
 

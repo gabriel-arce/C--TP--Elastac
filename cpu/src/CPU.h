@@ -32,7 +32,6 @@ typedef struct {
 	char * ip_nucleo;
 	int puerto_UMC;
 	char * ip_UMC;
-	int quantum;
 } t_CPU_config;
 
 typedef struct{
@@ -40,6 +39,13 @@ typedef struct{
 	int offset;
 	int size;
 } t_posicion;
+
+
+//-------------------Variables
+
+int quantum;
+int tamanio_paginas;
+
 
 //------------------Funciones
 
