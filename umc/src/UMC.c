@@ -32,6 +32,7 @@ void cargar_config() {
 	umc_config->frame_x_prog = getIntProperty(config_file, "MARCO_X_PROG");
 	umc_config->entradas_tlb = getIntProperty(config_file, "ENTRADAS_TLB");
 	umc_config->retardo = getIntProperty(config_file, "RETARDO");
+	umc_config->algoritmo = getIntProperty(config_file, "ALGORITMO");
 
 	config_destroy(config_file);
 }
@@ -46,6 +47,18 @@ void imprimir_config() {
 	printf("MARCO_X_PROG: %d\n", umc_config->frame_x_prog);
 	printf("ENTRADAS_TLB: %d\n", umc_config->entradas_tlb);
 	printf("RETARDO: %d\n", umc_config->retardo);
+
+	switch (umc_config->algoritmo) {
+	case CLOCK:
+		printf("ALGORITMO: CLOCK\n");
+		break;
+	case CLOCK_MODIFICADO:
+		printf("ALGORITMO: CLOCK MODIFICADO\n");
+		break;
+	default:
+		printf("ALGORITMO: desconocido\n");
+		break;
+	}
 	new_line();
 }
 
@@ -190,7 +203,7 @@ void inicializar_memoria() {
 		frame->pid = -1;
 		frame->libre = true;
 
-		list_add(lista_frames, frame);
+		list_add(marcos_memoria, frame);
 	}
 }
 
@@ -344,34 +357,12 @@ void * escucha_conexiones() {
 	return EXIT_SUCCESS;
 }
 
-void modificar_retardo(int ret) {
-	printf("comando retardo %d\n", ret);
-	umc_config->retardo = ret;
-}
-
-void reporte_estructuras() {
-	puts("comando dump - estructuras");
-}
-
-void reporte_contenido() {
-	puts("comando dump - contenido");
-}
-
-void limpiar_tlb() {
-	puts("comando flush - tlb");
-//list_clean(tlb);
-}
-
-void marcar_paginas() {
-	printf("comando flush - memory\n");
-}
-
 void * atiende_nucleo() {
 
 	int recibido = 1;
 	void * buffer_in = malloc(5);
 
-	while (recibido > 1) {
+	while (recibido > 0) {
 
 		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
 			printf("Error en el recv del header en atiende nucleo\n");
@@ -385,6 +376,7 @@ void * atiende_nucleo() {
 		switch (head_in->identificador) {
 		case Inicializar_programa:
 			new_line();
+			pthread_mutex_lock(&mutex_nucleo);
 			void * buffer_stream = malloc(head_in->tamanio);
 
 			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
@@ -406,12 +398,15 @@ void * atiende_nucleo() {
 			free(buffer_stream);
 			free(payload);
 
+			pthread_mutex_unlock(&mutex_nucleo);
 			break;
 		case Finalizar_programa:
 			printf("Finalizo programa\n");
+			pthread_mutex_lock(&mutex_nucleo);
 			//al igual que inicializar, quizas deba hacerlo mediante hilos
 			finalizar_programa(
 					head_in->tamanio/*en nucleo setea el pid en el tamaño*/);
+			pthread_mutex_unlock(&mutex_nucleo);
 			break;
 		default:
 			printf("Cabecera desconocida\n");
@@ -426,12 +421,83 @@ void * atiende_nucleo() {
 	return EXIT_SUCCESS;
 }
 
+void * inicializar_programa(int id_programa, int paginas_requeridas) {
+
+	int marcos_libres = 0;
+
+	void contar_marcos_libres (t_mem_frame * list_aux) {
+		if(list_aux->libre == true)
+			marcos_libres++;
+	}
+
+	pthread_mutex_lock(&mutex_memoria);
+	list_iterate(marcos_memoria, (void *) contar_marcos_libres);
+	pthread_mutex_unlock(&mutex_memoria);
+
+	if (paginas_requeridas > marcos_libres) {
+		if(pedir_espacio_swap(id_programa, paginas_requeridas) == -1) {
+			//rechazo programa
+		}
+	} else {
+		if (paginas_requeridas <= umc_config->frame_x_prog) {
+			//le mando la cantidad de paginas a swap
+			//le mando el ok a nucleo
+		} else {
+			//va a swap porque excede el limite de marcos por programa
+		}
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int * pedir_espacio_swap(int pid, int paginas_necesarias) {
+	t_header * peticion = malloc(sizeof(t_header));
+	peticion->identificador = Pedir_espacio_swap;
+	peticion->tamanio = 8;
+
+	void * stream_header = malloc(5);
+	memcpy(stream_header, &peticion->identificador, 1);
+	memcpy(stream_header + 1, &peticion->tamanio, 4);
+
+	t_paquete_inicializar_programa * package = malloc(sizeof(t_paquete_inicializar_programa));
+	package->pid = pid;
+	package->paginas_requeridas = paginas_necesarias;
+
+	void * stream_package = malloc(8);
+	memcpy(stream_package, &package->pid, 4);
+	memcpy(stream_package + 4, &package->paginas_requeridas, 4);
+
+	send(socket_cliente, stream_header, 5, 0);
+	send(socket_cliente, stream_package, 8, 0);
+
+	free(peticion);
+	free(package);
+	free(stream_header);
+	free(stream_package);
+
+	void * buffer_in = malloc(4);
+	int response = 0;
+
+	recv(socket_cliente, buffer_in, 4, MSG_WAITALL);
+
+	response = buffer_in;
+	free(buffer_in);
+
+	return response;
+}
+
+void * finalizar_programa(int id_programa) {
+	printf("Programa finalizado.\n");
+	return EXIT_SUCCESS;
+}
+
+
 void * atiende_cpu() {
 
 	int recibido = 1;
 	void * buffer_in = malloc(5);
 
-	while (recibido > 1) {
+	while (recibido > 0) {
 
 		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
 			printf("Error en el recv de atiende cpu");
@@ -462,12 +528,24 @@ void * atiende_cpu() {
 	return EXIT_SUCCESS;
 }
 
-void * inicializar_programa(int id_programa, int paginas_requeridas) {
-	printf("Programa iniciado.\n");
-	return EXIT_SUCCESS;
+void modificar_retardo(int ret) {
+	printf("comando retardo %d\n", ret);
+	umc_config->retardo = ret;
 }
 
-void * finalizar_programa(int id_programa) {
-	printf("Programa finalizado.\n");
-	return EXIT_SUCCESS;
+void reporte_estructuras() {
+	puts("comando dump - estructuras");
+}
+
+void reporte_contenido() {
+	puts("comando dump - contenido");
+}
+
+void limpiar_tlb() {
+	puts("comando flush - tlb");
+//list_clean(tlb);
+}
+
+void marcar_paginas() {
+	printf("comando flush - memory\n");
 }

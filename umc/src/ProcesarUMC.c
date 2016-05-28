@@ -26,7 +26,7 @@ int main() {
 	//crear_archivo_reporte();
 
 	cpu_conectadas = list_create();
-	lista_frames = list_create();
+	marcos_memoria = list_create();
 	tabla_de_paginas = list_create();
 
 	if (tlb_habilitada())
@@ -35,8 +35,10 @@ int main() {
 	//inicializo semaforos
 	pthread_mutex_init(&mutex_hilos, 0);
 	pthread_mutex_init(&mutex_lista_cpu, 0);
+	pthread_mutex_init(&mutex_nucleo, 0);
+	pthread_mutex_init(&mutex_memoria, 0);
 
-	conecta_swap();
+	conecta_swap(); //lo mejor es meterlo en un hilo
 	pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
 

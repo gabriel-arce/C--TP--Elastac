@@ -27,8 +27,8 @@
 #include <elestac_semaforos.h>
 #include <elestac_paquetes.h>
 
-//#define CONFIG_PATH "umc.conf" //para runear en terminal
-#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
+#define CONFIG_PATH "umc.conf" //para runear en terminal
+//#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
 //#define REPORT_PATH "reporte.txt"
 #define REPORT_PATH "../umc/src/reporte.txt"
 #define LOG_FILE "../umc/src/umc.log"
@@ -38,6 +38,8 @@
 #define LENGTH_MAX_COMANDO 7
 #define NUCLEO 2
 #define CPU 5
+#define CLOCK 99 //el condigo ascii de 'c' es 99
+#define CLOCK_MODIFICADO 100 //aca le "sumo" 1 a c
 
 //Cabeceras
 #define Tamanio_pagina 31
@@ -45,6 +47,7 @@
 #define Solicitar_bytes 33
 #define Almacenar_bytes 34
 #define Finalizar_programa 35
+#define Pedir_espacio_swap 36
 
 typedef struct {
 	int puerto_escucha;
@@ -55,6 +58,7 @@ typedef struct {
 	int frame_x_prog;
 	int entradas_tlb;
 	int retardo;
+	int algoritmo;
 } t_umc_config;
 
 typedef struct {
@@ -70,10 +74,21 @@ typedef struct {
 } t_mem_frame;
 
 typedef struct {
+	int pagina;
+	int frame;
 	int pid;
-	int tamanio_pid;
+	int dirtybit;
+} t_pagina;
+
+typedef struct {
+	int pagina;
+	int frame;
+	int pid;
+} t_tlb;
+
+typedef struct {
+	int pid;
 	int paginas_requeridas;
-	int tamanio_paginas_requeridas;
 } t_paquete_inicializar_programa;
 
 t_umc_config * umc_config;
@@ -84,12 +99,14 @@ pthread_t hiloConsola, hilo_server;
 int id_cpu;
 t_list * cpu_conectadas;
 pthread_mutex_t mutex_hilos, mutex_lista_cpu;
+pthread_mutex_t mutex_nucleo;
+pthread_mutex_t mutex_memoria;
 int memoria_size;
 char * memoria_principal;
 t_log * logger;
 FILE * archivo_reporte;
 t_list * tlb;
-t_list * lista_frames;
+t_list * marcos_memoria;
 t_list * tabla_de_paginas;
 
 void new_line();
@@ -117,5 +134,6 @@ void * finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
 void * atiende_nucleo();
 void * atende_cpu();
+int pedir_espacio_swap(int pid, int paginas_necesarias);
 
 #endif /* UMC_H_ */
