@@ -44,10 +44,10 @@
 //Cabeceras
 #define Tamanio_pagina 31
 #define Inicializar_programa 32
-#define Solicitar_bytes 33
-#define Almacenar_bytes 34
+#define Leer_pagina 33
+#define Modificar_bytes 34
 #define Finalizar_programa 35
-#define Pedir_espacio_swap 36
+#define Solicitar_espacio 36
 
 typedef struct {
 	int puerto_escucha;

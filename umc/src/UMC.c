@@ -389,7 +389,7 @@ void * atiende_nucleo() {
 					sizeof(t_paquete_inicializar_programa));
 
 			memcpy(&payload->pid, buffer_stream, 4);
-			memcpy(&payload->tamanio_paginas_requeridas, buffer_stream + 4, 4);
+			//memcpy(&payload->tamanio_paginas_requeridas, buffer_stream + 4, 4);
 
 			printf("Inicializo programa...\n");
 			//puede que lo inicialice en un hilo
@@ -452,7 +452,7 @@ void * inicializar_programa(int id_programa, int paginas_requeridas) {
 
 int * pedir_espacio_swap(int pid, int paginas_necesarias) {
 	t_header * peticion = malloc(sizeof(t_header));
-	peticion->identificador = Pedir_espacio_swap;
+	peticion->identificador = Solicitar_espacio;
 	peticion->tamanio = 8;
 
 	void * stream_header = malloc(5);
@@ -509,10 +509,10 @@ void * atiende_cpu() {
 		memcpy(&head_in->tamanio, buffer_in + 1, 4);
 
 		switch (head_in->identificador) {
-		case Solicitar_bytes:
+		case Leer_pagina:
 			printf("Lectura de bytes\n");
 			break;
-		case Almacenar_bytes:
+		case Modificar_bytes:
 			printf("Almaceno bytes\n");
 			break;
 		default:

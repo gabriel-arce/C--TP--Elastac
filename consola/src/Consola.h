@@ -20,6 +20,10 @@
 
 #define CONFIG_PATH "consola.conf"
 //#define CONFIG_PATH "../consola/src/consola.conf"
+#define Iniciar_ansisop 11
+#define Imprimir 12
+#define Imprimir_texto 13
+#define Fin_ansisop 14
 
 typedef struct {
 	int puerto_nucleo;
@@ -39,6 +43,11 @@ typedef enum{
 	NoSePudoEnviarSocket,
 	OtroError,
 } Error;
+
+typedef struct {
+	uint8_t identificador;
+	uint32_t tamanio;
+} t_header;
 
 t_consola_config *consola;
 t_proceso *proceso;
