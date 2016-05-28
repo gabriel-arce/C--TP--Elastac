@@ -34,4 +34,6 @@ int clienteDelServidor(char *ipDestino,int puerto);
 int enviarPorSocket(int socketFd,char* paquete);
 void limpiarBuffer(char* buffer);
 
+void compactaClaves (int *tabla, int *n);
+
 #endif /* ELESTAC_SOCKETS_H_ */

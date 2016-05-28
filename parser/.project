@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Nucleo</name>
+	<name>parser</name>
 	<comment></comment>
 	<projects>
-		<project>sharedElestac</project>
-		<project>commons</project>
-		<project>parser</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

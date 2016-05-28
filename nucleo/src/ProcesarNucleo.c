@@ -16,23 +16,51 @@ int main(void) {
 	free(directorio);*/
 
 	//Cargar configuracion
-	cargar_conf();
+	cargarConfiguracion();
 
-	//Escuchar procesos consolas o cpus
-	//escuchar_procesos();
+	//Crear las listas
+	crearListasYColas();
 
-	//Mientras haya al menos haya un cpu, planifica..
+	//Crear cliente para UMC
+	crearClienteUMC();
 
-	//while procesos_cpu > 1
+	//Crear semaforos
+	crearSemaforos();
 
-	//planificar_procesos();
+	//Crear servidor de consolas
+	pthread_create(&pIDServerConsola, NULL, (void *)crearServerConsola, NULL);
 
-	//Crear socket al nucleo
-	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1){
-//		MostrarMensajeDeError(ETIQUETA_NUCLEO, NoSePudoCrearSocket);
-		return EXIT_FAILURE;
-	}
+	//Crear servidor de cpus
+	pthread_create(&pIDServerCPU, NULL, (void *)crearServerCPU, NULL);
 
+	//Planificar consolas
+	pthread_create(&pIDPlanificador, NULL, (void *)planificar_consolas, NULL);
+
+	pthread_join(pIDServerConsola, NULL);
+	pthread_join(pIDServerCPU, NULL);
+	pthread_join(pIDPlanificador, NULL);
+
+	//Liberar
+	pthread_detach(pIDServerConsola);
+	pthread_detach(pIDServerCPU);
+	pthread_detach(pIDPlanificador);
+
+	//Destruir semaforos
+	destruirSemaforos();
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 	t_header * handshake = malloc(sizeof(t_header));
 	void * buffer_out = malloc(5);
 
@@ -64,7 +92,7 @@ int main(void) {
 	if (head_in->identificador == Tamanio_pagina) {
 		tamanio_pagina = head_in->tamanio;
 		printf("Tamaño de pagina: %d\n", tamanio_pagina);
-	}
+	}*/
 
 	return EXIT_SUCCESS;
 }

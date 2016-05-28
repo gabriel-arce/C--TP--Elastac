@@ -17,26 +17,35 @@
 #include <signal.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
-#include <elestac_global.h>
 #include <elestac_paquetes.h>
+#include <pthread.h>
+#include <parser/metadata_program.h>
+#include <parser/parser.h>
 
-#define CONFIG_NUCLEO	"nucleo.conf"
-//#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+/****** Constantes ******/
+
+//#define CONFIG_NUCLEO	"nucleo.conf"
+#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define MAXIMO_BUFFER	2000
 #define PUERTO_NUCLEO	7200
 #define MAX_CLIENTES 10
 #define ETIQUETA_NUCLEO	"[NUCLEO]"
 #define HANDSHAKE					 "Hola! Soy nucleo!.."
 #define SERIALIZADOR				"##"
-
-//Cabeceras
 #define Tamanio_pagina 31
 
+#define CONSOLA	1
+#define CPU				5
+
+
+/****** Estructuras ******/
 typedef enum {
 	Listo,
 	Corriendo,
-	Ejecutando,
 	Terminado,
+	Bloqueado,
+	Nuevo,
+	FinQuantum,
 } t_estado;
 
 typedef struct {
@@ -51,6 +60,7 @@ typedef struct {
 	t_list *io_sleep;
 	t_list *shared_vars;
 	char *ip_umc;
+	int stack_size;
 } t_nucleo;
 
 typedef struct {
@@ -59,36 +69,94 @@ typedef struct {
 } t_indice;
 
 typedef struct {
+	char **args;
+	t_list vars;
+	uint8_t retPos;
+	t_size retVar;
+} t_stack;
+
+typedef struct {
 	uint8_t pcb_pid;									//Identificador unico
 	uint8_t pcb_pc;									//Program counter
 	uint8_t pcb_sp;									//Stack pointer
 	uint8_t paginas_codigo;					//Paginas del codigo
-	t_indice indice_codigo;			//Indice del codigo
-	uint8_t indice_etiquetas;					//Indice de etiquetas
+	t_indice indice_codigo;					//Indice del codigo
+	char * indice_etiquetas;					//Indice de etiquetas
+	t_stack indice_stack;							//Indice del Stack
+	int quantum;										//quantum - privado
+	t_estado estado;								//Codigo interno para ver los estados del pcb
+	int consola;											//Consola
 } t_pcb;
 
+typedef struct {
+	uint8_t fd;
+	uint8_t cpuID;
+	uint8_t disponible;
+} t_clienteCPU;
+
+/****** Variables Globales ******/
 t_nucleo *nucleo;
 t_config  *config;
 int socketNucleo;
 int tamanio_pagina;
 
-//t_queue *cola_pcb, *cola_listos, *cola_bloqueados, *cola_ejecutando;
-t_list *lista_pcb, *lista_listos, *lista_bloqueados, *lista_ejecutando;
+t_queue *cola_listos;
+t_queue	*cola_bloqueados;
+//, *cola_ejecutando;
 
-sem_t *mutex;
+t_list *lista_ejecutando;
+t_list *lista_cpu;
+t_list *lista_finalizados;
 
-void *cargar_conf();
-int get_quantum(t_nucleo *nucleo);
-int get_quantum_sleep(t_nucleo *nucleo);
-void escuchar_procesos();
-void planificar_procesos();
-void crear_listas();
-void crear_semaforos();
+sem_t *mutexListos;
+sem_t *mutexCPU;
+sem_t *mutexEjecutando;
+sem_t *mutexFinalizados;
+sem_t *semCpuDisponible;
+sem_t *semListos;
+sem_t *semBloqueados;
+sem_t *semCPU;
+sem_t *semFinalizados;
 
 
-t_pcb *crear_lista_pcb();
-t_pcb *crear_pcb();
-void destruir_pcb(t_pcb *pcb);
+pthread_t pIDServerNucleo;
+pthread_t pIDServerConsola;
+pthread_t pIDServerCPU;
+pthread_t pIDProcesarMensaje;
+pthread_t pIDPlanificador;
+pthread_t hiloEjecucion;
+pthread_t hiloBloqueado;
+
+fd_set master;				// conjunto maestro de descriptores de fichero
+fd_set read_fds;				// conjunto temporal de descriptores de fichero para select()
+
+/****** Funciones ******/
+void cargarConfiguracion();
+void crearListasYColas();
+void crearSemaforos();
+void salirPor(const char *msg);
+void crearServerNucleo();
+void crearServerConsola();
+void crearServerCPU();
+void crearClienteUMC();
+void hiloProcesarMensaje(char *datos);
+void procesarMensaje(int fd, char *buffer);
+void planificar_consolas();
+void mainEjecucion();
+void mainBloqueado();
+void pasarAEjecutar();
+t_pcb *enviarAEjecutar(t_pcb *pcb, int fd);
+void entradaSalida();
+void pasarAListos(t_pcb *pcb);
+void destruirSemaforos();
+void sacarDeEjecutar(t_pcb *pcb);
+int obtenerCPUID();
+t_clienteCPU *obtenerCPUDisponible();
+int CPUestaDisponible(t_clienteCPU *cpu);
+
+t_pcb *crearPCB(char *programa, int fd);
+void destruirPCB(t_pcb *pcb);
 char* serializarPCB (t_pcb* pcb);
+t_pcb *convertirPCB(char *mensaje);
 
 #endif /* NUCLEO_H_ */

@@ -114,3 +114,28 @@ int enviarPorSocket(int socketFd,char* paquete){
 void limpiarBuffer(char* buffer){
 
 }
+
+
+/*
+ * Busca en array todas las posiciones con -1 y las elimina, copiando encima
+ * las posiciones siguientes.
+ * Ejemplo, si la entrada es (3, -1, 2, -1, 4) con *n=5
+ * a la salida tendremos (3, 2, 4) con *n=3
+ */
+void compactaClaves (int *tabla, int *n){
+	int i,j;
+
+	if ((tabla == NULL) || ((*n) == 0))
+		return;
+
+	j=0;
+	for (i=0; i<(*n); i++)	{
+		if (tabla[i] != -1)		{
+			tabla[j] = tabla[i];
+			j++;
+		}
+	}
+
+	*n = j;
+}
+
