@@ -22,8 +22,8 @@
 #include <parser/parser.h>
 #include <elestac_paquetes.h>
 
-#define CONFIG_PATH "../cpu/src/CPU.conf"
-//#define CONFIG_PATH "CPU.conf"
+#define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
+//#define CONFIG_PATH "CPU.conf"					//Terminal
 
 //------------------Estructuras
 
@@ -34,15 +34,66 @@ typedef struct {
 	char * ip_UMC;
 } t_CPU_config;
 
+typedef enum {
+	Listo,
+	Corriendo,
+	Terminado,
+	Bloqueado,
+	Nuevo,
+	FinQuantum,
+} t_estado;
+
 typedef struct{
 	int pagina;
 	int offset;
 	int size;
 } t_posicion;
 
+typedef struct {
+	t_list args;     // (t_posicion)
+	t_list vars;     // (t_variable_stack)
+	uint32_t retPos;
+	t_posicion retVar;
+} t_stack;
+
+typedef struct {
+	t_nombre_variable id;
+	t_posicion posicion;
+}t_variable_stack;
+
+typedef struct {
+	uint32_t posicion;			//Posicion de comienzo
+	uint32_t tamanio;			//Tamanio de instruccion
+} t_indice_de_codigo;
+
+typedef struct {
+	char * nombre_funcion;
+	uint32_t posicionPrimeraInstruccion;
+}t_indice_de_etiquetas;
+
+typedef struct{
+	uint32_t pagina;
+	uint32_t offset;
+}t_sp;
+
+typedef struct {
+	uint32_t pcb_pid;									//Identificador unico
+	uint32_t pcb_pc;									//Program counter
+	t_sp pcb_sp;										//Stack pointer
+	uint32_t paginas_codigo;							//Paginas del codigo
+	t_list indice_codigo;								//Indice del codigo  (t_indice_de_codigo)                   //hay que ver como lo devuelve el metadata
+	t_indice_de_etiquetas indice_etiquetas;				//Indice de etiquetas				  						//idem
+	t_list indice_stack;								//Indice del Stack (t_stack)
+	t_estado estado;									//Codigo interno para ver los estados del pcb
+	int consola;										//Consola
+} t_pcb;
+
+
+
 
 //-------------------Variables
 
+t_pcb pcbActual;					//PCB del programa ejecutando
 int quantum;
 int tamanio_paginas;
 
