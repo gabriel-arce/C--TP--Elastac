@@ -53,7 +53,15 @@ int main(void){
 	}
 
 
+ int i = 0;
+ while(i < quantum){
 
+	//me fijo el pc
+	//pido instruccion a umc
+	//analizarLinea()
+i+=1;
+}
+	//devolver el pcb al nucleo
 
 
 	return EXIT_SUCCESS;
