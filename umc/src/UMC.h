@@ -95,7 +95,7 @@ t_umc_config * umc_config;
 int socket_nucleo;
 int contador_hilos;
 int socket_cliente, socket_servidor;
-pthread_t hiloConsola, hilo_server;
+pthread_t hiloConsola, hilo_server, hilo_cliente;
 int id_cpu;
 t_list * cpu_conectadas;
 pthread_mutex_t mutex_hilos, mutex_lista_cpu;

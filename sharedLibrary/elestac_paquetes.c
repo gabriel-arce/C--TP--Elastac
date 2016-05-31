@@ -7,37 +7,6 @@
 
 #include "elestac_paquetes.h"
 
-t_stream * serializar_header(t_header * unHeader) {
-	t_stream * unStream = NULL;
-	unStream = malloc(sizeof(t_stream));
-	int32_t offset = 0, tmp_size = 0;
-
-	unStream->data = malloc(
-			sizeof(unHeader->identificador) + sizeof(unHeader->tamanio));
-
-	memcpy(unStream->data + offset, &unHeader->identificador, tmp_size =
-			sizeof(unHeader->identificador));
-	offset += tmp_size;
-	memcpy(unStream->data + offset, &unHeader->tamanio, tmp_size =
-			sizeof(unHeader->tamanio));
-	unStream->size = offset + tmp_size;
-	return unStream;
-}
-
-t_header * deserializar_header(t_stream * unStream) {
-	t_header * unHeader = NULL;
-	unHeader = malloc(sizeof(t_header));
-	int32_t offset = 0, tmp_size = 0;
-
-	memcpy(&(unHeader->identificador), unStream->data + offset, tmp_size =
-			sizeof(unHeader->identificador));
-	offset += tmp_size;
-
-	memcpy(&(unHeader->tamanio), unStream->data + offset, tmp_size =
-			sizeof(unHeader->tamanio));
-	return unHeader;
-}
-
 int enviar_handshake(int sock_fd, uint8_t id_proc, uint32_t size) {
 
 	t_header * handshake = malloc(sizeof(t_header));
@@ -58,7 +27,7 @@ int enviar_handshake(int sock_fd, uint8_t id_proc, uint32_t size) {
 	return resultado_send;
 }
 
-int recibir_handshake(int sock_fd, t_header * handshake_in) {
+t_header * recibir_handshake(int sock_fd, t_header * handshake_in) {
 
 	void * buffer_in = malloc(5);
 
@@ -66,7 +35,7 @@ int recibir_handshake(int sock_fd, t_header * handshake_in) {
 
 	if (recibido == -1) {
 		printf("Error en el recv.\n");
-		return -1;
+		return NULL;
 	}
 
 	memcpy(&handshake_in->identificador, buffer_in, 1);
@@ -74,6 +43,60 @@ int recibir_handshake(int sock_fd, t_header * handshake_in) {
 
 	free(buffer_in);
 
-	return recibido;
+	return handshake_in;
 
+}
+
+void * serializar_header(t_header * header) {
+	void * buffer = malloc(5);
+
+	memcpy(buffer, &header->identificador, 1);
+	memcpy(buffer + 1, &header->tamanio, 4);
+
+	return buffer;
+}
+
+t_header * deserializar_header(void * buffer) {
+	t_header * header = malloc(sizeof(t_header));
+
+	memcpy(&header->identificador, buffer, 1);
+	memcpy(&header->tamanio, buffer + 1, 4);
+
+	return header;
+}
+
+void * serializar_pcb(t_pcb * pcb) {
+	int offset = 0;
+	int pcb_size = get_pcb_size(pcb);
+
+	void * buffer = malloc(pcb_size);
+
+	memcpy(buffer + offset, &pcb->pcb_pid, sizeof(pcb->pcb_pid));
+	offset += sizeof(pcb->pcb_pid);
+	memcpy(buffer + offset, &pcb->pcb_pc, sizeof(pcb->pcb_pc));
+	offset += sizeof(&pcb->pcb_pc);
+	memcpy(buffer + offset, &pcb->pcb_sp, sizeof(pcb->pcb_sp));
+	offset += sizeof(pcb->pcb_sp);
+	memcpy(buffer + offset, &pcb->paginas_codigo, sizeof(pcb->paginas_codigo));
+	offset += sizeof(pcb->paginas_codigo);
+	//aca ya empiezan las estructuras
+
+	return buffer;
+}
+
+t_pcb * deserializar_pcb(void * buffer) {
+	int offset = 0;
+	t_pcb * pcb = malloc(t_pcb);
+
+	memcpy(&pcb->pcb_pid, buffer + offset, sizeof(pcb->pcb_pid));
+	offset += sizeof(pcb->pcb_pid);
+	memcpy(&pcb->pcb_pc, buffer + offset, sizeof(pcb->pcb_pc));
+	offset += sizeof(&pcb->pcb_pc);
+	memcpy(&pcb->pcb_sp, buffer + offset, sizeof(pcb->pcb_sp));
+	offset += sizeof(pcb->pcb_sp);
+	memcpy(&pcb->paginas_codigo, buffer + offset, sizeof(pcb->paginas_codigo));
+	offset += sizeof(pcb->paginas_codigo);
+	//problema: si se va a hacer por listas las estructuras necesito los sizes
+
+	return pcb;
 }
