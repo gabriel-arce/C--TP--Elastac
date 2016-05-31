@@ -53,6 +53,32 @@ t_CPU_config *cargar_config() {
 	return cpu_config;
 }
 
+
+void cargarConfiguracion(){
+	printf(" Cargando configuracion.. \n");
+	t_config *config = config_create(CONFIG_PATH);
+
+	cpu->ip_nucleo 					= string_new();
+	cpu->ip_UMC						= string_new();
+
+	cpu->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
+	cpu->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
+
+	string_append(&cpu->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
+	string_append(&cpu->ip_UMC, getStringProperty(config, "IP_UMC"));
+
+	config_destroy(config);
+
+	printf("IP Nucleo: %s\n", cpu->ip_nucleo);
+	printf("Puerto Nucleo: %d\n", cpu->puerto_nucleo);
+	printf("IP UMC: %s\n", cpu->ip_UMC);
+	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
+
+
+
+}
+
+
 //--------------------------------------Primitivas
 
 t_posicion definirVariable(t_nombre_variable identificador_variable) {

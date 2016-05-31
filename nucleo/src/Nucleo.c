@@ -100,11 +100,7 @@ int dameMaximo (int *tabla, int n)
 	return pcb;
 }*/
 
-int crearPCBID(){
-	if(queue_is_empty(cola_listos))
-		return 1;
-	return queue_size(cola_listos) + 1;
-}
+
 
 void crearSemaforos(){
 	mutexListos				= crearMutex();
@@ -283,7 +279,7 @@ void procesarMensaje(int fd, char *buffer){
 			//Crear PCB por consola entrante
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, fd, nucleo->stack_size);
+			pcb_aux = crearPCB(buffer, fd, nucleo->stack_size, cola_listos);
 
 			//Agregar PCB a la cola de listos
 			queue_push(cola_listos, pcb_aux);
@@ -514,7 +510,7 @@ void crearServerConsola(){
 			//Crear PCB por consola entrante
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size);
+			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
 
 			//Agregar PCB a la cola de listos
 			queue_push(cola_listos, pcb_aux);

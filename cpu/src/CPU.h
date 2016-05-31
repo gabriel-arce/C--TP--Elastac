@@ -98,11 +98,13 @@ typedef struct {
 t_pcb * pcbActual;					//PCB del programa ejecutando
 int quantum;
 int tamanio_paginas;
+t_CPU_config *cpu;
 
 
 //------------------Funciones
 
 t_CPU_config * cargar_config();
+void cargarConfiguracion();
 
 
 //------------------Primitivas
