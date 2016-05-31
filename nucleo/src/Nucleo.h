@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
+#include <elestac_pcb.h>
 
 /****** Constantes ******/
 
@@ -39,14 +40,14 @@
 
 
 /****** Estructuras ******/
-typedef enum {
+/*typedef enum {
 	Listo,
 	Corriendo,
 	Terminado,
 	Bloqueado,
 	Nuevo,
 	FinQuantum,
-} t_estado;
+} t_estado;*/
 
 typedef struct {
 	int puerto_programas;
@@ -63,19 +64,21 @@ typedef struct {
 	int stack_size;
 } t_nucleo;
 
-typedef struct {
+/*typedef struct {
 	uint8_t posicion;			//Posicion de comienzo
 	uint8_t tamanio;			//Tamanio de instruccion
-} t_indice;
+} t_indice;*/
 
+/*
 typedef struct {
 	char **args;
 	t_list vars;
 	uint8_t retPos;
 	t_size retVar;
 } t_stack;
+*/
 
-typedef struct {
+/*typedef struct {
 	uint8_t pcb_pid;									//Identificador unico
 	uint8_t pcb_pc;									//Program counter
 	uint8_t pcb_sp;									//Stack pointer
@@ -86,7 +89,7 @@ typedef struct {
 	int quantum;										//quantum - privado
 	t_estado estado;								//Codigo interno para ver los estados del pcb
 	int consola;											//Consola
-} t_pcb;
+} t_pcb;*/
 
 typedef struct {
 	uint8_t fd;
@@ -154,9 +157,9 @@ int obtenerCPUID();
 t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 
-t_pcb *crearPCB(char *programa, int fd);
+/*t_pcb *crearPCB(char *programa, int fd);
 void destruirPCB(t_pcb *pcb);
 char* serializarPCB (t_pcb* pcb);
-t_pcb *convertirPCB(char *mensaje);
+t_pcb *convertirPCB(char *mensaje);*/
 
 #endif /* NUCLEO_H_ */
