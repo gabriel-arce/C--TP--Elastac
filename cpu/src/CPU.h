@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
@@ -50,15 +51,16 @@ typedef struct{
 } t_posicion;
 
 typedef struct {
-	t_list args;     // (t_posicion)
-	t_list vars;     // (t_variable_stack)
+	t_list * args;   				  // (t_posicion)
+	t_list * vars;    			 // (t_variable_stack)
 	uint32_t retPos;
-	t_posicion retVar;
+	t_posicion * retVar;
+	bool stackActivo;
 } t_stack;
 
 typedef struct {
-	t_nombre_variable id;
-	t_posicion posicion;
+	t_nombre_variable  id;
+	t_posicion * posicion;
 }t_variable_stack;
 
 typedef struct {
@@ -79,12 +81,12 @@ typedef struct{
 typedef struct {
 	uint32_t pcb_pid;									//Identificador unico
 	uint32_t pcb_pc;									//Program counter
-	t_sp pcb_sp;										//Stack pointer
+	t_sp * pcb_sp;										//Stack pointer
 	uint32_t paginas_codigo;							//Paginas del codigo
-	t_list indice_codigo;								//Indice del codigo  (t_indice_de_codigo)                   //hay que ver como lo devuelve el metadata
-	t_indice_de_etiquetas indice_etiquetas;				//Indice de etiquetas				  						//idem
-	t_list indice_stack;								//Indice del Stack (t_stack)
-	t_estado estado;									//Codigo interno para ver los estados del pcb
+	t_list * indice_codigo;								//Indice del codigo  (t_indice_de_codigo)                   //hay que ver como lo devuelve el metadata
+	t_indice_de_etiquetas * indice_etiquetas;				//Indice de etiquetas				  						//idem
+	t_list * indice_stack;								//Indice del Stack (t_stack)
+	t_estado * estado;									//Codigo interno para ver los estados del pcb
 	int consola;										//Consola
 } t_pcb;
 
@@ -93,14 +95,16 @@ typedef struct {
 
 //-------------------Variables
 
-t_pcb pcbActual;					//PCB del programa ejecutando
+t_pcb * pcbActual;					//PCB del programa ejecutando
 int quantum;
 int tamanio_paginas;
+t_CPU_config *cpu;
 
 
 //------------------Funciones
 
 t_CPU_config * cargar_config();
+void cargarConfiguracion();
 
 
 //------------------Primitivas

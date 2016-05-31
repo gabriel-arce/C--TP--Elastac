@@ -66,7 +66,7 @@ int dameMaximo (int *tabla, int n)
 }
 
 
-t_pcb *crearPCB(char *programa, int fd){
+/*t_pcb *crearPCB(char *programa, int fd){
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 
 	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
@@ -98,13 +98,9 @@ t_pcb *crearPCB(char *programa, int fd){
 	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
 
 	return pcb;
-}
+}*/
 
-int crearPCBID(){
-	if(queue_is_empty(cola_listos))
-		return 1;
-	return queue_size(cola_listos) + 1;
-}
+
 
 void crearSemaforos(){
 	mutexListos				= crearMutex();
@@ -115,11 +111,11 @@ void crearSemaforos(){
 	semBloqueados			= crearSemaforo(0);
 }
 
-void destruirPCB(t_pcb *pcb){
+/*void destruirPCB(t_pcb *pcb){
 	free(pcb->indice_etiquetas);
 	free(pcb->indice_stack.args);
 	free(pcb);
-}
+}*/
 
 void crearListasYColas(){
 
@@ -132,7 +128,7 @@ void crearListasYColas(){
 	lista_cpu					= list_create();
 }
 
-char* serializarPCB (t_pcb* pcb)
+/*char* serializarPCB (t_pcb* pcb)
 {
 	char* serial = string_new();
 	string_append(&serial,"0");											//Tipo de Proceso
@@ -152,7 +148,7 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
 
 	return serial;
-}
+}*/
 
 void salirPor(const char *msg){
 	perror(msg);
@@ -283,7 +279,7 @@ void procesarMensaje(int fd, char *buffer){
 			//Crear PCB por consola entrante
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, fd);
+			pcb_aux = crearPCB(buffer, fd, nucleo->stack_size, cola_listos);
 
 			//Agregar PCB a la cola de listos
 			queue_push(cola_listos, pcb_aux);
@@ -514,7 +510,7 @@ void crearServerConsola(){
 			//Crear PCB por consola entrante
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, newfd);
+			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
 
 			//Agregar PCB a la cola de listos
 			queue_push(cola_listos, pcb_aux);
@@ -590,7 +586,7 @@ int obtenerCPUID(){
 	return ++cpuID;
 }
 
-t_pcb *convertirPCB(char *mensaje){
+/*t_pcb *convertirPCB(char *mensaje){
 	t_pcb *pcb;
 
 	char** componentes = string_split(mensaje,SERIALIZADOR);
@@ -609,7 +605,7 @@ t_pcb *convertirPCB(char *mensaje){
 	pcb->consola								= atoi(componentes[12]);
 
 	return pcb;
-}
+}*/
 
 void finalizar(){
 

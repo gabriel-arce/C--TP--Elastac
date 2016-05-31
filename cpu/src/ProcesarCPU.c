@@ -10,18 +10,14 @@
 
 int main(void){
 
-	t_CPU_config *cpu = NULL;		//Configuracion
 	int socketCPU;				    //Descriptor de CPU
 
 
 	printf("PROCESO CPU \n");
 
-	//cargar configuracion
-	cpu = cargar_config();
-	printf("IP Nucleo: %s\n", cpu->ip_nucleo);
-	printf("Puerto Nucleo: %d\n", cpu->puerto_nucleo);
-	printf("IP UMC: %s\n", cpu->ip_UMC);
-	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
+
+	//Cargar configuracion
+	cargarConfiguracion();
 
 
 	//Conectar al nucleo
@@ -53,7 +49,15 @@ int main(void){
 	}
 
 
+ int i = 0;
+ while(i < quantum){
 
+	//me fijo el pc
+	//pido instruccion a umc
+	//analizarLinea()
+i+=1;
+}
+	//devolver el pcb al nucleo
 
 
 	return EXIT_SUCCESS;
