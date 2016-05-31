@@ -40,15 +40,6 @@
 
 
 /****** Estructuras ******/
-/*typedef enum {
-	Listo,
-	Corriendo,
-	Terminado,
-	Bloqueado,
-	Nuevo,
-	FinQuantum,
-} t_estado;*/
-
 typedef struct {
 	int puerto_programas;
 	int puerto_cpu;
@@ -64,32 +55,6 @@ typedef struct {
 	int stack_size;
 } t_nucleo;
 
-/*typedef struct {
-	uint8_t posicion;			//Posicion de comienzo
-	uint8_t tamanio;			//Tamanio de instruccion
-} t_indice;*/
-
-/*
-typedef struct {
-	char **args;
-	t_list vars;
-	uint8_t retPos;
-	t_size retVar;
-} t_stack;
-*/
-
-/*typedef struct {
-	uint8_t pcb_pid;									//Identificador unico
-	uint8_t pcb_pc;									//Program counter
-	uint8_t pcb_sp;									//Stack pointer
-	uint8_t paginas_codigo;					//Paginas del codigo
-	t_indice indice_codigo;					//Indice del codigo
-	char * indice_etiquetas;					//Indice de etiquetas
-	t_stack indice_stack;							//Indice del Stack
-	int quantum;										//quantum - privado
-	t_estado estado;								//Codigo interno para ver los estados del pcb
-	int consola;											//Consola
-} t_pcb;*/
 
 typedef struct {
 	uint8_t fd;
@@ -137,7 +102,6 @@ fd_set read_fds;				// conjunto temporal de descriptores de fichero para select(
 void cargarConfiguracion();
 void crearListasYColas();
 void crearSemaforos();
-void salirPor(const char *msg);
 void crearServerNucleo();
 void crearServerConsola();
 void crearServerCPU();
@@ -157,9 +121,5 @@ int obtenerCPUID();
 t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 
-/*t_pcb *crearPCB(char *programa, int fd);
-void destruirPCB(t_pcb *pcb);
-char* serializarPCB (t_pcb* pcb);
-t_pcb *convertirPCB(char *mensaje);*/
 
 #endif /* NUCLEO_H_ */

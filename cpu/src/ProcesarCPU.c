@@ -10,25 +10,18 @@
 
 int main(void){
 
-	int socketCPU;				    //Descriptor de CPU
-
-
-	printf("PROCESO CPU \n");
-
-
 	//Cargar configuracion
 	cargarConfiguracion();
 
-
 	//Conectar al nucleo
-	if((socketCPU = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
-		exit(1);
+	conectarConNucleo();
+
+	//Conectar al UMC
+	conectarConUMC();
 
 
-	//conexion con umc
-	if((socketCPU = clienteDelServidor(cpu->ip_UMC, cpu->puerto_UMC)) == -1)
-			exit(1);
 
+/*
 	if (enviar_handshake(socketCPU, 5, 0) == -1) {
 		printf("No se pudo enviar el handshake a umc. \n");
 		return EXIT_FAILURE;
@@ -47,18 +40,10 @@ int main(void){
 	} else {
 		return EXIT_FAILURE;
 	}
+*/
 
+	//Escuchar al nucleo a la espera de nuevos PCBs
+	escucharAlNucleo();
 
- int i = 0;
- while(i < quantum){
-
-	//me fijo el pc
-	//pido instruccion a umc
-	//analizarLinea()
-i+=1;
-}
-	//devolver el pcb al nucleo
-
-
-	return EXIT_SUCCESS;
+ 	return EXIT_SUCCESS;
 }

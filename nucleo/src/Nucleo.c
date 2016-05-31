@@ -150,10 +150,7 @@ void crearListasYColas(){
 	return serial;
 }*/
 
-void salirPor(const char *msg){
-	perror(msg);
-	exit(EXIT_FAILURE);
-}
+
 
 void crearServerNucleo(){
 	 int listener;														//Descriptor de escucha

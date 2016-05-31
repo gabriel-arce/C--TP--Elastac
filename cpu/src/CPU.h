@@ -22,9 +22,13 @@
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
 #include <elestac_paquetes.h>
+#include <elestac_pcb.h>
 
 #define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
 //#define CONFIG_PATH "CPU.conf"					//Terminal
+#define MAXIMO_BUFFER 2000
+#define SERIALIZADOR				"##"
+
 
 //------------------Estructuras
 
@@ -34,29 +38,6 @@ typedef struct {
 	int puerto_UMC;
 	char * ip_UMC;
 } t_CPU_config;
-
-typedef enum {
-	Listo,
-	Corriendo,
-	Terminado,
-	Bloqueado,
-	Nuevo,
-	FinQuantum,
-} t_estado;
-
-typedef struct{
-	int pagina;
-	int offset;
-	int size;
-} t_posicion;
-
-typedef struct {
-	t_list * args;   				  // (t_posicion)
-	t_list * vars;    			 // (t_variable_stack)
-	uint32_t retPos;
-	t_posicion * retVar;
-	bool stackActivo;
-} t_stack;
 
 typedef struct {
 	t_nombre_variable  id;
@@ -68,44 +49,26 @@ typedef struct {
 	uint32_t tamanio;			//Tamanio de instruccion
 } t_indice_de_codigo;
 
-typedef struct {
-	char * nombre_funcion;
-	uint32_t posicionPrimeraInstruccion;
-}t_indice_de_etiquetas;
-
-typedef struct{
-	uint32_t pagina;
-	uint32_t offset;
-}t_sp;
-
-typedef struct {
-	uint32_t pcb_pid;									//Identificador unico
-	uint32_t pcb_pc;									//Program counter
-	t_sp * pcb_sp;										//Stack pointer
-	uint32_t paginas_codigo;							//Paginas del codigo
-	t_list * indice_codigo;								//Indice del codigo  (t_indice_de_codigo)                   //hay que ver como lo devuelve el metadata
-	t_indice_de_etiquetas * indice_etiquetas;				//Indice de etiquetas				  						//idem
-	t_list * indice_stack;								//Indice del Stack (t_stack)
-	t_estado * estado;									//Codigo interno para ver los estados del pcb
-	int consola;										//Consola
-} t_pcb;
-
-
-
 
 //-------------------Variables
 
-t_pcb * pcbActual;					//PCB del programa ejecutando
+t_pcb *pcbActual;					//PCB del programa ejecutando
 int quantum;
 int tamanio_paginas;
 t_CPU_config *cpu;
-
+int socketNucleo, socketUMC;
+fd_set master;				// conjunto maestro de descriptores de fichero
+fd_set read_fds;				// conjunto temporal de descriptores de fichero para select()
 
 //------------------Funciones
 
 t_CPU_config * cargar_config();
 void cargarConfiguracion();
-
+void conectarConNucleo();
+void conectarConUMC();
+void escucharAlNucleo();
+void recibirPCB(char *buffer);
+void solicitarAlUMCProxSentencia();
 
 //------------------Primitivas
 
