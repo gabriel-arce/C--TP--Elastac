@@ -38,7 +38,7 @@ typedef struct {
 
 typedef struct {
 	t_list * args;   				  // (t_posicion) -> tipo del dato que contiene la lista
-	t_list vars;					  // (t_variable_stack)
+	t_list * vars;					  // (t_variable_stack)
 	uint32_t retPos;
 	t_posicion * retVar;
 	bool stackActivo;
@@ -59,9 +59,9 @@ typedef struct {
 	uint32_t pcb_pc;										//Program counter
 	t_sp * pcb_sp;											//Stack pointer
 	uint32_t paginas_codigo;								//Paginas del codigo
-	t_list indice_codigo;									//Indice del codigo   (t_indice_de_codigo)
-	t_list indice_etiquetas;								//Indice de etiquetas (t_indice_de_etiquetas)
-	t_list indice_stack;									//Indice del Stack	  (t_stack)
+	t_list * indice_codigo;									//Indice del codigo   (t_indice_de_codigo)
+	t_list * indice_etiquetas;								//Indice de etiquetas (t_indice_de_etiquetas)
+	t_list * indice_stack;									//Indice del Stack	  (t_stack)
 	t_estado estado;										//Codigo interno para ver los estados del pcb
 	int consola;											//Consola
 } t_pcb;

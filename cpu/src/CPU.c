@@ -199,60 +199,59 @@ void solicitarAlUMCProxSentencia(){
 t_posicion definirVariable(t_nombre_variable identificador_variable) {
 
 	t_variable_stack * variableStack = malloc(sizeof(variableStack));
-	t_posicion * posicionVariable = malloc(sizeof(posicionVariable));
+	t_stack * stackActivo;
 
 	variableStack->id = identificador_variable;
 
-//	if(pcbActual->indice_stack->elements_count == 0){				//me fijo si ya hay algun stack creado
-//		t_stack * stackNuevo = malloc(sizeof(stackNuevo));
-//		stackNuevo->stackActivo = true;
-//		stackNuevo->args = list_create();
-//
-//	}
+	if(list_size(pcbActual->indice_stack) == 0){				//me fijo si ya hay algun stack creado
+		crearStackInicial();
+
+	}
 
 	if(((pcbActual->pcb_sp->offset) + 4) <= tamanio_paginas){     //me fijo si la variable entra (totalmente) en la pagina  (va a haber fragmentacion interna)
 
-		posicionVariable->pagina = (pcbActual->pcb_sp->pagina);
-		posicionVariable->offset = (pcbActual->pcb_sp->offset);
-		posicionVariable->size = 4;
-		variableStack->posicion = posicionVariable;
+		variableStack->posicion->pagina = (pcbActual->pcb_sp->pagina);
+		variableStack->posicion->offset = (pcbActual->pcb_sp->offset);
+		variableStack->posicion->size = 4;
 
 		pcbActual->pcb_sp->offset += 4;
 
 	}
 	else {
 
-		posicionVariable->pagina = ((pcbActual->pcb_sp->pagina) + 1);    //pongo la variable en la pagina siguiente
-		posicionVariable->offset = 0;
-		posicionVariable->size = 4;
-		variableStack->posicion = posicionVariable;
+		variableStack->posicion->pagina = ((pcbActual->pcb_sp->pagina) + 1);    //pongo la variable en la pagina siguiente
+		variableStack->posicion->offset = 0;
+		variableStack->posicion->size = 4;
 		pcbActual->pcb_sp->pagina += 1;									//pagina siguiente en el stack pointer
 		pcbActual->pcb_sp->offset = 4;
 	}
 
 
-	//buscarStackActivo();
-	//Agrego variableStack a stackActivo
-
-
+	//stackActivo = buscarStackActivo();
+	list_add(stackActivo->vars, &variableStack);						//Agrego variableStack a stackActivo
 
 	//mandar a umc escribirBytes()
 
-	return * posicionVariable;
+	return * variableStack->posicion;
 	}
 
 
 t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
 
-	t_stack stackActivo;
-	//BuscarStackActivo();
+	t_stack * stackActivo;
+	t_variable_stack * variableStack;
+
+	//stackActivo = BuscarStackActivo();
 	//list_find(stackActivo->vars, identificador_variable);   //busco la variable por el identificador
-	//retornar posicion de la variable
+	return * variableStack->posicion;
 }
 
 t_valor_variable dereferenciar(t_posicion direccion_variable) {
 
+	t_valor_variable * valorVariable;
+
 	//mandar a umc leerBytes(direccion_variable)
+	return * valorVariable;
 
 }
 
@@ -312,5 +311,15 @@ int signal(t_nombre_semaforo identificador_semaforo){
 
 t_stack buscarStackActivo(){
 
-	//list_find(pcbActual->indice_stack, stackActivo);
+	//list_find(&pcbActual->indice_stack, stackActivo);
+}
+
+void crearStackInicial(){
+
+	t_stack * stackNuevo = malloc(sizeof(stackNuevo));
+	stackNuevo->stackActivo = true;
+	stackNuevo->args = list_create();
+	stackNuevo->vars = list_create();
+
+	list_add(pcbActual->indice_stack, &stackNuevo);
 }
