@@ -6,8 +6,7 @@
  */
 
 #include "elestac_pcb.h"
-
-t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
+/*t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 
 	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
@@ -68,7 +67,7 @@ char* serializarPCB (t_pcb* pcb)
 
 	return serial;
 }
-
+*/
 t_pcb *convertirPCB(char *mensaje){
 	t_pcb *pcb;
 
@@ -76,14 +75,15 @@ t_pcb *convertirPCB(char *mensaje){
 	pcb->pcb_pid								= atoi(componentes[0]);
 	pcb->pcb_pc								= atoi(componentes[1]);
 	pcb->pcb_sp								= atoi(componentes[2]);
-	pcb->indice_etiquetas 				= componentes[3];
+	//pcb->indice_etiquetas 				= componentes[3];
 	pcb->paginas_codigo 				= atoi(componentes[4]);
+	/*
 	pcb->indice_codigo.posicion	= atoi(componentes[5]);
 	pcb->indice_codigo.tamanio	= atoi(componentes[6]);
 	pcb->indice_stack.args 			= componentes[7];
 	pcb->indice_stack.retPos 		= componentes[8];
 	pcb->indice_stack.retVar 		= componentes[9];
-	pcb->quantum 							= atoi(componentes[10]);
+	*/
 	pcb->estado								= atoi(componentes[11]);
 	pcb->consola								= atoi(componentes[12]);
 
@@ -100,3 +100,4 @@ void salirPor(const char *msg){
 	perror(msg);
 	exit(EXIT_FAILURE);
 }
+
