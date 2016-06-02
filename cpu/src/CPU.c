@@ -238,11 +238,9 @@ t_posicion definirVariable(t_nombre_variable identificador_variable) {
 
 t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
 
-	t_stack * stackActivo;
 	t_variable_stack * variableStack;
 
-	//stackActivo = BuscarStackActivo();
-	//list_find(stackActivo->vars, identificador_variable);   //busco la variable por el identificador
+	//variableStack =  buscarVariableEnStack(identificador_variable);  //busco la variable por el identificador
 	return * variableStack->posicion;
 }
 
@@ -290,6 +288,7 @@ int imprimir(t_valor_variable valor_mostrar){
 int imprimirTexto(char* texto){
 
 	//mandar a nucleo
+	//hay que ver si es "end" y cambiar estado a FINALIZADO
 }
 
 int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
@@ -309,7 +308,7 @@ int signal(t_nombre_semaforo identificador_semaforo){
 
 //---------------------------------Otras
 
-t_stack buscarStackActivo(){
+t_stack * buscarStackActivo(){
 
 	//list_find(&pcbActual->indice_stack, stackActivo);
 }
@@ -323,3 +322,14 @@ void crearStackInicial(){
 
 	list_add(pcbActual->indice_stack, &stackNuevo);
 }
+
+t_variable_stack * buscarVariableEnStack(t_nombre_variable  id){
+	t_stack * stackActivo = buscarStackActivo();
+
+	int _es_la_que_busco(t_variable_stack *variable){
+		return string_equals_ignore_case(variable->id, id);
+	}
+
+	return list_find(stackActivo->vars, (void*) _es_la_que_busco);
+}
+
