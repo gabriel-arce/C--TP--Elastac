@@ -57,6 +57,10 @@ void conectarConUMC();
 void escucharAlNucleo();
 void recibirPCB(char *buffer);
 void solicitarAlUMCProxSentencia();
+t_stack * buscarStackActivo();
+void crearStackInicial();
+t_variable_stack * buscarVariableEnStack(t_nombre_variable  id);
+int stackActivo(t_stack * stack);
 
 //------------------Primitivas
 

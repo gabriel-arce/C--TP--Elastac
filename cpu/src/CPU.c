@@ -227,7 +227,7 @@ t_posicion definirVariable(t_nombre_variable identificador_variable) {
 	}
 
 
-	//stackActivo = buscarStackActivo();
+	stackActivo = buscarStackActivo();
 	list_add(stackActivo->vars, &variableStack);						//Agrego variableStack a stackActivo
 
 	//mandar a umc escribirBytes()
@@ -240,7 +240,7 @@ t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
 
 	t_variable_stack * variableStack;
 
-	//variableStack =  buscarVariableEnStack(identificador_variable);  //busco la variable por el identificador
+	variableStack =  buscarVariableEnStack(identificador_variable);  //busco la variable por el identificador
 	return * variableStack->posicion;
 }
 
@@ -310,8 +310,15 @@ int signal(t_nombre_semaforo identificador_semaforo){
 
 t_stack * buscarStackActivo(){
 
-	//list_find(&pcbActual->indice_stack, stackActivo);
+	return list_find(pcbActual->indice_stack, (void*) stackActivo);
 }
+
+int stackActivo(t_stack * stack){
+
+return (stack->stackActivo);
+
+}
+
 
 void crearStackInicial(){
 
@@ -324,10 +331,11 @@ void crearStackInicial(){
 }
 
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id){
+
 	t_stack * stackActivo = buscarStackActivo();
 
 	int _es_la_que_busco(t_variable_stack *variable){
-		return string_equals_ignore_case(variable->id, id);
+		return string_equals_ignore_case(&variable->id, &id);
 	}
 
 	return list_find(stackActivo->vars, (void*) _es_la_que_busco);
