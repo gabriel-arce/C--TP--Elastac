@@ -63,7 +63,8 @@ typedef struct {
 	t_list * indice_etiquetas;								//Indice de etiquetas (t_indice_de_etiquetas)
 	t_list * indice_stack;									//Indice del Stack	  (t_stack)
 	t_estado estado;										//Codigo interno para ver los estados del pcb
-	int consola;											//Consola
+	uint32_t consola;										//Consola
+	uint32_t quantum_actual;								//cantidad de instrucciones ejecutadas en el quantum actual
 } t_pcb;
 
 t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb);
