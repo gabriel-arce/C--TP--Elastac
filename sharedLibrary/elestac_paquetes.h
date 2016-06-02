@@ -22,11 +22,6 @@ typedef struct {
 	uint32_t tamanio;
 }__attribute__((packed)) t_header;
 
-typedef struct {
-	uint8_t posicion;			//Posicion de comienzo
-	uint8_t tamanio;			//Tamanio de instruccion
-} t_indice;
-
 t_header * recibir_handshake(int sock_fd, t_header * handshake_in);
 int enviar_handshake(int sock_fd, uint8_t id_proc, uint32_t size);
 void * serializar_header(t_header * header);

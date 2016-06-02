@@ -13,6 +13,7 @@
 
 
 static const char* DEFINICION_VARIABLES = "variables a, b, c";
+static const char* FINALIZACION = "end";
 static const char* ASIGNACION = "a = b + 12";
 static const char* IMPRIMIR = "print b";
 static const char* IMPRIMIR_TEXTO = "textPrint foo\n";
@@ -71,6 +72,11 @@ if (file) {
     fclose(file);
 }
 }
+void correrFinalizar() {
+	printf("Ejecutando '%s'", FINALIZACION);
+	analizadorLinea(strdup(IMPRIMIR_TEXTO), &functions, &kernel_functions);
+	printf("================\n");
+}
 
 
 
@@ -79,6 +85,7 @@ int main(int argc, char **argv) {
 	correrDefinirVariables();
 	correrImprimir();
 	correrImprimirTexto();
+	correrFinalizar();
 	printf(" El numero de instrucciones del codigo completo es '%d'\n",metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_size);
 	leerArchivo();
 
