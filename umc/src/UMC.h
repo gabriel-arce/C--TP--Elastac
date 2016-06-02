@@ -89,6 +89,8 @@ typedef struct {
 typedef struct {
 	int pid;
 	int paginas_requeridas;
+	int programa_length;
+	char * codigo_programa;
 } t_paquete_inicializar_programa;
 
 t_umc_config * umc_config;
@@ -127,7 +129,7 @@ void limpiar_tlb();
 void marcar_paginas();
 void enviar_pagina_size(int sock_fd);
 // begin OPERACIONES PRINCIPALES
-void * inicializar_programa(int id_programa, int paginas_requeridas);
+void * inicializar_programa(int id_programa, int paginas_requeridas, char * codigo);
 void * solicitar_bytes(int nro_pagina, int offset, int tamanio); //cuidado que devuelve algo!!
 void * almacenar_bytes(int nro_pagina, int offset, int tamanio, char * buffer);
 void * finalizar_programa(int id_programa);

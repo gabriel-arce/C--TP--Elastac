@@ -360,18 +360,24 @@ void * escucha_conexiones() {
 void * atiende_nucleo() {
 
 	int recibido = 1;
-	void * buffer_in = malloc(5);
 
 	while (recibido > 0) {
 
-		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
+		void * buffer_in = malloc(5);
+
+		recibido = recv(socket_nucleo, buffer_in, 5, MSG_WAITALL);
+
+		if (recibido == -1) {
 			printf("Error en el recv del header en atiende nucleo\n");
 			continue;
 		}
 
 		t_header * head_in = malloc(sizeof(t_header));
-		memcpy(&head_in->identificador, buffer_in, 1);
-		memcpy(&head_in->tamanio, buffer_in + 1, 4);
+		memcpy(&(head_in->identificador), buffer_in, 1);
+		memcpy(&(head_in->tamanio), buffer_in + 1, 4);
+
+		printf("ID: %d\n", head_in->identificador);
+		printf("SIZE: %d\n", head_in->tamanio);
 
 		switch (head_in->identificador) {
 		case Inicializar_programa:
@@ -380,23 +386,29 @@ void * atiende_nucleo() {
 			void * buffer_stream = malloc(head_in->tamanio);
 
 			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
-					0)) == -1) {
+					MSG_WAITALL)) == -1) {
 				printf("Error en el recv del header en atiende nucleo");
 				continue;
 			}
 
-			t_paquete_inicializar_programa * payload = malloc(
+			t_paquete_inicializar_programa * iniciar_prog_pack = malloc(
 					sizeof(t_paquete_inicializar_programa));
 
-			memcpy(&payload->pid, buffer_stream, 4);
-			//memcpy(&payload->tamanio_paginas_requeridas, buffer_stream + 4, 4);
+			memcpy(&(iniciar_prog_pack->pid), buffer_stream, 4);
+			memcpy(&(iniciar_prog_pack->paginas_requeridas), buffer_stream + 4, 4);
+			memcpy(&(iniciar_prog_pack->programa_length), buffer_stream + 8, 4);
+			iniciar_prog_pack->codigo_programa = malloc(iniciar_prog_pack->programa_length);
+			memcpy(iniciar_prog_pack->codigo_programa, buffer_stream + 12, iniciar_prog_pack->programa_length);
 
+			printf("pid: %d\n", iniciar_prog_pack->pid);
+			printf("paginas: %d\n", iniciar_prog_pack->paginas_requeridas);
+			printf("%s", iniciar_prog_pack->codigo_programa);
+			new_line();
 			printf("Inicializo programa...\n");
-			//puede que lo inicialice en un hilo
-			inicializar_programa(payload->pid, payload->paginas_requeridas);
+			//inicializar_programa(iniciar_prog_pack);
 
 			free(buffer_stream);
-			free(payload);
+			free(iniciar_prog_pack);
 
 			pthread_mutex_unlock(&mutex_nucleo);
 			break;
@@ -414,14 +426,13 @@ void * atiende_nucleo() {
 		}
 
 		free(head_in);
+		free(buffer_in);
 	}
-
-	free(buffer_in);
 
 	return EXIT_SUCCESS;
 }
 
-void * inicializar_programa(int id_programa, int paginas_requeridas) {
+void * inicializar_programa(int id_programa, int paginas_requeridas, char * codigo) {
 
 	int marcos_libres = 0;
 
@@ -450,7 +461,7 @@ void * inicializar_programa(int id_programa, int paginas_requeridas) {
 	return EXIT_SUCCESS;
 }
 
-int * pedir_espacio_swap(int pid, int paginas_necesarias) {
+int pedir_espacio_swap(int pid, int paginas_necesarias) {
 	t_header * peticion = malloc(sizeof(t_header));
 	peticion->identificador = Solicitar_espacio;
 	peticion->tamanio = 8;
@@ -480,7 +491,7 @@ int * pedir_espacio_swap(int pid, int paginas_necesarias) {
 
 	recv(socket_cliente, buffer_in, 4, MSG_WAITALL);
 
-	response = buffer_in;
+	//response = buffer_in;
 	free(buffer_in);
 
 	return response;

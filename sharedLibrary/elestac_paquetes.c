@@ -64,39 +64,3 @@ t_header * deserializar_header(void * buffer) {
 
 	return header;
 }
-
-void * serializar_pcb(t_pcb * pcb) {
-	int offset = 0;
-	int pcb_size = get_pcb_size(pcb);
-
-	void * buffer = malloc(pcb_size);
-
-	memcpy(buffer + offset, &pcb->pcb_pid, sizeof(pcb->pcb_pid));
-	offset += sizeof(pcb->pcb_pid);
-	memcpy(buffer + offset, &pcb->pcb_pc, sizeof(pcb->pcb_pc));
-	offset += sizeof(&pcb->pcb_pc);
-	memcpy(buffer + offset, &pcb->pcb_sp, sizeof(pcb->pcb_sp));
-	offset += sizeof(pcb->pcb_sp);
-	memcpy(buffer + offset, &pcb->paginas_codigo, sizeof(pcb->paginas_codigo));
-	offset += sizeof(pcb->paginas_codigo);
-	//aca ya empiezan las estructuras
-
-	return buffer;
-}
-
-t_pcb * deserializar_pcb(void * buffer) {
-	int offset = 0;
-	t_pcb * pcb = malloc(t_pcb);
-
-	memcpy(&pcb->pcb_pid, buffer + offset, sizeof(pcb->pcb_pid));
-	offset += sizeof(pcb->pcb_pid);
-	memcpy(&pcb->pcb_pc, buffer + offset, sizeof(pcb->pcb_pc));
-	offset += sizeof(&pcb->pcb_pc);
-	memcpy(&pcb->pcb_sp, buffer + offset, sizeof(pcb->pcb_sp));
-	offset += sizeof(pcb->pcb_sp);
-	memcpy(&pcb->paginas_codigo, buffer + offset, sizeof(pcb->paginas_codigo));
-	offset += sizeof(pcb->paginas_codigo);
-	//problema: si se va a hacer por listas las estructuras necesito los sizes
-
-	return pcb;
-}

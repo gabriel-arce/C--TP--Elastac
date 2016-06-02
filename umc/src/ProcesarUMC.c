@@ -38,14 +38,14 @@ int main() {
 	pthread_mutex_init(&mutex_nucleo, 0);
 	pthread_mutex_init(&mutex_memoria, 0);
 
-	pthread_create(&hilo_cliente, NULL, conecta_swap,NULL);
-	pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
+	//pthread_create(&hilo_cliente, NULL, conecta_swap,NULL);
+	//pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
 
-	pthread_join(hilo_cliente, NULL);
-	pthread_detach(hilo_cliente, NULL);
-	pthread_join(hiloConsola, NULL);
-	pthread_detach(hiloConsola);
+	//pthread_join(hilo_cliente, NULL);
+	//pthread_detach(hilo_cliente, NULL);
+	//pthread_join(hiloConsola, NULL);
+	//pthread_detach(hiloConsola);
 	pthread_join(hilo_server, NULL);
 	pthread_detach(hilo_server);
 

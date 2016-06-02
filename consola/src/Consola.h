@@ -31,11 +31,6 @@ typedef struct {
 	char * programa_ansisop;
 } t_consola_config;
 
-typedef struct {
-	char tipoProceso[3];
-	char *contenido;
-} t_proceso;
-
 typedef enum{
 	CantidadArgumentosIncorrecta,
 	NoSePudoAbrirIn,
@@ -47,11 +42,14 @@ typedef enum{
 typedef struct {
 	uint8_t identificador;
 	uint32_t tamanio;
-} t_header;
+}__attribute__((packed)) t_header;
+
+typedef struct {
+	uint32_t programa_length;
+	char * codigo_programa;
+} t_paquete_programa;
 
 t_consola_config *consola;
-t_proceso *proceso;
-FILE *in;
 
 void cargar_config();
 void MostrarAyuda();
