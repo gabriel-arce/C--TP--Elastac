@@ -6,7 +6,7 @@
  */
 
 #include "elestac_pcb.h"
-/*t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
+t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 
 	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
@@ -14,7 +14,7 @@
 	//Obtener metadata del programa
 	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
 	metadata = metadata_desde_literal(PROGRAMA);
-
+	/*
 	pcb->pcb_pid	= crearPCBID(cola_pcb);
 	pcb->pcb_pc	= metadata->instruccion_inicio;
 	pcb->pcb_sp	= 0;
@@ -36,13 +36,14 @@
 	printf("Indice Etiquetas: %s\n", pcb->indice_etiquetas);
 	printf("Paginas de Codigo: %d\n", pcb->paginas_codigo);
 	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
-
+*/
 	return pcb;
 }
 
+
 void destruirPCB(t_pcb *pcb){
 	free(pcb->indice_etiquetas);
-	free(pcb->indice_stack.args);
+//	free(pcb->indice_stack.args);
 	free(pcb);
 }
 
@@ -61,13 +62,13 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->indice_etiquetas));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_codigo.posicion));
+//	string_append(&serial, string_itoa(pcb->indice_codigo.posicion));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
+//	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
 
 	return serial;
 }
-*/
+
 t_pcb *convertirPCB(char *mensaje){
 	t_pcb *pcb;
 
