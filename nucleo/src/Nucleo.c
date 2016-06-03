@@ -381,6 +381,8 @@ t_pcb *enviarAEjecutar(t_pcb *pcb, int fd){
 		switch(PCBActualizado->estado){
 			case Bloqueado:{
 				//Agregar a cola de bloqueados
+				puts("Bloqueado por I/O..");
+				puts("Pasando a bloqueados..");
 				queue_push(cola_bloqueados, PCBActualizado);
 				signalSemaforo(semBloqueados);
 				return PCBActualizado;
@@ -389,7 +391,9 @@ t_pcb *enviarAEjecutar(t_pcb *pcb, int fd){
 
 			case Terminado:{
 				//Agregar a lista de finalizados
+				puts("Programa ANSISOP finalizado..");
 				waitSemaforo(mutexFinalizados);
+				puts("Agregando a finalizados..");
 				list_add(lista_finalizados, PCBActualizado);
 				signalSemaforo(semFinalizados);
 				signalSemaforo(mutexFinalizados);
@@ -398,6 +402,10 @@ t_pcb *enviarAEjecutar(t_pcb *pcb, int fd){
 				}
 
 			case FinQuantum:{
+				puts("Saliendo de ejecutando..");
+				sacarDeEjecutar(PCBActualizado);				//Sacar de la lista de Ejecutando
+				puts("Pasando a listos..");
+				pasarAListos(PCBActualizado);						//Pasar a la cola de Listos
 				return PCBActualizado;
 				break;
 			}
@@ -434,7 +442,15 @@ void pasarAEjecutar(){
 		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
 		pcbEjecutando->estado = Corriendo;
 
-		//Mientras tenga quantum
+		//2da version
+		//Enviar a Ejecutar
+		waitSemaforo(mutexEjecutando);
+		puts("Ejecutando consola..");
+		pcbActual = enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
+		pcbEjecutando = pcbActual;
+		signalSemaforo(mutexEjecutando);
+
+/*		//Mientras tenga quantum
 		while(pcbEjecutando->quantum != nucleo->quantum){
 			//Enviar a Ejecutar
 			waitSemaforo(mutexEjecutando);
@@ -451,7 +467,7 @@ void pasarAEjecutar(){
 			sacarDeEjecutar(pcbEjecutando);				//Sacar de la lista de Ejecutando
 			puts("Pasando a listos..");
 			pasarAListos(pcbEjecutando);						//Pasar a la cola de Listos
-		}
+		}*/
 
 
 	}

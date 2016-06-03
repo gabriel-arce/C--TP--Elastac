@@ -17,7 +17,6 @@
 #include <signal.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
-#include <elestac_paquetes.h>
 #include <pthread.h>
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
