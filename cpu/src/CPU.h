@@ -61,6 +61,11 @@ t_stack * buscarStackActivo();
 void crearStackInicial();
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id);
 int stackActivo(t_stack * stack);
+int getQuantumPcb();
+int getQuantum();
+void ejecutarProximaInstruccion();
+t_indice_de_codigo * buscarProximaInstruccion();
+
 
 //------------------Primitivas
 

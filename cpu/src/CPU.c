@@ -89,6 +89,25 @@ void conectarConNucleo(){
 void conectarConUMC(){
 	if((socketUMC = clienteDelServidor(cpu->ip_UMC, cpu->puerto_UMC)) == -1)
 		salirPor("[CPU] No se pudo conectar al UMC");
+
+	if (enviar_handshake(socketUMC, 5, 0) == -1) {
+		printf("No se pudo enviar el handshake a umc. \n");
+		//return EXIT_FAILURE;
+	}
+
+	t_header * handshake_in = malloc(sizeof(t_header));
+
+	recibir_handshake(socketUMC, handshake_in);
+
+	if (handshake_in->identificador == 3) {
+		printf("Se conecto umc\n");
+		printf("Tamanio de pagina: %d", handshake_in->tamanio);
+
+		tamanio_paginas = handshake_in->tamanio;    		 			        //Asignar el tamaño de paginas
+
+	} else {
+	//	return EXIT_FAILURE;
+	}
 }
 
 
@@ -341,3 +360,30 @@ t_variable_stack * buscarVariableEnStack(t_nombre_variable  id){
 	return list_find(stackActivo->vars, (void*) _es_la_que_busco);
 }
 
+int getQuantum(){
+	return quantum;
+}
+
+int getQuantumPcb(){
+	return pcbActual->quantum_actual;
+}
+
+void ejecutarProximaInstruccion(){
+	t_indice_de_codigo * InstruccionACorrer;
+
+	InstruccionACorrer = buscarProximaInstruccion();
+
+	//obtener paginas y mandar a umc
+
+
+
+	pcbActual->quantum_actual ++;
+
+}
+
+t_indice_de_codigo * buscarProximaInstruccion(){
+	int pc;
+
+	pc = pcbActual->pcb_pc;
+	return list_get(pcbActual->indice_codigo, pc);
+}
