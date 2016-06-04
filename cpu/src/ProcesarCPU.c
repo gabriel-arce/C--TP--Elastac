@@ -22,10 +22,21 @@ int main(void){
 	//Escuchar al nucleo a la espera de nuevos PCBs
 	escucharAlNucleo();
 
-	while(getQuantumPcb() < getQuantum()){
+	while(pcbCorriendo()){
 
 		ejecutarProximaInstruccion();
+		actualizarQuantum();
+
+		if(getQuantumPcb() == getQuantum()){
+
+			restaurarQuantum();
+			cambiarEstadoAFinQuantum();
+		}
 	}
+
+	enviarPCB();
+
+	borrarPCBActual();
 
 
 

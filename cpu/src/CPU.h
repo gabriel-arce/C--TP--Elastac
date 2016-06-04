@@ -65,6 +65,16 @@ int getQuantumPcb();
 int getQuantum();
 void ejecutarProximaInstruccion();
 t_indice_de_codigo * buscarProximaInstruccion();
+bool pcbCorriendo();
+void restaurarQuantum();
+void actualizarQuantum();
+void enviarPCB();
+void cambiarEstadoACorriendo();
+void cambiarEstadoAFinQuantum();
+void actualizarPC();
+void borrarPCBActual();
+void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable);
+t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size);
 
 
 //------------------Primitivas
