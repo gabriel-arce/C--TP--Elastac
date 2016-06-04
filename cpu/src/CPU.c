@@ -219,7 +219,7 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 	//si hay algun error devuelve -1 y se destruye el programa
 }
 
-t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size){
+t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
 
 	//TODO enviar a UMC
 
@@ -388,12 +388,16 @@ int getQuantumPcb(){
 }
 
 void ejecutarProximaInstruccion(){
-	t_indice_de_codigo * InstruccionACorrer;
+	t_indice_de_codigo * instruccionACorrer;  //TODO free
+	char* instruccionEnString;
 
 	actualizarPC();
-	InstruccionACorrer = buscarProximaInstruccion();
+	instruccionACorrer = buscarProximaInstruccion();
 
 	// TODO obtener paginas y mandar a umc
+	instruccionEnString = obtenerInstruccion(instruccionACorrer);
+
+	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 
 }
@@ -433,6 +437,42 @@ void cambiarEstadoAFinQuantum(){
 void actualizarPC(){
 
 	pcbActual->pcb_pc ++;
+}
+
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (hacer que leerBytes devuelva int o char*
+
+	char* instruccion = string_new();
+	uint32_t pagina;
+	uint32_t offset;
+	uint32_t size;
+	uint32_t aux;
+	uint32_t loQueGuardo;
+
+	pagina = instruccionACorrer->posicion / tamanio_paginas;					//dividir devuelve el numero entero (redondeado para abajo)
+	offset = (instruccionACorrer->posicion - (tamanio_paginas * pagina));
+	aux = offset + instruccionACorrer->tamanio;
+
+	if(aux <= tamanio_paginas){
+		string_append(&instruccion, leerBytes(pagina, offset, size));
+	}
+	else{
+
+		while(aux > tamanio_paginas){
+
+			loQueGuardo = (tamanio_paginas - offset);
+
+			string_append(&instruccion, leerBytes(pagina,offset, loQueGuardo));
+
+			pagina++;
+			offset = 0;
+			aux -= loQueGuardo;
+
+		}
+
+		string_append(&instruccion, leerBytes(pagina, offset, aux));
+	}
+
+	return instruccion;
 }
 
 void solicitarAlUMCProxSentencia(){

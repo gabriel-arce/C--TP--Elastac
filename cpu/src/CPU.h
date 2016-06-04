@@ -75,6 +75,7 @@ void actualizarPC();
 void borrarPCBActual();
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable);
 t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size);
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer);
 
 
 //------------------Primitivas
