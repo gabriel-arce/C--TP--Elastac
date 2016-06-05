@@ -84,11 +84,32 @@ void cargarConfiguracion(){
 void conectarConNucleo(){
 	if((socketNucleo = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
 		salirPor("[CPU} No se pudo conectar al Nucleo");
+	//recibir Quantum
+
 }
 
 void conectarConUMC(){
 	if((socketUMC = clienteDelServidor(cpu->ip_UMC, cpu->puerto_UMC)) == -1)
 		salirPor("[CPU] No se pudo conectar al UMC");
+
+	if (enviar_handshake(socketUMC, 5, 0) == -1) {
+		printf("No se pudo enviar el handshake a umc. \n");
+		//return EXIT_FAILURE;
+	}
+
+	t_header * handshake_in = malloc(sizeof(t_header));
+
+	recibir_handshake(socketUMC, handshake_in);
+
+	if (handshake_in->identificador == 3) {
+		printf("Se conecto umc\n");
+		printf("Tamanio de pagina: %d", handshake_in->tamanio);
+
+		tamanio_paginas = handshake_in->tamanio;    		 			        //Asignar el tamaño de paginas
+
+	} else {
+	//	return EXIT_FAILURE;
+	}
 }
 
 
@@ -173,28 +194,40 @@ void escucharAlNucleo(){
 
 
 void recibirPCB(char *buffer){
-	t_pcb *pcb;
 
 	//Deserializar pcb
-	pcb = convertirPCB(buffer);
+	pcbActual = convertirPCB(buffer);
 
-	//Aumentar program counter
-	pcb->pcb_pc++;
+	cambiarEstadoACorriendo();
+}
 
-	//solicitar al UMC la proxima sentencia a ejecutar, con el indice de codigo del PCB
-	solicitarAlUMCProxSentencia();
+void enviarPCB(){
 
-	//cuando recibe, parsear
+	//TODO enviar a nucleo
 
 }
 
+void borrarPCBActual(){
 
-void solicitarAlUMCProxSentencia(){
+	//TODO free
+}
 
-	//Enviar al UMC
-};
+void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
-//--------------------------------------Primitivas
+	// TODO enviar a UMC
+
+	//si hay algun error devuelve -1 y se destruye el programa
+}
+
+t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
+
+	//TODO enviar a UMC
+
+
+}
+
+//=================================================================================================================================================================
+//----------------------------------------------------------------Primitivas
 
 t_posicion definirVariable(t_nombre_variable identificador_variable) {
 
@@ -230,7 +263,7 @@ t_posicion definirVariable(t_nombre_variable identificador_variable) {
 	stackActivo = buscarStackActivo();
 	list_add(stackActivo->vars, &variableStack);						//Agrego variableStack a stackActivo
 
-	//mandar a umc escribirBytes()
+	escribirBytes(variableStack->posicion->pagina, variableStack->posicion->offset, variableStack->posicion->size, 0);		//En realidad no se tendrian que inicializar las variables
 
 	return * variableStack->posicion;
 	}
@@ -246,16 +279,18 @@ t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
 
 t_valor_variable dereferenciar(t_posicion direccion_variable) {
 
-	t_valor_variable * valorVariable;
+	t_valor_variable  valorVariable;
 
-	//mandar a umc leerBytes(direccion_variable)
-	return * valorVariable;
+	valorVariable = leerBytes(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size);
+
+	return  valorVariable;
 
 }
 
 void asignar(t_posicion direccion_variable, t_valor_variable valor) {
 
-	//mandar a umc esribirBytes()
+	escribirBytes(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size, valor);
+
 }
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
@@ -293,7 +328,9 @@ int imprimirTexto(char* texto){
 
 int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
+	//cambiar estado a bloqueado
 	//mandar a nucleo
+
 }
 
 int wait(t_nombre_semaforo identificador_semaforo){
@@ -306,7 +343,8 @@ int signal(t_nombre_semaforo identificador_semaforo){
 	//mandar a nucleo
 }
 
-//---------------------------------Otras
+//=================================================================================================================================================================
+//----------------------------------------------------------------------Otras
 
 t_stack * buscarStackActivo(){
 
@@ -340,4 +378,106 @@ t_variable_stack * buscarVariableEnStack(t_nombre_variable  id){
 
 	return list_find(stackActivo->vars, (void*) _es_la_que_busco);
 }
+
+int getQuantum(){
+	return quantum;
+}
+
+int getQuantumPcb(){
+	return pcbActual->quantum_actual;
+}
+
+void ejecutarProximaInstruccion(){
+	t_indice_de_codigo * instruccionACorrer;  //TODO free
+	char* instruccionEnString;
+
+	actualizarPC();
+	instruccionACorrer = buscarProximaInstruccion();
+
+	// TODO obtener paginas y mandar a umc
+	instruccionEnString = obtenerInstruccion(instruccionACorrer);
+
+	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
+
+
+}
+
+t_indice_de_codigo * buscarProximaInstruccion(){
+	int pc;
+
+	pc = pcbActual->pcb_pc;
+	return list_get(pcbActual->indice_codigo, pc);   //hay que ver si la lista empieza en 0 o en 1
+}
+
+bool pcbCorriendo(){
+
+	return (pcbActual->estado == Corriendo);
+}
+
+void restaurarQuantum(){
+
+	pcbActual->quantum_actual = 0;
+}
+
+void actualizarQuantum(){
+
+	pcbActual->quantum_actual ++;
+}
+
+void cambiarEstadoACorriendo(){
+
+	pcbActual->estado = Corriendo;
+}
+
+void cambiarEstadoAFinQuantum(){
+
+	pcbActual->estado = FinQuantum;
+}
+
+void actualizarPC(){
+
+	pcbActual->pcb_pc ++;
+}
+
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (hacer que leerBytes devuelva int o char*
+
+	char* instruccion = string_new();
+	uint32_t pagina;
+	uint32_t offset;
+	uint32_t size;
+	uint32_t aux;
+	uint32_t loQueGuardo;
+
+	pagina = instruccionACorrer->posicion / tamanio_paginas;					//dividir devuelve el numero entero (redondeado para abajo)
+	offset = (instruccionACorrer->posicion - (tamanio_paginas * pagina));
+	aux = offset + instruccionACorrer->tamanio;
+
+	if(aux <= tamanio_paginas){
+		string_append(&instruccion, leerBytes(pagina, offset, size));
+	}
+	else{
+
+		while(aux > tamanio_paginas){
+
+			loQueGuardo = (tamanio_paginas - offset);
+
+			string_append(&instruccion, leerBytes(pagina,offset, loQueGuardo));
+
+			pagina++;
+			offset = 0;
+			aux -= loQueGuardo;
+
+		}
+
+		string_append(&instruccion, leerBytes(pagina, offset, aux));
+	}
+
+	return instruccion;
+}
+
+void solicitarAlUMCProxSentencia(){
+
+	//Enviar al UMC
+};
+
 

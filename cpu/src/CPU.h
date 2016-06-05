@@ -61,6 +61,22 @@ t_stack * buscarStackActivo();
 void crearStackInicial();
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id);
 int stackActivo(t_stack * stack);
+int getQuantumPcb();
+int getQuantum();
+void ejecutarProximaInstruccion();
+t_indice_de_codigo * buscarProximaInstruccion();
+bool pcbCorriendo();
+void restaurarQuantum();
+void actualizarQuantum();
+void enviarPCB();
+void cambiarEstadoACorriendo();
+void cambiarEstadoAFinQuantum();
+void actualizarPC();
+void borrarPCBActual();
+void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable);
+t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size);
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer);
+
 
 //------------------Primitivas
 

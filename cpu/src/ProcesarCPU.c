@@ -19,31 +19,28 @@ int main(void){
 	//Conectar al UMC
 	conectarConUMC();
 
-
-
-/*
-	if (enviar_handshake(socketCPU, 5, 0) == -1) {
-		printf("No se pudo enviar el handshake a umc. \n");
-		return EXIT_FAILURE;
-	}
-
-	t_header * handshake_in = malloc(sizeof(t_header));
-
-	recibir_handshake(socketCPU, handshake_in);
-
-	if (handshake_in->identificador == 3) {
-		printf("Se conecto umc\n");
-		printf("Tamanio de pagina: %d", handshake_in->tamanio);
-
-		tamanio_paginas = handshake_in->tamanio;    		 			        //Asignar el tamaño de paginas
-
-	} else {
-		return EXIT_FAILURE;
-	}
-*/
-
 	//Escuchar al nucleo a la espera de nuevos PCBs
 	escucharAlNucleo();
+
+	while(pcbCorriendo()){
+
+		ejecutarProximaInstruccion();
+		actualizarQuantum();
+
+		if(getQuantumPcb() == getQuantum()){
+
+			restaurarQuantum();
+			cambiarEstadoAFinQuantum();
+		}
+	}
+
+	enviarPCB();
+
+	borrarPCBActual();
+
+
+
+
 
  	return EXIT_SUCCESS;
 }
