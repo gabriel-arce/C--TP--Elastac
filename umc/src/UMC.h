@@ -104,7 +104,7 @@ pthread_mutex_t mutex_hilos, mutex_lista_cpu;
 pthread_mutex_t mutex_nucleo;
 pthread_mutex_t mutex_memoria;
 int memoria_size;
-char * memoria_principal;
+void * memoria_principal;
 t_log * logger;
 FILE * archivo_reporte;
 t_list * tlb;
