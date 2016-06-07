@@ -55,11 +55,11 @@ int main(int argc, char * argv[]) {
 	cargar_config();
 
 	//Crear socket al nucleo
-	if ((socketConsola = clienteDelServidor(consola->ip_nucleo,
-			consola->puerto_nucleo)) == -1) {
+	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
 		MostrarMensajeDeError(NoSePudoCrearSocket);
 		return EXIT_FAILURE;
 	}
+
 	//--------handshake
 	t_header * handshake = malloc(sizeof(t_header));
 	handshake->identificador = (uint8_t) 2;
