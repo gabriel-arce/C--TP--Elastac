@@ -10,6 +10,7 @@
 
 #include "Nucleo.h"
 
+
 int cpuID = 0;						//Numero de CPU
 
 void cargarConfiguracion(){
@@ -308,7 +309,7 @@ void procesarMensaje(int fd, char *buffer){
 }
 
 void crearClienteUMC(){
-	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
+	/*	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
 		salirPor("[NUCLEO] No pudo conectarse al swap");
 
 	//----------Envio el handshake a UMC
@@ -349,7 +350,7 @@ void crearClienteUMC(){
 	printf("El tamanio de pagina es: %d", tamanio_pagina);
 
 	free(buffer_entrada);
-	free(head_tamanio_pagina);
+	free(head_tamanio_pagina);*/
 }
 
 void planificar_consolas(){
@@ -535,6 +536,8 @@ void crearServerConsola(){
 	 int newfd;
 	 char buffer[MAXIMO_BUFFER];
 	t_pcb *pcb_aux;
+	t_header *header;
+
 
 	//Crear socket de escucha
 	listener = crearSocket();
@@ -554,13 +557,29 @@ void crearServerConsola(){
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
-		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0){
+		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0)
 			printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", listener);
-			}
+
 		if (nbytes == 0){
 				printf("[NUCLEO] Conexion con socket de consola nro. %d cerrada.\n", listener);
 		} else {
 			//Crear PCB por consola entrante
+
+			if ((recibirHandshakeConsola(buffer)) != CONSOLA)
+				salirPor("Proceso desconocido por puerto de Consola");
+
+		    puts("[NUCLEO] Recepcion hanshake Consola" );
+
+			//recibirHeaderConsola(buffer, fd, header);
+			recibirDatosConsola(buffer);
+			//enviarAUMC(buffer);
+			//cantidadpaginas = lengh programa / tamanio_pagina + stacksize conf / tamanio_pagina
+			//programa
+			//pid
+			//recibo una estructura donde tengo el tamanio y ahi tengo la respuesta!
+
+
+
 			printf("Creando PCB.. \n");
 			pcb_aux = malloc(sizeof(t_pcb));
 			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
@@ -679,6 +698,8 @@ void finalizar(){
 		//Sacar de la lista de finalizados
 		list_remove(lista_finalizados, i);
 
+		//avisar a UMC que termino
+
 		//Destruyo el pcb creado
 		destruirPCB(pcb);
 	}
@@ -686,5 +707,31 @@ void finalizar(){
 	signalSemaforo(mutexFinalizados);
 }
 
+t_header * deserializar_header(void * buffer) {
+	t_header * header = malloc(sizeof(t_header));
+
+	memcpy(&header->identificador, buffer, 1);
+	memcpy(&header->tamanio, buffer + 1, 4);
+
+	return header;
+}
 
 
+uint8_t recibirHandshakeConsola(void *buffer){
+	t_header *handshake = malloc(sizeof(t_header));
+
+	handshake = deserializar_header(buffer);
+
+	return handshake->identificador;
+}
+
+t_header *recibirHeaderConsola(fd, header){
+	t_header *handshake = malloc(sizeof(t_header));
+//	int nbytes = recv(fd, buffer, sizeof(buffer), 0);
+//	handshake = deserializar_header(buffer);
+	return handshake;
+}
+
+void recibirDatosConsola(buffer){
+
+}
