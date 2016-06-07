@@ -190,11 +190,7 @@ void inicializar_memoria() {
 	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
 			memoria_size);
 
-	int pos, indice_frame = 0;
-	while (pos < memoria_size) {
-		memoria_principal[pos] = 'X';
-		pos++;
-	}
+	int indice_frame = 0;
 
 	for (indice_frame = 0; indice_frame < memoria_size; indice_frame++) {
 		t_mem_frame * frame = malloc(sizeof(t_mem_frame));

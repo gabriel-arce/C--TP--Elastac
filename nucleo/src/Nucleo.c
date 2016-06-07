@@ -686,7 +686,8 @@ void finalizar(){
 	waitSemaforo(mutexFinalizados);
 	waitSemaforo(semFinalizados);
 
-	for(int i = 0; !list_is_empty(lista_finalizados); i++){
+	int i;
+	for(i = 0; !list_is_empty(lista_finalizados); i++){
 
 		//Por cada elemento de la lista de finalizados
 		pcb = list_get(lista_finalizados, i);
