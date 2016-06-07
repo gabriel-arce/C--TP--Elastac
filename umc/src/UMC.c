@@ -336,10 +336,11 @@ void * escucha_conexiones() {
 		case CPU:
 			new_line();
 			printf("Se conecto una CPU \n");
+			pthread_mutex_lock(&mutex_lista_cpu);
 			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
 			cpu->socket_cpu = socket_nuevo;
-			pthread_mutex_lock(&mutex_lista_cpu);
 			cpu->id_cpu = ++id_cpu;
+			cpu->proceso_activo = -1;
 			list_add(cpu_conectadas, cpu);
 			pthread_mutex_unlock(&mutex_lista_cpu);
 
@@ -361,6 +362,7 @@ void * escucha_conexiones() {
 void * atiende_nucleo() {
 
 	int recibido = 1;
+	int proceso_activo = -1;
 
 	while (recibido > 0) {
 

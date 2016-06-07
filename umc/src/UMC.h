@@ -25,7 +25,6 @@
 #include <elestac_config.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
-#include <elestac_paquetes.h>
 
 #define CONFIG_PATH "umc.conf" //para runear en terminal
 //#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
@@ -50,6 +49,11 @@
 #define Solicitar_espacio 36
 
 typedef struct {
+	uint8_t identificador;
+	uint32_t tamanio;
+}__attribute__((packed)) t_header;
+
+typedef struct {
 	int puerto_escucha;
 	int puerto_swap;
 	char * ip_swap;
@@ -64,6 +68,7 @@ typedef struct {
 typedef struct {
 	int socket_cpu;
 	int id_cpu;
+	int proceso_activo;
 } t_sesion_cpu;
 
 typedef struct {

@@ -89,27 +89,7 @@ void conectarConNucleo(){
 }
 
 void conectarConUMC(){
-	if((socketUMC = clienteDelServidor(cpu->ip_UMC, cpu->puerto_UMC)) == -1)
-		salirPor("[CPU] No se pudo conectar al UMC");
-
-	if (enviar_handshake(socketUMC, 5, 0) == -1) {
-		printf("No se pudo enviar el handshake a umc. \n");
-		//return EXIT_FAILURE;
-	}
-
-	t_header * handshake_in = malloc(sizeof(t_header));
-
-	recibir_handshake(socketUMC, handshake_in);
-
-	if (handshake_in->identificador == 3) {
-		printf("Se conecto umc\n");
-		printf("Tamanio de pagina: %d", handshake_in->tamanio);
-
-		tamanio_paginas = handshake_in->tamanio;    		 			        //Asignar el tamaño de paginas
-
-	} else {
-	//	return EXIT_FAILURE;
-	}
+	//despues lo hago
 }
 
 

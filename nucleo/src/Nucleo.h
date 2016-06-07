@@ -54,12 +54,16 @@ typedef struct {
 	int stack_size;
 } t_nucleo;
 
-
 typedef struct {
 	uint8_t fd;
 	uint8_t cpuID;
 	uint8_t disponible;
 } t_clienteCPU;
+
+typedef struct {
+	uint8_t identificador;
+	uint32_t tamanio;
+}__attribute__((packed)) t_header;
 
 /****** Variables Globales ******/
 t_nucleo *nucleo;

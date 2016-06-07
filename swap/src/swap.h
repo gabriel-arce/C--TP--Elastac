@@ -21,7 +21,6 @@
 #include <elestac_config.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
-#include <elestac_paquetes.h>
 
 #define CONFIG_PATH "swap.conf"
 //#define CONFIG_PATH "../swap/src/swap.conf"
@@ -39,6 +38,11 @@ typedef struct {
 	int identificador;
 	char * mensaje;
 } t_handshake;
+
+typedef struct {
+	uint8_t identificador;
+	uint32_t tamanio;
+}__attribute__((packed)) t_header;
 
 t_swap_config * swap_config;
 
