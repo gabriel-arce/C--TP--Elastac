@@ -182,8 +182,9 @@ int no_es_comando(char * com) {
 
 void inicializar_memoria() {
 
-	memoria_principal = malloc(
-			umc_config->frames_size * umc_config->cant_frames);
+	memoria_size = umc_config->frames_size * umc_config->cant_frames;
+
+	memoria_principal = malloc(memoria_size);
 	memset(memoria_principal, 0, memoria_size);
 
 	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
@@ -386,7 +387,7 @@ void * atiende_nucleo() {
 			void * buffer_stream = malloc(head_in->tamanio);
 
 			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
-					MSG_WAITALL)) == -1) {
+			MSG_WAITALL)) == -1) {
 				printf("Error en el recv del header en atiende nucleo");
 				continue;
 			}
@@ -395,10 +396,13 @@ void * atiende_nucleo() {
 					sizeof(t_paquete_inicializar_programa));
 
 			memcpy(&(iniciar_prog_pack->pid), buffer_stream, 4);
-			memcpy(&(iniciar_prog_pack->paginas_requeridas), buffer_stream + 4, 4);
+			memcpy(&(iniciar_prog_pack->paginas_requeridas), buffer_stream + 4,
+					4);
 			memcpy(&(iniciar_prog_pack->programa_length), buffer_stream + 8, 4);
-			iniciar_prog_pack->codigo_programa = malloc(iniciar_prog_pack->programa_length);
-			memcpy(iniciar_prog_pack->codigo_programa, buffer_stream + 12, iniciar_prog_pack->programa_length);
+			iniciar_prog_pack->codigo_programa = malloc(
+					iniciar_prog_pack->programa_length);
+			memcpy(iniciar_prog_pack->codigo_programa, buffer_stream + 12,
+					iniciar_prog_pack->programa_length);
 
 			printf("pid: %d\n", iniciar_prog_pack->pid);
 			printf("paginas: %d\n", iniciar_prog_pack->paginas_requeridas);
@@ -432,12 +436,13 @@ void * atiende_nucleo() {
 	return EXIT_SUCCESS;
 }
 
-void * inicializar_programa(int id_programa, int paginas_requeridas, char * codigo) {
+void * inicializar_programa(int id_programa, int paginas_requeridas,
+		char * codigo) {
 
 	int marcos_libres = 0;
 
-	void contar_marcos_libres (t_mem_frame * list_aux) {
-		if(list_aux->libre == true)
+	void contar_marcos_libres(t_mem_frame * list_aux) {
+		if (list_aux->libre == true)
 			marcos_libres++;
 	}
 
@@ -446,7 +451,7 @@ void * inicializar_programa(int id_programa, int paginas_requeridas, char * codi
 	pthread_mutex_unlock(&mutex_memoria);
 
 	if (paginas_requeridas > marcos_libres) {
-		if(pedir_espacio_swap(id_programa, paginas_requeridas) == -1) {
+		if (pedir_espacio_swap(id_programa, paginas_requeridas) == -1) {
 			//rechazo programa
 		}
 	} else {
@@ -470,7 +475,8 @@ int pedir_espacio_swap(int pid, int paginas_necesarias) {
 	memcpy(stream_header, &peticion->identificador, 1);
 	memcpy(stream_header + 1, &peticion->tamanio, 4);
 
-	t_paquete_inicializar_programa * package = malloc(sizeof(t_paquete_inicializar_programa));
+	t_paquete_inicializar_programa * package = malloc(
+			sizeof(t_paquete_inicializar_programa));
 	package->pid = pid;
 	package->paginas_requeridas = paginas_necesarias;
 
@@ -501,7 +507,6 @@ void * finalizar_programa(int id_programa) {
 	printf("Programa finalizado.\n");
 	return EXIT_SUCCESS;
 }
-
 
 void * atiende_cpu() {
 
