@@ -21,7 +21,7 @@
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
 #include <elestac_pcb.h>
-#include <elestac_paquetes.h>
+
 
 /****** Constantes ******/
 
@@ -65,6 +65,11 @@ typedef struct {
 	uint8_t identificador;
 	uint32_t tamanio;
 }__attribute__((packed)) t_header;
+
+typedef struct {
+	uint32_t programa_length;
+	char * codigo_programa;
+} t_paquete_programa;
 
 /****** Variables Globales ******/
 t_nucleo *nucleo;
@@ -127,6 +132,7 @@ int CPUestaDisponible(t_clienteCPU *cpu);
 t_header * deserializar_header(void * buffer);
 uint8_t recibirHandshakeConsola(void *buffer);
 t_header *recibirHeaderConsola(buffer);
-void recibirDatosConsola(buffer);
+t_paquete_programa *recibirDatosConsola(int fd);
+void finalizar();
 
 #endif /* NUCLEO_H_ */

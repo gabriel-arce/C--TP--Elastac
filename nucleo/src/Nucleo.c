@@ -570,8 +570,22 @@ void crearServerConsola(){
 
 		    puts("[NUCLEO] Recepcion hanshake Consola" );
 
-			//recibirHeaderConsola(buffer, fd, header);
-			recibirDatosConsola(buffer);
+		    t_header *header = malloc(sizeof(t_header));
+			header = recibirHeaderConsola(newfd);
+
+			void *buffer2 = malloc(header->tamanio);
+			t_paquete_programa *programa = malloc(sizeof(t_paquete_programa));
+			programa->codigo_programa = malloc(programa->programa_length);
+
+			if (recv(newfd, buffer2, header->tamanio, 0) < 0)
+				salirPor("No se pudo obtener el codigo del programa");
+
+			memcpy(&programa->programa_length, buffer2, 4);
+			memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
+			printf("Codigo programa: %s\n", programa->codigo_programa);
+
+
+
 			//enviarAUMC(buffer);
 			//cantidadpaginas = lengh programa / tamanio_pagina + stacksize conf / tamanio_pagina
 			//programa
@@ -725,13 +739,16 @@ uint8_t recibirHandshakeConsola(void *buffer){
 	return handshake->identificador;
 }
 
-t_header *recibirHeaderConsola(fd, header){
-	t_header *handshake = malloc(sizeof(t_header));
-//	int nbytes = recv(fd, buffer, sizeof(buffer), 0);
-//	handshake = deserializar_header(buffer);
-	return handshake;
+t_header *recibirHeaderConsola(int fd){
+	char buffer[MAXIMO_BUFFER];
+
+	if( recv(fd, buffer, sizeof(buffer), 0) < 0)
+		return NULL;
+
+	return deserializar_header(buffer);
 }
 
-void recibirDatosConsola(buffer){
-
-}
+t_paquete_programa *recibirDatosConsola(int fd){
+	t_paquete_programa *programa;
+	return programa;
+};
