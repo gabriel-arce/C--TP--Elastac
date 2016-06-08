@@ -32,33 +32,13 @@ AnSISOP_kernel kernel_functions = { };
 
 
 
-
-t_CPU_config *cargar_config() {
-
-	printf(" Cargando configuracion.. \n");
-	t_config *config = config_create(CONFIG_PATH);
-	t_CPU_config *cpu_config	= malloc(sizeof(t_CPU_config));
-
-	cpu_config->ip_nucleo 					= string_new();
-	cpu_config->ip_UMC						= string_new();
-
-	cpu_config->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
-	cpu_config->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
-
-	string_append(&cpu_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
-	string_append(&cpu_config->ip_UMC, getStringProperty(config, "IP_UMC"));
-
-	config_destroy(config);
-
-	return cpu_config;
-}
-
-
 void cargarConfiguracion(){
 
 	printf("PROCESO CPU \n");
 	printf(" Cargando configuracion.. \n");
 	t_config *config = config_create(CONFIG_PATH);
+
+	cpu = malloc(sizeof(t_CPU_config));
 
 	cpu->ip_nucleo 					= string_new();
 	cpu->ip_UMC						= string_new();
@@ -175,8 +155,9 @@ void escucharAlNucleo(){
 
 void recibirPCB(char *buffer){
 
-	//Deserializar pcb
-	pcbActual = convertirPCB(buffer);
+	pcbActual = malloc(sizeof(t_pcb));
+
+	pcbActual = convertirPCB(buffer);					//Deserializar pcb
 
 	cambiarEstadoACorriendo();
 }
@@ -199,12 +180,24 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 	//si hay algun error devuelve -1 y se destruye el programa
 }
 
-t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
+t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
 
 	//TODO enviar a UMC
 
 
 }
+
+char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
+
+	//TODO enviar a UMC
+}
+
+void mandarTextoANucleo(char* texto){
+
+	//TODO enviar a Nucleo
+}
+
+
 
 //=================================================================================================================================================================
 //----------------------------------------------------------------Primitivas
@@ -261,7 +254,7 @@ t_valor_variable dereferenciar(t_posicion direccion_variable) {
 
 	t_valor_variable  valorVariable;
 
-	valorVariable = leerBytes(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size);
+	valorVariable = leerBytesDeVariable(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size);
 
 	return  valorVariable;
 
@@ -302,8 +295,14 @@ int imprimir(t_valor_variable valor_mostrar){
 
 int imprimirTexto(char* texto){
 
-	//mandar a nucleo
-	//hay que ver si es "end" y cambiar estado a FINALIZADO
+	if(string_equals_ignore_case(texto, "end")){
+
+		cambiarEstadoATerminado();
+	}
+
+	mandarTextoANucleo(texto);
+
+	return string_length(texto);
 }
 
 int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
@@ -372,10 +371,10 @@ void ejecutarProximaInstruccion(){
 	char* instruccionEnString;
 
 	actualizarPC();
-	instruccionACorrer = buscarProximaInstruccion();
+	instruccionACorrer = buscarProximaInstruccion();    // busco la instruccion en el indice de codigo
 
-	// TODO obtener paginas y mandar a umc
-	instruccionEnString = obtenerInstruccion(instruccionACorrer);
+
+	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
@@ -414,6 +413,11 @@ void cambiarEstadoAFinQuantum(){
 	pcbActual->estado = FinQuantum;
 }
 
+void cambiarEstadoATerminado(){
+
+	pcbActual->estado = Terminado;
+}
+
 void actualizarPC(){
 
 	pcbActual->pcb_pc ++;
@@ -433,7 +437,8 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 	aux = offset + instruccionACorrer->tamanio;
 
 	if(aux <= tamanio_paginas){
-		string_append(&instruccion, leerBytes(pagina, offset, size));
+		size= instruccionACorrer->tamanio;
+		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, size));
 	}
 	else{
 
@@ -441,7 +446,7 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 
 			loQueGuardo = (tamanio_paginas - offset);
 
-			string_append(&instruccion, leerBytes(pagina,offset, loQueGuardo));
+			string_append(&instruccion, leerBytesDeInstruccion(pagina,offset, loQueGuardo));
 
 			pagina++;
 			offset = 0;
@@ -449,7 +454,7 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 
 		}
 
-		string_append(&instruccion, leerBytes(pagina, offset, aux));
+		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, aux));
 	}
 
 	return instruccion;

@@ -44,13 +44,13 @@ typedef struct {
 
 //-------------------Variables
 
-t_pcb *pcbActual;					//PCB del programa ejecutando
+t_pcb * pcbActual;					//PCB del programa ejecutando
 int quantum;
 int tamanio_paginas;
-t_CPU_config *cpu;
+t_CPU_config * cpu;
 int socketNucleo, socketUMC;
 fd_set master;				// conjunto maestro de descriptores de fichero
-fd_set read_fds;// conjunto temporal de descriptores de fichero para select()
+fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 
 //------------------Funciones
 
@@ -75,11 +75,13 @@ void actualizarQuantum();
 void enviarPCB();
 void cambiarEstadoACorriendo();
 void cambiarEstadoAFinQuantum();
+void cambiarEstadoATerminado();
 void actualizarPC();
 void borrarPCBActual();
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable);
 t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size);
 char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer);
+void mandarTextoANucleo(char* texto);
 
 
 //------------------Primitivas
