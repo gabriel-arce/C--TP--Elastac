@@ -21,10 +21,6 @@
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
 #include <elestac_pcb.h>
-<<<<<<< HEAD
-
-=======
->>>>>>> 39f1a30b47aa1b7d6dcd9229d314c09229a662d1
 
 /****** Constantes ******/
 
@@ -134,13 +130,9 @@ t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 t_header * deserializar_header(void * buffer);
 uint8_t recibirHandshakeConsola(void *buffer);
-<<<<<<< HEAD
-t_header *recibirHeaderConsola(buffer);
 t_paquete_programa *recibirDatosConsola(int fd);
 void finalizar();
-=======
-//t_header *recibirHeaderConsola(buffer);
+t_header *recibirHeaderConsola(buffer);
 //void recibirDatosConsola(buffer);
->>>>>>> 39f1a30b47aa1b7d6dcd9229d314c09229a662d1
 
 #endif /* NUCLEO_H_ */
