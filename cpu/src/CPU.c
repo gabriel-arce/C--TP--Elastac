@@ -18,7 +18,7 @@ AnSISOP_funciones functions = {
 		.AnSISOP_obtenerValorCompartida  = obtenerValorCompartida,
 		.AnSISOP_asignarValorCompartida  = asignarValorCompartida,
 		.AnSISOP_irAlLabel 				 = irAlLabel,
-		.AnSISOP_llamarConRetorno        = llamarFuncion,
+		.AnSISOP_llamarConRetorno        = llamarConRetorno,
 		.AnSISOP_retornar				 = retornar,
 		.AnSISOP_imprimir				 = imprimir,
 		.AnSISOP_imprimirTexto			 = imprimirTexto,
@@ -55,6 +55,9 @@ void cargarConfiguracion(){
 	printf("Puerto Nucleo: %d\n", cpu->puerto_nucleo);
 	printf("IP UMC: %s\n", cpu->ip_UMC);
 	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
+
+	hotPlugActivado = malloc(sizeof(bool));
+	hotPlugActivado = false;
 
 
 
@@ -280,16 +283,17 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
 
 	//mandar a nucleo
+	return valor;
 }
 
-t_puntero_instruccion irAlLabel(t_nombre_etiqueta etiqueta){
+void irAlLabel(t_nombre_etiqueta etiqueta){
 
 }
-t_puntero_instruccion llamarFuncion(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion){
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion){
 
 	//cambiar stackActivo
 }
-t_puntero_instruccion retornar(t_valor_variable retorno){
+void retornar(t_valor_variable retorno){
 
 	//cambiar stackActivo
 }
@@ -318,12 +322,12 @@ int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 }
 
-int wait(t_nombre_semaforo identificador_semaforo){
+void wait(t_nombre_semaforo identificador_semaforo){
 
 	// mandar a nucleo
 }
 
-int signals(t_nombre_semaforo identificador_semaforo){
+void signals(t_nombre_semaforo identificador_semaforo){
 
 	//mandar a nucleo
 }
