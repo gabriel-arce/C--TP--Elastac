@@ -49,10 +49,6 @@ typedef struct {
 	uint32_t offset;
 } t_sp;
 
-typedef struct {
-	char * nombre_funcion;
-	uint32_t posicionPrimeraInstruccion;
-} t_indice_de_etiquetas;
 
 typedef struct {
 	uint32_t pcb_pid;												//Identificador unico
@@ -60,7 +56,7 @@ typedef struct {
 	t_sp * pcb_sp;														//Stack pointer
 	uint32_t paginas_codigo;								//Paginas del codigo
 	t_list * indice_codigo;										//Indice del codigo   (t_indice_de_codigo)
-	t_list * indice_etiquetas;									//Indice de etiquetas (t_indice_de_etiquetas)
+	char* indice_etiquetas;									//Indice de etiquetas (se busca con metadata_buscar_etiqueta)
 	t_list * indice_stack;											//Indice del Stack	  (t_stack)
 	t_estado estado;												//Codigo interno para ver los estados del pcb
 	uint32_t consola;															//Consola
