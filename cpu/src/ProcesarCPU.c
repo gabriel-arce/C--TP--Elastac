@@ -10,6 +10,8 @@
 
 int main(void){
 
+	signal(SIGUSR1,rutina);
+
 
 	cargarConfiguracion();		//Cargar configuracion
 
@@ -19,10 +21,11 @@ int main(void){
 
 	conectarConUMC();			//Conectar al UMC
 
-	while(1){
 
+	while(!hotPlugActivado){
 
 		escucharAlNucleo();			//Escuchar al nucleo a la espera de nuevos PCBs
+
 
 		while(pcbCorriendo()){
 
@@ -41,6 +44,8 @@ int main(void){
 		borrarPCBActual();
 
 	}
+
+	desconectarCPU();
 
 
 

@@ -24,7 +24,7 @@ AnSISOP_funciones functions = {
 		.AnSISOP_imprimirTexto			 = imprimirTexto,
 		.AnSISOP_entradaSalida           = entradaSalida,
 		//.AnSISOP_wait					 = wait,
-		//.AnSISOP_signal					 = signal,
+		//.AnSISOP_signal					 = signals,
 
 };
 
@@ -198,6 +198,11 @@ void mandarTextoANucleo(char* texto){
 	//TODO enviar a Nucleo
 }
 
+void desconectarCPU(){
+
+	//mandar a nucleo que muere este CPU
+}
+
 
 
 //=================================================================================================================================================================
@@ -318,10 +323,28 @@ int wait(t_nombre_semaforo identificador_semaforo){
 	// mandar a nucleo
 }
 
-int signal(t_nombre_semaforo identificador_semaforo){
+int signals(t_nombre_semaforo identificador_semaforo){
 
 	//mandar a nucleo
 }
+
+
+//=================================================================================================================================================================
+//----------------------------------------------------------------------Hot plug (signal)
+
+
+void rutina (int n) {
+	switch (n) {
+		case SIGUSR1:
+			printf("Hot plug activado \n");
+			if(pcbCorriendo()){
+				printf("Se desconectará el CPU cuando termine la ejecucion de la instruccion actual\n");
+			}
+			hotPlugActivado = true;
+	}
+}
+
+
 
 //=================================================================================================================================================================
 //----------------------------------------------------------------------Otras

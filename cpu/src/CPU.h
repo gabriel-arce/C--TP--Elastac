@@ -22,6 +22,7 @@
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
 #include <elestac_pcb.h>
+#include <signal.h>
 
 #define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
 //#define CONFIG_PATH "CPU.conf"					//Terminal
@@ -51,6 +52,7 @@ t_CPU_config * cpu;
 int socketNucleo, socketUMC;
 fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
+bool hotPlugActivado;
 
 //------------------Funciones
 
@@ -81,6 +83,8 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size);
 char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer);
 void mandarTextoANucleo(char* texto);
+void rutina(int n);
+void desconectarCPU();
 
 
 //------------------Primitivas
@@ -98,6 +102,6 @@ int imprimir(t_valor_variable valor_mostrar);
 int imprimirTexto(char* texto);
 int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 int wait(t_nombre_semaforo identificador_semaforo);
-int signal(t_nombre_semaforo identificador_semaforo);
+int signals(t_nombre_semaforo identificador_semaforo);
 
 #endif /* CPU_H_ */
