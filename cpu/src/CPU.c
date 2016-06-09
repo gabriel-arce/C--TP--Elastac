@@ -23,12 +23,14 @@ AnSISOP_funciones functions = {
 		.AnSISOP_imprimir				 = imprimir,
 		.AnSISOP_imprimirTexto			 = imprimirTexto,
 		.AnSISOP_entradaSalida           = entradaSalida,
-		//.AnSISOP_wait					 = wait,
-		//.AnSISOP_signal					 = signals,
 
 };
 
-AnSISOP_kernel kernel_functions = { };
+AnSISOP_kernel kernel_functions = {
+		.AnSISOP_wait					 = wait,
+		.AnSISOP_signal					 = signals,
+
+};
 
 
 
@@ -147,6 +149,7 @@ void escucharAlNucleo(){
 					// tenemos datos de algún cliente
 						if (FD_ISSET(i, &master))	{
 							recibirPCB(buffer);
+
 						}
 					}
 				}
@@ -162,7 +165,10 @@ void recibirPCB(char *buffer){
 
 	pcbActual = convertirPCB(buffer);					//Deserializar pcb
 
+	puts("PCB recibido");
+
 	cambiarEstadoACorriendo();
+
 }
 
 void enviarPCB(){
@@ -395,7 +401,7 @@ int getQuantumPcb(){
 }
 
 void ejecutarProximaInstruccion(){
-	t_indice_de_codigo * instruccionACorrer;
+	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 	char* instruccionEnString;
 
 	actualizarPC();
@@ -436,16 +442,20 @@ void actualizarQuantum(){
 void cambiarEstadoACorriendo(){
 
 	pcbActual->estado = Corriendo;
+	puts("PCB corriendo");
+
 }
 
 void cambiarEstadoAFinQuantum(){
 
 	pcbActual->estado = FinQuantum;
+	puts("finalizo el Quantum");
 }
 
 void cambiarEstadoATerminado(){
 
 	pcbActual->estado = Terminado;
+	puts("Se termino el programa actual");
 }
 
 void actualizarPC(){
