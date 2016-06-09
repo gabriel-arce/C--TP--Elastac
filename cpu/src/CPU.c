@@ -182,7 +182,8 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
 
-	//TODO enviar a UMC
+	t_valor_variable  valor;
+
 
 
 }
@@ -367,7 +368,7 @@ int getQuantumPcb(){
 }
 
 void ejecutarProximaInstruccion(){
-	t_indice_de_codigo * instruccionACorrer;  //TODO free
+	t_indice_de_codigo * instruccionACorrer;
 	char* instruccionEnString;
 
 	actualizarPC();
@@ -377,6 +378,8 @@ void ejecutarProximaInstruccion(){
 	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
+
+	free(instruccionACorrer);
 
 
 }
@@ -423,7 +426,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (hacer que leerBytes devuelva int o char*
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
 
 	char* instruccion = string_new();
 	uint32_t pagina;
@@ -460,9 +463,5 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 	return instruccion;
 }
 
-void solicitarAlUMCProxSentencia(){
-
-	//Enviar al UMC
-};
 
 
