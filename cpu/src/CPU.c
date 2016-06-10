@@ -225,7 +225,7 @@ t_posicion definirVariable(t_nombre_variable identificador_variable) {
 	variableStack->id = identificador_variable;
 
 	if(list_size(pcbActual->indice_stack) == 0){				//me fijo si ya hay algun stack creado
-		crearStackInicial();
+		crearStack();
 
 	}
 
@@ -281,12 +281,13 @@ void asignar(t_posicion direccion_variable, t_valor_variable valor) {
 
 }
 
-t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
+t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){				//TODO enviar a nucleo
 
 	//mandar a nucleo
+
 }
 
-t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
+t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){			//TODO enviar a nucleo
 
 	//mandar a nucleo
 	return valor;
@@ -294,11 +295,18 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 
 void irAlLabel(t_nombre_etiqueta etiqueta){
 
-}
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion){
 
-	//cambiar stackActivo
+	pcbActual->pcb_pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indice_etiquetas, pcbActual->cantidad_de_etiquetas);
+
 }
+
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
+
+	desactivarStackActivo();
+	crearStack();
+
+}
+
 void retornar(t_valor_variable retorno){
 
 	//cambiar stackActivo
@@ -348,7 +356,7 @@ void rutina (int n) {
 		case SIGUSR1:
 			printf("Hot plug activado \n");
 			if(pcbCorriendo()){
-				printf("Se desconectará el CPU cuando termine la ejecucion de la instruccion actual\n");
+				printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
 			}
 			hotPlugActivado = true;
 	}
@@ -371,7 +379,7 @@ return (stack->stackActivo);
 }
 
 
-void crearStackInicial(){
+void crearStack(){
 
 	t_stack * stackNuevo = malloc(sizeof(stackNuevo));
 	stackNuevo->stackActivo = true;
@@ -498,6 +506,15 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 	}
 
 	return instruccion;
+}
+
+void desactivarStackActivo(){
+	t_stack * stackActivo;
+
+	stackActivo = buscarStackActivo();
+	stackActivo->stackActivo = false;
+	stackActivo->stackDeRetorno = true;
+
 }
 
 

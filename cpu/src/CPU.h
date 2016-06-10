@@ -63,7 +63,7 @@ void conectarConUMC();
 void escucharAlNucleo();
 void recibirPCB(char *buffer);
 t_stack * buscarStackActivo();
-void crearStackInicial();
+void crearStack();
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id);
 int stackActivo(t_stack * stack);
 int getQuantumPcb();
@@ -85,6 +85,7 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer);
 void mandarTextoANucleo(char* texto);
 void rutina(int n);
 void desconectarCPU();
+void desactivarStackActivo();
 
 
 //------------------Primitivas
@@ -96,7 +97,7 @@ void asignar(t_posicion direccion_variable, t_valor_variable valor);
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable);
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable,t_valor_variable valor);
 void irAlLabel(t_nombre_etiqueta etiqueta);
-void llamarConRetorno(t_nombre_etiqueta etiqueta,t_posicion donde_retornar, t_puntero_instruccion linea_en_ejecuccion);
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar);
 void retornar(t_valor_variable retorno);
 int imprimir(t_valor_variable valor_mostrar);
 int imprimirTexto(char* texto);
