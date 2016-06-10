@@ -133,6 +133,8 @@ uint8_t recibirHandshakeConsola(void *buffer);
 t_paquete_programa *recibirDatosConsola(int fd);
 void finalizar();
 t_header *recibirHeaderConsola(buffer);
+void enviarHandshakeAUMC();
+void recibirHandshakeDeUMC();
 //void recibirDatosConsola(buffer);
 
 #endif /* NUCLEO_H_ */
