@@ -18,40 +18,20 @@ AnSISOP_funciones functions = {
 		.AnSISOP_obtenerValorCompartida  = obtenerValorCompartida,
 		.AnSISOP_asignarValorCompartida  = asignarValorCompartida,
 		.AnSISOP_irAlLabel 				 = irAlLabel,
-		.AnSISOP_llamarConRetorno        = llamarFuncion,
+		.AnSISOP_llamarConRetorno        = llamarConRetorno,
 		.AnSISOP_retornar				 = retornar,
 		.AnSISOP_imprimir				 = imprimir,
 		.AnSISOP_imprimirTexto			 = imprimirTexto,
 		.AnSISOP_entradaSalida           = entradaSalida,
-		//.AnSISOP_wait					 = wait,
-		//.AnSISOP_signal					 = signal,
 
 };
 
-AnSISOP_kernel kernel_functions = { };
+AnSISOP_kernel kernel_functions = {
+		.AnSISOP_wait					 = wait,
+		.AnSISOP_signal					 = signals,
 
+};
 
-
-
-t_CPU_config *cargar_config() {
-
-	printf(" Cargando configuracion.. \n");
-	t_config *config = config_create(CONFIG_PATH);
-	t_CPU_config *cpu_config	= malloc(sizeof(t_CPU_config));
-
-	cpu_config->ip_nucleo 					= string_new();
-	cpu_config->ip_UMC						= string_new();
-
-	cpu_config->puerto_nucleo = getIntProperty(config, "PUERTO_NUCLEO");
-	cpu_config->puerto_UMC    = getIntProperty(config, "PUERTO_UMC");
-
-	string_append(&cpu_config->ip_nucleo, getStringProperty(config, "IP_NUCLEO"));
-	string_append(&cpu_config->ip_UMC, getStringProperty(config, "IP_UMC"));
-
-	config_destroy(config);
-
-	return cpu_config;
-}
 
 
 void cargarConfiguracion(){
@@ -59,6 +39,8 @@ void cargarConfiguracion(){
 	printf("PROCESO CPU \n");
 	printf(" Cargando configuracion.. \n");
 	t_config *config = config_create(CONFIG_PATH);
+
+	cpu = malloc(sizeof(t_CPU_config));
 
 	cpu->ip_nucleo 					= string_new();
 	cpu->ip_UMC						= string_new();
@@ -75,6 +57,9 @@ void cargarConfiguracion(){
 	printf("Puerto Nucleo: %d\n", cpu->puerto_nucleo);
 	printf("IP UMC: %s\n", cpu->ip_UMC);
 	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
+
+	hotPlugActivado = malloc(sizeof(bool));
+	hotPlugActivado = false;
 
 
 
@@ -164,6 +149,7 @@ void escucharAlNucleo(){
 					// tenemos datos de algún cliente
 						if (FD_ISSET(i, &master))	{
 							recibirPCB(buffer);
+
 						}
 					}
 				}
@@ -175,10 +161,14 @@ void escucharAlNucleo(){
 
 void recibirPCB(char *buffer){
 
-	//Deserializar pcb
-	pcbActual = convertirPCB(buffer);
+	pcbActual = malloc(sizeof(t_pcb));
+
+	pcbActual = convertirPCB(buffer);					//Deserializar pcb
+
+	puts("PCB recibido");
 
 	cambiarEstadoACorriendo();
+
 }
 
 void enviarPCB(){
@@ -199,12 +189,30 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 	//si hay algun error devuelve -1 y se destruye el programa
 }
 
-t_valor_variable leerBytes(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
+t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
 
-	//TODO enviar a UMC
+	t_valor_variable  valor;
+
 
 
 }
+
+char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
+
+	//TODO enviar a UMC
+}
+
+void mandarTextoANucleo(char* texto){
+
+	//TODO enviar a Nucleo
+}
+
+void desconectarCPU(){
+
+	//mandar a nucleo que muere este CPU
+}
+
+
 
 //=================================================================================================================================================================
 //----------------------------------------------------------------Primitivas
@@ -217,7 +225,7 @@ t_posicion definirVariable(t_nombre_variable identificador_variable) {
 	variableStack->id = identificador_variable;
 
 	if(list_size(pcbActual->indice_stack) == 0){				//me fijo si ya hay algun stack creado
-		crearStackInicial();
+		crearStack();
 
 	}
 
@@ -261,7 +269,7 @@ t_valor_variable dereferenciar(t_posicion direccion_variable) {
 
 	t_valor_variable  valorVariable;
 
-	valorVariable = leerBytes(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size);
+	valorVariable = leerBytesDeVariable(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size);
 
 	return  valorVariable;
 
@@ -273,24 +281,34 @@ void asignar(t_posicion direccion_variable, t_valor_variable valor) {
 
 }
 
-t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
+t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){				//TODO enviar a nucleo
 
 	//mandar a nucleo
+
 }
 
-t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
+t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){			//TODO enviar a nucleo
 
 	//mandar a nucleo
+	return valor;
 }
 
-t_puntero_instruccion irAlLabel(t_nombre_etiqueta etiqueta){
+void irAlLabel(t_nombre_etiqueta etiqueta){
+
+
+	pcbActual->pcb_pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indice_etiquetas, pcbActual->cantidad_de_etiquetas);
 
 }
-t_puntero_instruccion llamarFuncion(t_nombre_etiqueta etiqueta, t_posicion donde_retornar,t_puntero_instruccion linea_en_ejecuccion){
 
-	//cambiar stackActivo
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
+
+	desactivarStackActivo();
+	crearStack();
+
+
 }
-t_puntero_instruccion retornar(t_valor_variable retorno){
+
+void retornar(t_valor_variable retorno){
 
 	//cambiar stackActivo
 }
@@ -302,8 +320,14 @@ int imprimir(t_valor_variable valor_mostrar){
 
 int imprimirTexto(char* texto){
 
-	//mandar a nucleo
-	//hay que ver si es "end" y cambiar estado a FINALIZADO
+	if(string_equals_ignore_case(texto, "end")){
+
+		cambiarEstadoATerminado();
+	}
+
+	mandarTextoANucleo(texto);
+
+	return string_length(texto);
 }
 
 int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
@@ -313,15 +337,33 @@ int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 }
 
-int wait(t_nombre_semaforo identificador_semaforo){
+void wait(t_nombre_semaforo identificador_semaforo){
 
 	// mandar a nucleo
 }
 
-int signal(t_nombre_semaforo identificador_semaforo){
+void signals(t_nombre_semaforo identificador_semaforo){
 
 	//mandar a nucleo
 }
+
+
+//=================================================================================================================================================================
+//----------------------------------------------------------------------Hot plug (signal)
+
+
+void rutina (int n) {
+	switch (n) {
+		case SIGUSR1:
+			printf("Hot plug activado \n");
+			if(pcbCorriendo()){
+				printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
+			}
+			hotPlugActivado = true;
+	}
+}
+
+
 
 //=================================================================================================================================================================
 //----------------------------------------------------------------------Otras
@@ -338,7 +380,7 @@ return (stack->stackActivo);
 }
 
 
-void crearStackInicial(){
+void crearStack(){
 
 	t_stack * stackNuevo = malloc(sizeof(stackNuevo));
 	stackNuevo->stackActivo = true;
@@ -368,16 +410,18 @@ int getQuantumPcb(){
 }
 
 void ejecutarProximaInstruccion(){
-	t_indice_de_codigo * instruccionACorrer;  //TODO free
+	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 	char* instruccionEnString;
 
 	actualizarPC();
-	instruccionACorrer = buscarProximaInstruccion();
+	instruccionACorrer = buscarProximaInstruccion();    // busco la instruccion en el indice de codigo
 
-	// TODO obtener paginas y mandar a umc
-	instruccionEnString = obtenerInstruccion(instruccionACorrer);
+
+	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
+
+	free(instruccionACorrer);
 
 
 }
@@ -407,11 +451,20 @@ void actualizarQuantum(){
 void cambiarEstadoACorriendo(){
 
 	pcbActual->estado = Corriendo;
+	puts("PCB corriendo");
+
 }
 
 void cambiarEstadoAFinQuantum(){
 
 	pcbActual->estado = FinQuantum;
+	puts("finalizo el Quantum");
+}
+
+void cambiarEstadoATerminado(){
+
+	pcbActual->estado = Terminado;
+	puts("Se termino el programa actual");
 }
 
 void actualizarPC(){
@@ -419,7 +472,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (hacer que leerBytes devuelva int o char*
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
 
 	char* instruccion = string_new();
 	uint32_t pagina;
@@ -433,7 +486,8 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 	aux = offset + instruccionACorrer->tamanio;
 
 	if(aux <= tamanio_paginas){
-		string_append(&instruccion, leerBytes(pagina, offset, size));
+		size= instruccionACorrer->tamanio;
+		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, size));
 	}
 	else{
 
@@ -441,7 +495,7 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 
 			loQueGuardo = (tamanio_paginas - offset);
 
-			string_append(&instruccion, leerBytes(pagina,offset, loQueGuardo));
+			string_append(&instruccion, leerBytesDeInstruccion(pagina,offset, loQueGuardo));
 
 			pagina++;
 			offset = 0;
@@ -449,15 +503,20 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO tes
 
 		}
 
-		string_append(&instruccion, leerBytes(pagina, offset, aux));
+		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, aux));
 	}
 
 	return instruccion;
 }
 
-void solicitarAlUMCProxSentencia(){
+void desactivarStackActivo(){
+	t_stack * stackActivo;
 
-	//Enviar al UMC
-};
+	stackActivo = buscarStackActivo();
+	stackActivo->stackActivo = false;
+	stackActivo->stackDeRetorno = true;
+
+}
+
 
 

@@ -100,11 +100,12 @@ int main(int argc, char * argv[]) {
 	//-----------luego envio el codigo del programa
 	t_paquete_programa * prog_package = malloc(sizeof(t_paquete_programa));
 	prog_package->programa_length = codigo_length;
-	prog_package->codigo_programa = malloc(codigo_length);
+	prog_package->codigo_programa = string_new();
+	//malloc(codigo_length);
 	string_append(&prog_buffer, prog_package->codigo_programa);
 	void * buffer_pack = malloc(tamanio_paquete);
 	memcpy(buffer_pack, &(prog_package->programa_length), 4);
-	memcpy(buffer_pack + 4, prog_package->codigo_programa, codigo_length);
+	memcpy(buffer_pack + 4, prog_buffer, codigo_length);
 	r = send(socketConsola, buffer_pack, tamanio_paquete, 0);
 	free(prog_package->codigo_programa);
 	free(prog_package);

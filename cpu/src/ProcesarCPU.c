@@ -10,35 +10,42 @@
 
 int main(void){
 
-	//Cargar configuracion
-	cargarConfiguracion();
+	signal(SIGUSR1,rutina);
 
-	//Conectar al nucleo
-	conectarConNucleo();
 
-	//Conectar al UMC
-	conectarConUMC();
+	cargarConfiguracion();		//Cargar configuracion
 
-	//Escuchar al nucleo a la espera de nuevos PCBs
-	escucharAlNucleo();
 
-	while(pcbCorriendo()){
+	conectarConNucleo();		//Conectar al nucleo
 
-		ejecutarProximaInstruccion();
-		actualizarQuantum();
 
-		if(getQuantumPcb() == getQuantum()){
+	conectarConUMC();			//Conectar al UMC
 
-			restaurarQuantum();
-			cambiarEstadoAFinQuantum();
+
+	while(!hotPlugActivado){
+
+		escucharAlNucleo();			//Escuchar al nucleo a la espera de nuevos PCBs
+
+
+		while(pcbCorriendo()){
+
+			ejecutarProximaInstruccion();
+			actualizarQuantum();
+
+			if(getQuantumPcb() == getQuantum()){
+
+				restaurarQuantum();
+				cambiarEstadoAFinQuantum();
+			}
 		}
+
+		enviarPCB();
+
+		borrarPCBActual();
+
 	}
 
-	enviarPCB();
-
-	borrarPCBActual();
-
-
+	desconectarCPU();
 
 
 

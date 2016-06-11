@@ -309,6 +309,8 @@ void procesarMensaje(int fd, char *buffer){
 }
 
 void crearClienteUMC(){
+	enviarHandshakeAUMC();
+	recibirHandshakeDeUMC();
 	/*	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
 		salirPor("[NUCLEO] No pudo conectarse al swap");
 
@@ -570,8 +572,22 @@ void crearServerConsola(){
 
 		    puts("[NUCLEO] Recepcion hanshake Consola" );
 
-			//recibirHeaderConsola(buffer, fd, header);
-			recibirDatosConsola(buffer);
+		    t_header *header = malloc(sizeof(t_header));
+			header = recibirHeaderConsola(newfd);
+
+			void *buffer2 = malloc(header->tamanio);
+			t_paquete_programa *programa = malloc(sizeof(t_paquete_programa));
+			programa->codigo_programa = malloc(programa->programa_length);
+
+			if (recv(newfd, buffer2, header->tamanio, 0) < 0)
+				salirPor("No se pudo obtener el codigo del programa");
+
+			memcpy(&programa->programa_length, buffer2, 4);
+			memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
+			printf("Codigo programa: %s\n", programa->codigo_programa);
+
+
+
 			//enviarAUMC(buffer);
 			//cantidadpaginas = lengh programa / tamanio_pagina + stacksize conf / tamanio_pagina
 			//programa
@@ -726,13 +742,67 @@ uint8_t recibirHandshakeConsola(void *buffer){
 	return handshake->identificador;
 }
 
-t_header *recibirHeaderConsola(fd, header){
-	t_header *handshake = malloc(sizeof(t_header));
-//	int nbytes = recv(fd, buffer, sizeof(buffer), 0);
-//	handshake = deserializar_header(buffer);
-	return handshake;
+t_header *recibirHeaderConsola(int fd){
+	char buffer[MAXIMO_BUFFER];
+
+	if( recv(fd, buffer, sizeof(buffer), 0) < 0)
+		return NULL;
+
+	return deserializar_header(buffer);
 }
 
-void recibirDatosConsola(buffer){
+t_paquete_programa *recibirDatosConsola(int fd){
+	t_paquete_programa *programa;
+	return programa;
+};
+
+void enviarHandshakeAUMC(){
+
+	//----------Envio el handshake a UMC
+	t_header * handshake = malloc(sizeof(t_header));
+	int resultado = 0;
+
+	handshake->identificador = (uint8_t) 2;
+	handshake->tamanio = (uint32_t) 0;
+
+	void * buffer_handshake = malloc(5);
+	memcpy(buffer_handshake, &(handshake->identificador), 1);
+	memcpy(buffer_handshake + 1, &(handshake->tamanio), 4);
+
+	if ((resultado = enviarPorSocket(socketNucleo, buffer_handshake)) == -1)
+		salirPor("Error en el send del handshake a UMC\n");
+
+
+//	resultado = send(socketNucleo, buffer_handshake, 5, 0);
+	free(handshake);
+	free(buffer_handshake);
+
+}
+
+void recibirHandshakeDeUMC(){
+
+	//---------Recibo el tamanio de pagina
+	void * buffer_entrada = malloc(5);
+	int resultado = 0;
+
+	resultado = recv(socketNucleo, buffer_entrada, 5, MSG_WAITALL);
+
+	if (resultado == -1) {
+		printf("Error en el recv del tamanio de pagina desde UMC\n");
+		exit(EXIT_FAILURE);
+	}
+
+	t_header * head_tamanio_pagina = malloc(sizeof(t_header));
+	memcpy(&(head_tamanio_pagina->identificador), buffer_entrada, 1);
+	memcpy(&(head_tamanio_pagina->tamanio), buffer_entrada + 1, 4);
+
+	if (head_tamanio_pagina->identificador != (uint8_t) Tamanio_pagina)
+		salirPor("Error en el ID de la cabecera de recibirPagina\n");
+
+	tamanio_pagina = head_tamanio_pagina->tamanio;
+	printf("El tamanio de pagina es: %d", tamanio_pagina);
+
+	free(buffer_entrada);
+	free(head_tamanio_pagina);
 
 }
