@@ -226,18 +226,14 @@ void * conecta_swap() {
 			umc_config->puerto_swap)) == -1)
 		exit(EXIT_FAILURE);
 
-	void * buffer_out = malloc(5);
-	t_header * handshake_out = malloc(sizeof(t_header));
-
-	handshake_out->identificador = 3;
-	handshake_out->tamanio = 0;
-
-	memcpy(buffer_out, &handshake_out->identificador, sizeof(uint8_t));
-	memcpy(buffer_out + 1, &handshake_out->tamanio, sizeof(uint32_t));
+	void * buffer_out;
+	buffer_out = serializar_header((uint8_t) UMC, 0);
 
 	if (send(socket_cliente, buffer_out, 5, 0) == -1) {
 		printf("Error en el send\n");
 	}
+
+	free(buffer_out);
 
 	return EXIT_SUCCESS;
 
@@ -245,15 +241,8 @@ void * conecta_swap() {
 
 void enviar_pagina_size(int sock_fd) {
 
-	void * buffer_out = malloc(5);
-	t_header * head_out = malloc(sizeof(t_header));
-
-	//luego del handshake le mando el tamaño de pagina a nucleo
-	head_out->identificador = Tamanio_pagina;
-	head_out->tamanio = umc_config->frames_size;
-
-	memcpy(buffer_out, &head_out->identificador, sizeof(uint8_t));
-	memcpy(buffer_out + sizeof(uint8_t), &head_out->tamanio, sizeof(uint32_t));
+	void * buffer_out;
+	buffer_out = serializar_header((uint8_t) Tamanio_pagina, umc_config->frames_size);
 
 	if (send(sock_fd, buffer_out, 5, 0) == -1) {
 		printf("No se pudo responder el handshake a nucleo. \n");
@@ -261,7 +250,6 @@ void enviar_pagina_size(int sock_fd) {
 	printf("Se ha enviado el tamanio de pagina \n");
 
 	free(buffer_out);
-	free(head_out);
 }
 
 void * escucha_conexiones() {
@@ -286,36 +274,31 @@ void * escucha_conexiones() {
 
 	struct sockaddr_in direccion_cliente;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
-	int socket_nuevo = 0;
-	int recibido = 1;
+	int socket_nuevo = -1;
 
-	while (recibido > 0) {
+	while (true) {
+
+		pthread_mutex_lock(&mutex_servidor); //LOCK MUTEX SERVIDOR
 
 		socket_nuevo = accept(socket_servidor,
 				(struct sockaddr*) &direccion_cliente, &addrlen);
 
 		if (socket_nuevo == -1) {
 			printf("Error en el accept.\n");
+			continue;
 		}
 
 		setsockopt(socket_nuevo, SOL_SOCKET, SO_REUSEADDR, &optval,
 				sizeof(optval));
 
-		pthread_mutex_lock(&mutex_hilos);
-		contador_hilos++;
-		pthread_mutex_unlock(&mutex_hilos);
-
-		t_header * handshake_in = malloc(sizeof(t_header));
+		//------Recibo un handshake de la nueva conexion
 		void * buffer_in = malloc(5);
-
 		if (recv(socket_nuevo, buffer_in, 5, 0) == -1) {
 			printf("Error en el recv.");
 		}
+		t_header * handshake_in = deserializar_header(buffer_in);
 
-		memcpy(&handshake_in->identificador, buffer_in, sizeof(uint8_t));
-		memcpy(&handshake_in->tamanio, buffer_in + sizeof(uint8_t),
-				sizeof(uint32_t));
-
+		//-------Averiguo quien es
 		switch (handshake_in->identificador) {
 		case NUCLEO:
 			new_line();
@@ -350,6 +333,8 @@ void * escucha_conexiones() {
 
 		free(handshake_in);
 		free(buffer_in);
+
+		pthread_mutex_unlock(&mutex_servidor); //UNLOCK MUTEX SERVIDOR
 	}
 
 	return EXIT_SUCCESS;
@@ -465,40 +450,7 @@ void * inicializar_programa(int id_programa, int paginas_requeridas,
 }
 
 int pedir_espacio_swap(int pid, int paginas_necesarias) {
-	t_header * peticion = malloc(sizeof(t_header));
-	peticion->identificador = Solicitar_espacio;
-	peticion->tamanio = 8;
-
-	void * stream_header = malloc(5);
-	memcpy(stream_header, &peticion->identificador, 1);
-	memcpy(stream_header + 1, &peticion->tamanio, 4);
-
-	t_paquete_inicializar_programa * package = malloc(
-			sizeof(t_paquete_inicializar_programa));
-	package->pid = pid;
-	package->paginas_requeridas = paginas_necesarias;
-
-	void * stream_package = malloc(8);
-	memcpy(stream_package, &package->pid, 4);
-	memcpy(stream_package + 4, &package->paginas_requeridas, 4);
-
-	send(socket_cliente, stream_header, 5, 0);
-	send(socket_cliente, stream_package, 8, 0);
-
-	free(peticion);
-	free(package);
-	free(stream_header);
-	free(stream_package);
-
-	void * buffer_in = malloc(4);
-	int response = 0;
-
-	recv(socket_cliente, buffer_in, 4, MSG_WAITALL);
-
-	//response = buffer_in;
-	free(buffer_in);
-
-	return response;
+	return 0;
 }
 
 void * finalizar_programa(int id_programa) {
@@ -526,7 +478,7 @@ void * atiende_cpu() {
 		case Leer_pagina:
 			printf("Lectura de bytes\n");
 			break;
-		case Modificar_bytes:
+		case Modificar_pagina:
 			printf("Almaceno bytes\n");
 			break;
 		default:

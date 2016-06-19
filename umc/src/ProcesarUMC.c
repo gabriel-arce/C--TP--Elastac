@@ -33,6 +33,7 @@ int main() {
 		tlb = list_create();
 
 	//inicializo semaforos
+	pthread_mutex_init(&mutex_servidor, 0);
 	pthread_mutex_init(&mutex_hilos, 0);
 	pthread_mutex_init(&mutex_lista_cpu, 0);
 	pthread_mutex_init(&mutex_nucleo, 0);

@@ -25,6 +25,7 @@
 #include <elestac_config.h>
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
+#include <elestac_comunicaciones.h>
 
 #define CONFIG_PATH "umc.conf" //para runear en terminal
 //#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
@@ -35,23 +36,20 @@
 #define MSJ_ERROR2 "Error en # de variable"
 #define PROMPT "#>"
 #define LENGTH_MAX_COMANDO 7
-#define NUCLEO 2
-#define CPU 5
 #define CLOCK 99 //el condigo ascii de 'c' es 99
 #define CLOCK_MODIFICADO 100 //aca le "sumo" 1 a c
 
 //Cabeceras
+#define NUCLEO 2
+#define UMC 3
+#define SWAP 4
+#define CPU 5
 #define Tamanio_pagina 31
 #define Inicializar_programa 32
 #define Leer_pagina 33
-#define Modificar_bytes 34
+#define Modificar_pagina 34
 #define Finalizar_programa 35
 #define Solicitar_espacio 36
-
-typedef struct {
-	uint8_t identificador;
-	uint32_t tamanio;
-}__attribute__((packed)) t_header;
 
 typedef struct {
 	int puerto_escucha;
@@ -91,20 +89,14 @@ typedef struct {
 	int pid;
 } t_tlb;
 
-typedef struct {
-	int pid;
-	int paginas_requeridas;
-	int programa_length;
-	char * codigo_programa;
-} t_paquete_inicializar_programa;
-
 t_umc_config * umc_config;
+int nucleos_conectados;
 int socket_nucleo;
-int contador_hilos;
 int socket_cliente, socket_servidor;
 pthread_t hiloConsola, hilo_server, hilo_cliente;
 int id_cpu;
 t_list * cpu_conectadas;
+pthread_mutex_t mutex_servidor;
 pthread_mutex_t mutex_hilos, mutex_lista_cpu;
 pthread_mutex_t mutex_nucleo;
 pthread_mutex_t mutex_memoria;

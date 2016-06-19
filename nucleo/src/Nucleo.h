@@ -21,6 +21,7 @@
 #include <parser/metadata_program.h>
 #include <parser/parser.h>
 #include <elestac_pcb.h>
+#include <elestac_comunicaciones.h>
 
 /****** Constantes ******/
 
@@ -59,11 +60,6 @@ typedef struct {
 	uint8_t cpuID;
 	uint8_t disponible;
 } t_clienteCPU;
-
-typedef struct {
-	uint8_t identificador;
-	uint32_t tamanio;
-}__attribute__((packed)) t_header;
 
 typedef struct {
 	uint32_t programa_length;

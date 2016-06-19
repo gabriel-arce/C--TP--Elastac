@@ -23,12 +23,49 @@
 #include <commons/string.h>
 #include <commons/log.h>
 
+enum interfaces {
+	Solicitar_pagina = 35,
+	Almacenar_pagina = 36,
+} t_interfaz;
+
 typedef struct {
 	uint8_t identificador;
 	uint32_t tamanio;
 }__attribute__((packed)) t_header;
 
+typedef struct {
+	int pid;
+	int paginas_requeridas;
+	int programa_length;
+	char * codigo_programa;
+} t_paquete_inicializar_programa;
+
+typedef struct {
+	int nro_pagina;
+	int offset;
+	int bytes;
+} t_paquete_solicitar_pagina;
+
+typedef struct {
+	int nro_pagina;
+	int offset;
+	int bytes;
+	void * buffer;
+} t_paquete_almacenar_pagina;
+
 void * serializar_header(uint8_t id, uint32_t size);
 t_header * deserializar_header(void * buffer);
+
+void * serializar_iniciar_prog(int pid, int paginas, char * codigo);
+t_paquete_inicializar_programa * deserializar_iniciar_prog(void * buffer);
+
+void * serializar_leer_pagina(int pagina, int offset, int bytes);
+t_paquete_solicitar_pagina * deserializar_leer_pagina(void * buffer);
+
+void * serializar_almacenar_pagina(int pagina, int offset, int bytes, void * buffer);
+t_paquete_almacenar_pagina * deserializar_almacenar_pagina(void * buffer);
+
+void * serializar_fin_prog(int pid);
+t_header * deserializar_fin_prog(void * buffer);
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

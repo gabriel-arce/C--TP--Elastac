@@ -23,6 +23,7 @@
 #include <parser/parser.h>
 #include <elestac_pcb.h>
 #include <signal.h>
+#include <elestac_comunicaciones.h>
 
 #define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
 //#define CONFIG_PATH "CPU.conf"					//Terminal
@@ -37,11 +38,6 @@ typedef struct {
 	int puerto_UMC;
 	char * ip_UMC;
 } t_CPU_config;
-
-typedef struct {
-	uint8_t identificador;
-	uint32_t tamanio;
-}__attribute__((packed)) t_header;
 
 //-------------------Variables
 

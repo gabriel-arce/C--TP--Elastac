@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <elestac_config.h>
+#include <elestac_comunicaciones.h>
 
 //#define CONFIG_PATH "consola.conf"
 #define CONFIG_PATH "../consola/src/consola.conf"
@@ -38,11 +39,6 @@ typedef enum{
 	NoSePudoEnviarSocket,
 	OtroError,
 } Error;
-
-typedef struct {
-	uint8_t identificador;
-	uint32_t tamanio;
-}__attribute__((packed)) t_header;
 
 typedef struct {
 	uint32_t programa_length;
