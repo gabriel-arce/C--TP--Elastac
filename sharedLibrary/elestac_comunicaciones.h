@@ -66,6 +66,15 @@ void * serializar_almacenar_pagina(int pagina, int offset, int bytes, void * buf
 t_paquete_almacenar_pagina * deserializar_almacenar_pagina(void * buffer);
 
 void * serializar_fin_prog(int pid);
-t_header * deserializar_fin_prog(void * buffer);
+int deserializar_fin_prog(void * buffer);
+
+void * serializar_cambio_proceso(int pid);
+int deserializar_cambio_proceso(void * buffer);
+
+void * serializar_tamanio_pagina(int page_size);
+int deserializar_tamanio_pagina(void * buffer);
+
+void * serializar_respuesta_inicio(int response);
+int deserializar_respuesta_inicio(void * buffer);
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

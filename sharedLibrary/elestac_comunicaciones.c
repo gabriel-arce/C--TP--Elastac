@@ -31,7 +31,7 @@ t_header * deserializar_header(void * buffer) {
 
 	return header;
 }
-
+//----------------------------------------------------->
 void * serializar_iniciar_prog(int pid, int paginas, char * codigo) {
 
 	int n = 0;
@@ -39,7 +39,8 @@ void * serializar_iniciar_prog(int pid, int paginas, char * codigo) {
 
 	void * buffer = malloc(n);
 
-	t_paquete_inicializar_programa * paquete = malloc(sizeof(t_paquete_inicializar_programa));
+	t_paquete_inicializar_programa * paquete = malloc(
+			sizeof(t_paquete_inicializar_programa));
 	paquete->pid = pid;
 	paquete->paginas_requeridas = paginas;
 	paquete->programa_length = strlen(codigo);
@@ -55,7 +56,8 @@ void * serializar_iniciar_prog(int pid, int paginas, char * codigo) {
 }
 
 t_paquete_inicializar_programa * deserializar_iniciar_prog(void * buffer) {
-	t_paquete_inicializar_programa * paquete = malloc(sizeof(t_paquete_inicializar_programa));
+	t_paquete_inicializar_programa * paquete = malloc(
+			sizeof(t_paquete_inicializar_programa));
 
 	memcpy(&(paquete->pid), buffer, 4);
 	memcpy(&(paquete->paginas_requeridas), buffer + 4, 4);
@@ -67,9 +69,10 @@ t_paquete_inicializar_programa * deserializar_iniciar_prog(void * buffer) {
 
 	return paquete;
 }
-
+//----------------------------------------------------->
 void * serializar_leer_pagina(int pagina, int offset, int bytes) {
-	t_paquete_solicitar_pagina * paquete = malloc(sizeof(t_paquete_solicitar_pagina));
+	t_paquete_solicitar_pagina * paquete = malloc(
+			sizeof(t_paquete_solicitar_pagina));
 	void * buffer = malloc(12);
 
 	paquete->nro_pagina = pagina;
@@ -85,7 +88,8 @@ void * serializar_leer_pagina(int pagina, int offset, int bytes) {
 }
 
 t_paquete_solicitar_pagina * deserializar_leer_pagina(void * buffer) {
-	t_paquete_solicitar_pagina * paquete = malloc(sizeof(t_paquete_solicitar_pagina));
+	t_paquete_solicitar_pagina * paquete = malloc(
+			sizeof(t_paquete_solicitar_pagina));
 
 	memcpy(&(paquete->nro_pagina), buffer, 4);
 	memcpy(&(paquete->offset), buffer + 4, 4);
@@ -94,9 +98,11 @@ t_paquete_solicitar_pagina * deserializar_leer_pagina(void * buffer) {
 	free(buffer);
 	return paquete;
 }
-
-void * serializar_almacenar_pagina(int pagina, int offset, int bytes, void * buffer) {
-	t_paquete_almacenar_pagina * paquete = malloc(sizeof(t_paquete_almacenar_pagina));
+//----------------------------------------------------->
+void * serializar_almacenar_pagina(int pagina, int offset, int bytes,
+		void * buffer) {
+	t_paquete_almacenar_pagina * paquete = malloc(
+			sizeof(t_paquete_almacenar_pagina));
 	void * ret_buffer = malloc(12 + bytes);
 
 	paquete->nro_pagina = pagina;
@@ -113,7 +119,8 @@ void * serializar_almacenar_pagina(int pagina, int offset, int bytes, void * buf
 }
 
 t_paquete_almacenar_pagina * deserializar_almacenar_pagina(void * buffer) {
-	t_paquete_almacenar_pagina * paquete = malloc(sizeof(t_paquete_almacenar_pagina));
+	t_paquete_almacenar_pagina * paquete = malloc(
+			sizeof(t_paquete_almacenar_pagina));
 
 	memcpy(&(paquete->nro_pagina), buffer, 4);
 	memcpy(&(paquete->offset), buffer + 4, 4);
@@ -124,11 +131,64 @@ t_paquete_almacenar_pagina * deserializar_almacenar_pagina(void * buffer) {
 	free(buffer);
 	return paquete;
 }
-
+//----------------------------------------------------->
 void * serializar_fin_prog(int pid) {
-	return serializar_header((uint8_t) 37, (uint32_t) pid);
+	return serializar_header((uint8_t) 13, (uint32_t) pid);
 }
 
-t_header * deserializar_fin_prog(void * buffer) {
-	return deserializar_header(buffer);
+int deserializar_fin_prog(void * buffer) {
+	t_header * head = deserializar_header(buffer);
+
+	if (head->identificador != (uint8_t) 13) {
+		puts("Error en el header **fin_programa**");
+		return -1;
+	}
+
+	return head->tamanio;
 }
+//----------------------------------------------------->
+void * serializar_cambio_proceso(int pid) {
+	return serializar_header((uint8_t) 18, (uint32_t) pid);
+}
+
+int deserializar_cambio_proceso(void * buffer) {
+	t_header * head = deserializar_header(buffer);
+
+	if (head->identificador != (uint8_t) 18) {
+		puts("Error en el header **cambio_proceso_activo**");
+		return -1;
+	}
+
+	return head->tamanio;
+}
+//----------------------------------------------------->
+void * serializar_tamanio_pagina(int page_size) {
+	return serializar_header((uint8_t) 19, (uint32_t) page_size);
+}
+
+int deserializar_tamanio_pagina(void * buffer) {
+	t_header * head = deserializar_header(buffer);
+
+	if (head->identificador != (uint8_t) 19) {
+		puts("Error en el header **tamaño_pagina**");
+		return -1;
+	}
+
+	return head->tamanio;
+}
+//----------------------------------------------------->
+void * serializar_respuesta_inicio(int response) {
+	return serializar_header((uint8_t) 17, (uint32_t) response);
+}
+
+int deserializar_respuesta_inicio(void * buffer) {
+	t_header * head = deserializar_header(buffer);
+
+	if (head->identificador != (uint8_t) 17) {
+		puts("Error en el header **respuesta_inicio_programa**");
+		return -1;
+	}
+
+	return head->tamanio;
+}
+//----------------------------------------------------->
