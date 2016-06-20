@@ -192,3 +192,56 @@ int deserializar_respuesta_inicio(void * buffer) {
 	return head->tamanio;
 }
 //----------------------------------------------------->
+void * serializar_ansisop(char * programa) {
+
+	int codigo_length = string_length(programa);
+
+	void * buffer_pack = malloc(4 + codigo_length);
+
+	memcpy(buffer_pack, &(codigo_length), 4);
+	memcpy(buffer_pack + 4, programa, codigo_length);
+
+	return buffer_pack;
+}
+
+t_paquete_programa * deserializar_ansisop(void * buffer) {
+
+	t_paquete_programa * paquete = malloc(sizeof(t_paquete_programa));
+
+	memcpy(&(paquete->programa_length), buffer, 4);
+	paquete->codigo_programa = malloc(paquete->programa_length);
+	memcpy(paquete->codigo_programa, buffer + 4, paquete->programa_length);
+
+	free(buffer);
+	return paquete;
+}
+//----------------------------------------------------->
+void * serializar_imprimir_texto(char * texto) {
+	return serializar_ansisop(texto);
+}
+
+char * deserializar_imprimir_texto(void * buffer) {
+
+	t_paquete_programa * paquete = deserializar_ansisop(buffer);
+
+	char * texto = string_new();
+	string_append(&texto, paquete->codigo_programa);
+	free(paquete->codigo_programa);
+	free(paquete);
+
+	return texto;
+}
+//----------------------------------------------------->
+void * serializar_imprimir_valor(int valor) {
+	return serializar_header((uint8_t) 11, (uint32_t) valor);
+}
+
+int deserializar_imprimir_valor(void * buffer) {
+	int valor = 0;
+
+	t_header * head = deserializar_header(buffer);
+	valor = head->tamanio;
+	free(head);
+
+	return valor;
+}

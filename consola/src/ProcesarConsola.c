@@ -13,6 +13,8 @@ int main(int argc, char * argv[]) {
 	printf("Proceso Consola..\n");
 	printf("\n");
 
+	pthread_mutex_init(&mutex_nucleo, 0);
+
 	FILE * fp_in;
 	long fp_size;
 	char * prog_buffer = NULL;
@@ -48,8 +50,8 @@ int main(int argc, char * argv[]) {
 	}
 	prog_buffer[fp_size + 1] = '\0';
 
-	printf("%s\n", prog_buffer);
-	printf("Length del programa: %d\n", string_length(prog_buffer));
+//	printf("%s\n", prog_buffer);
+//	printf("Length del programa: %d\n", string_length(prog_buffer));
 
 	//Cargar configuracion
 	cargar_config();
@@ -61,21 +63,15 @@ int main(int argc, char * argv[]) {
 	}
 
 	//--------handshake
-	t_header * handshake = malloc(sizeof(t_header));
-	handshake->identificador = (uint8_t) 2;
-	handshake->tamanio = 0;
-	void * buffer_hs = malloc(5);
-	memcpy(buffer_hs, &(handshake->identificador), 1);
-	memcpy(buffer_hs + 1, &(handshake->tamanio), 4);
+	void * buffer_hs = serializar_header((uint8_t) 1, (uint32_t) 0);
 	int r = send(socketConsola, buffer_hs, 5, 0);
 
 	if (r == -1) {
 		printf("Error en el envio del handshake\n");
 		return EXIT_FAILURE;
 	}
-	printf("se envio el handshake\n");
+	printf("Se ha enviado el handshake a NUCLEO\n");
 
-	free(handshake);
 	free(buffer_hs);
 
 	//-----------INICIO ENVIO PROGRAMA
@@ -83,14 +79,8 @@ int main(int argc, char * argv[]) {
 	int codigo_length = string_length(prog_buffer);
 	int tamanio_paquete = 4 + codigo_length;
 
-	t_header * head = malloc(sizeof(t_header));
-	head->identificador = (uint8_t) Iniciar_ansisop;
-	head->tamanio = tamanio_paquete;
-	void * buffer_head = malloc(5);
-	memcpy(buffer_head, &(head->identificador), 1);
-	memcpy(buffer_head + 1, &(head->tamanio), 4);
+	void * buffer_head = serializar_header((uint8_t) Iniciar_ansisop, (uint32_t) tamanio_paquete);
 	r = send(socketConsola, buffer_head, 5, 0);
-	free(head);
 	free(buffer_head);
 	if (r == -1) {
 		printf("Error en el send de la cabecera\n");
@@ -98,60 +88,70 @@ int main(int argc, char * argv[]) {
 	}
 
 	//-----------luego envio el codigo del programa
-	t_paquete_programa * prog_package = malloc(sizeof(t_paquete_programa));
-	prog_package->programa_length = codigo_length;
-	prog_package->codigo_programa = string_new();
-	//malloc(codigo_length);
-	string_append(&prog_buffer, prog_package->codigo_programa);
-	void * buffer_pack = malloc(tamanio_paquete);
-	memcpy(buffer_pack, &(prog_package->programa_length), 4);
-	memcpy(buffer_pack + 4, prog_buffer, codigo_length);
+	void * buffer_pack = serializar_ansisop(prog_buffer);
 	r = send(socketConsola, buffer_pack, tamanio_paquete, 0);
-	free(prog_package->codigo_programa);
-	free(prog_package);
 	free(buffer_pack);
 	if (r == -1) {
 		printf("Error en el send del programa\n");
 		return EXIT_FAILURE;
 	}
-	//-------------FIN ENVIO PROGRAMA
+	puts("Se ha enviado el codigo del programa AnSISOP");
+//	//-------------FIN ENVIO PROGRAMA
 
 	//-----------Quedo en espera para recibir cosas
 	int recibido = 1;
-	t_header * cabecera = malloc(sizeof(t_header));
 
-	while (recibido) {
+	while (recibido >= 0) {
+
+		pthread_mutex_lock(&mutex_nucleo);
 
 		void * buffer_in = malloc(5);
 
-		recibido = recv(socketConsola, buffer_in, 5, 0);
+		recibido = recv(socketConsola, buffer_in, 5, MSG_WAITALL);
 
 		if (recibido == -1) {
+			free(buffer_in);
 			printf("Error en el recv");
+			break;
+		}
+
+		if (recibido == 0) {
+			free(buffer_in);
+			pthread_mutex_unlock(&mutex_nucleo);
 			continue;
 		}
 
-		memcpy(&cabecera->identificador, buffer_in, 1);
-		memcpy(&cabecera->tamanio, buffer_in + 1, 4);
+		t_header * cabecera = deserializar_header(buffer_in);
 
 		switch (cabecera->identificador) {
-		case Imprimir:
-			puts("Imprimo algo\n");
+		case Imprimir_valor:
+			printf("\n");
+			printf("VALOR: %d\n", cabecera->tamanio);
 			break;
 		case Imprimir_texto:
-			puts("Imprimo texto\n");
+			printf("\n");
+			void * text_buff = malloc(cabecera->tamanio);
+			recv(socketConsola, text_buff, cabecera->tamanio, MSG_WAITALL);
+			char * texto = deserializar_imprimir_texto(text_buff);
+			printf("TEXTO: %s\n", texto);
+			free(texto);
 			break;
 		case Fin_ansisop:
-			puts("Finalizo programa\n");
+			printf("\n");
+			if (cabecera->tamanio == 0) {
+				puts("No se ha podido inicializar el programa. Programa rechazado");
+			} else {
+				printf("Finalizo programa nro.: %d\n", cabecera->tamanio);
+			}
+			recibido = -1;
 			break;
 		default:
 			puts("Cabecera no reconocida");
 			break;
 		}
 
-		cabecera->identificador = 0;
-		cabecera->tamanio = 0;
-		free(buffer_in);
+		free(cabecera);
+		pthread_mutex_unlock(&mutex_nucleo);
 	}
 
 	fclose(fp_in);

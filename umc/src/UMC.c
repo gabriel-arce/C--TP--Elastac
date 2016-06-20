@@ -475,10 +475,10 @@ void * atiende_cpu() {
 		memcpy(&head_in->tamanio, buffer_in + 1, 4);
 
 		switch (head_in->identificador) {
-		case Leer_pagina:
+		case Solicitar_pagina:
 			printf("Lectura de bytes\n");
 			break;
-		case Modificar_pagina:
+		case Almacenar_pagina:
 			printf("Almaceno bytes\n");
 			break;
 		default:

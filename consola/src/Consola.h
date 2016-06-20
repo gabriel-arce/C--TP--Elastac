@@ -18,13 +18,14 @@
 #include <sys/socket.h>
 #include <elestac_config.h>
 #include <elestac_comunicaciones.h>
+#include <pthread.h>
 
-//#define CONFIG_PATH "consola.conf"
-#define CONFIG_PATH "../consola/src/consola.conf"
-#define Iniciar_ansisop 11
-#define Imprimir 12
-#define Imprimir_texto 13
-#define Fin_ansisop 14
+#define CONFIG_PATH "consola.conf"
+//#define CONFIG_PATH "../consola/src/consola.conf"
+#define Iniciar_ansisop 10
+#define Imprimir_valor 11
+#define Imprimir_texto 12
+#define Fin_ansisop 13
 
 typedef struct {
 	int puerto_nucleo;
@@ -40,12 +41,8 @@ typedef enum{
 	OtroError,
 } Error;
 
-typedef struct {
-	uint32_t programa_length;
-	char * codigo_programa;
-} t_paquete_programa;
-
 t_consola_config *consola;
+pthread_mutex_t mutex_nucleo;
 
 void cargar_config();
 void MostrarAyuda();

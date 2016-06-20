@@ -34,6 +34,11 @@ typedef struct {
 }__attribute__((packed)) t_header;
 
 typedef struct {
+	uint32_t programa_length;
+	char * codigo_programa;
+} t_paquete_programa;
+
+typedef struct {
 	int pid;
 	int paginas_requeridas;
 	int programa_length;
@@ -76,5 +81,14 @@ int deserializar_tamanio_pagina(void * buffer);
 
 void * serializar_respuesta_inicio(int response);
 int deserializar_respuesta_inicio(void * buffer);
+
+void * serializar_ansisop(char * programa);
+t_paquete_programa * deserializar_ansisop(void * buffer);
+
+void * serializar_imprimir_texto(char * texto);
+char * deserializar_imprimir_texto(void * buffer);
+
+void * serializar_imprimir_valor(int valor);
+int deserializar_imprimir_valor(void * buffer);
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

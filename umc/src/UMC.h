@@ -44,12 +44,14 @@
 #define UMC 3
 #define SWAP 4
 #define CPU 5
-#define Tamanio_pagina 31
-#define Inicializar_programa 32
-#define Leer_pagina 33
-#define Modificar_pagina 34
-#define Finalizar_programa 35
-#define Solicitar_espacio 36
+
+#define Tamanio_pagina 19
+#define Inicializar_programa 14
+#define Solicitar_pagina 15
+#define Almacenar_pagina 16
+#define Finalizar_programa 13
+#define Cambio_proceso_activo 18
+#define Respuesta_inicio_programa 17
 
 typedef struct {
 	int puerto_escucha;
