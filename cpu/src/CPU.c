@@ -65,19 +65,45 @@ void cargarConfiguracion(){
 
 }
 
-
 void conectarConNucleo(){
 	if((socketNucleo = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
 		salirPor("[CPU} No se pudo conectar al Nucleo");
-	//recibir Quantum
+	int result = -1;
+	result = enviar_handshake(socketNucleo, 5);
+	if (result == -1) {
+		exit(EXIT_FAILURE);
+	}
 
+//	 int recibido = 1;
+//	 while (recibido > 0) {
+//		 aca recibe el pcb y ejecuta			<<<<---------EMPEZAR DESDE ACA A PROCESAR EL PCB!!
+//	 }
 }
 
 void conectarConUMC(){
-	//despues lo hago
+	if((socketUMC = clienteDelServidor(cpu->ip_UMC, cpu->puerto_UMC)) == -1)
+		salirPor("[CPU} No se pudo conectar a UMC");
+
+//	---------envio el handshake a umc
+	int result = -1;
+	result = enviar_handshake(socketUMC, 5);
+	if (result == -1) {
+		exit(EXIT_FAILURE);
+	}
+//	---------recibo el tamaño de pagina
+	t_header * head = recibir_header(socketUMC);
+	tamanio_paginas = head->tamanio;
+	free(head);
 }
 
+void cambiar_proceso_activo(int pid) {
+	int result = enviar_header(18, pid, socketUMC);
 
+	if (result == -1)
+		salirPor("No se pudo realizar el cambio de proceso activo");
+}
+
+// este servidor esta demas
 void escucharAlNucleo(){
 	 int listener;														//Descriptor de escucha
 	 int i;

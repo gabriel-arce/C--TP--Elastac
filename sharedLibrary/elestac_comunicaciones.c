@@ -143,8 +143,10 @@ int deserializar_fin_prog(void * buffer) {
 		puts("Error en el header **fin_programa**");
 		return -1;
 	}
+	int response = head->tamanio;
 
-	return head->tamanio;
+	free(head);
+	return response;
 }
 //----------------------------------------------------->
 void * serializar_cambio_proceso(int pid) {
@@ -158,8 +160,10 @@ int deserializar_cambio_proceso(void * buffer) {
 		puts("Error en el header **cambio_proceso_activo**");
 		return -1;
 	}
+	int response = head->tamanio;
 
-	return head->tamanio;
+	free(head);
+	return response;
 }
 //----------------------------------------------------->
 void * serializar_tamanio_pagina(int page_size) {
@@ -174,7 +178,10 @@ int deserializar_tamanio_pagina(void * buffer) {
 		return -1;
 	}
 
-	return head->tamanio;
+	int response = head->tamanio;
+
+	free(head);
+	return response;
 }
 //----------------------------------------------------->
 void * serializar_respuesta_inicio(int response) {
@@ -189,7 +196,10 @@ int deserializar_respuesta_inicio(void * buffer) {
 		return -1;
 	}
 
-	return head->tamanio;
+	int response = head->tamanio;
+
+	free(head);
+	return response;
 }
 //----------------------------------------------------->
 void * serializar_ansisop(char * programa) {
@@ -244,4 +254,66 @@ int deserializar_imprimir_valor(void * buffer) {
 	free(head);
 
 	return valor;
+}
+//----------------------------------------------------->
+int enviar_handshake(int socket, int id) {
+	void * buffer = serializar_header((uint8_t) id, (uint32_t) 0);
+
+	int result = send(socket, buffer, 5, 0);
+
+	if (result == -1) {
+		puts("Error en el envio del handshake");
+	} else {
+		puts("Handshake enviado");
+	}
+
+	free(buffer);
+	return result;
+}
+
+int recibir_handshake(int socket) {
+	void * buffer = malloc(5);
+	int handshake_id = 0;
+
+	int result = recv(socket, buffer, 5, 0);
+
+	if (result == -1) {
+		puts("Error en el recv del handshake");
+		return result;
+	}
+
+	t_header * header = deserializar_header(buffer);
+
+	handshake_id = (int) header->identificador;
+	free(header);
+
+	return handshake_id;
+}
+//----------------------------------------------------->
+int enviar_header(int id, int tamanio, int socket) {
+	void * buffer = serializar_header((uint8_t) id, (uint32_t) tamanio);
+
+	int result = send(socket, buffer, 5, 0);
+
+	if (result == -1) {
+		puts("Error en el envio del header");
+	}
+
+	free(buffer);
+	return result;
+}
+
+t_header * recibir_header(int socket) {
+	void * buffer = malloc(5);
+
+	int result = recv(socket, buffer, 5, 0);
+
+	if (result == -1) {
+		puts("Error en el recv del header");
+		return NULL;
+	}
+
+	t_header * header = deserializar_header(buffer);
+
+	return header;
 }

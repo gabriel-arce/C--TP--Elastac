@@ -56,6 +56,7 @@ t_CPU_config * cargar_config();
 void cargarConfiguracion();
 void conectarConNucleo();
 void conectarConUMC();
+void cambiar_proceso_activo(int pid);
 void escucharAlNucleo();
 void recibirPCB(char *buffer);
 t_stack * buscarStackActivo();

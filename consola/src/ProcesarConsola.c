@@ -57,41 +57,40 @@ int main(int argc, char * argv[]) {
 	cargar_config();
 
 	//Crear socket al nucleo
-	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
-		MostrarMensajeDeError(NoSePudoCrearSocket);
-		return EXIT_FAILURE;
-	}
+	socketConsola = clienteDelServidor("127.0.0.1", 6000);
+//	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
+//		MostrarMensajeDeError(NoSePudoCrearSocket);
+//		return EXIT_FAILURE;
+//	}
 
 	//--------handshake
-	void * buffer_hs = serializar_header((uint8_t) 1, (uint32_t) 0);
-	int r = send(socketConsola, buffer_hs, 5, 0);
-
-	if (r == -1) {
-		printf("Error en el envio del handshake\n");
-		return EXIT_FAILURE;
+	int result = enviar_handshake(socketConsola, 1);
+	if (result == -1) {
+		return result;
 	}
-	printf("Se ha enviado el handshake a NUCLEO\n");
-
-	free(buffer_hs);
 
 	//-----------INICIO ENVIO PROGRAMA
 	//---------primero envio el header
 	int codigo_length = string_length(prog_buffer);
 	int tamanio_paquete = 4 + codigo_length;
 
-	void * buffer_head = serializar_header((uint8_t) Iniciar_ansisop, (uint32_t) tamanio_paquete);
-	r = send(socketConsola, buffer_head, 5, 0);
-	free(buffer_head);
-	if (r == -1) {
-		printf("Error en el send de la cabecera\n");
-		return EXIT_FAILURE;
+	result = enviar_header(Iniciar_ansisop, tamanio_paquete, socketConsola);
+	if (result == -1) {
+		return -1;
 	}
+//	void * buffer_head = serializar_header((uint8_t) Iniciar_ansisop, (uint32_t) tamanio_paquete);
+//	result = send(socketConsola, buffer_head, 5, 0);
+//	free(buffer_head);
+//	if (result == -1) {
+//		printf("Error en el send de la cabecera\n");
+//		return EXIT_FAILURE;
+//	}
 
 	//-----------luego envio el codigo del programa
 	void * buffer_pack = serializar_ansisop(prog_buffer);
-	r = send(socketConsola, buffer_pack, tamanio_paquete, 0);
+	result = send(socketConsola, buffer_pack, tamanio_paquete, 0);
 	free(buffer_pack);
-	if (r == -1) {
+	if (result == -1) {
 		printf("Error en el send del programa\n");
 		return EXIT_FAILURE;
 	}

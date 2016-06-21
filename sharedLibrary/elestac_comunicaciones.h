@@ -91,4 +91,10 @@ char * deserializar_imprimir_texto(void * buffer);
 void * serializar_imprimir_valor(int valor);
 int deserializar_imprimir_valor(void * buffer);
 
+int enviar_handshake(int socket, int id);
+int recibir_handshake(int socket);
+
+int enviar_header(int id, int tamanio, int socket);
+t_header * recibir_header(int socket);
+
 #endif /* ELESTAC_COMUNICACIONES_H_ */
