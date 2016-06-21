@@ -242,7 +242,8 @@ void * conecta_swap() {
 void enviar_pagina_size(int sock_fd) {
 
 	void * buffer_out;
-	buffer_out = serializar_header((uint8_t) Tamanio_pagina, umc_config->frames_size);
+	buffer_out = serializar_header((uint8_t) Tamanio_pagina,
+			umc_config->frames_size);
 
 	if (send(sock_fd, buffer_out, 5, 0) == -1) {
 		printf("No se pudo responder el handshake a nucleo. \n");
@@ -292,17 +293,13 @@ void * escucha_conexiones() {
 				sizeof(optval));
 
 		//------Recibo un handshake de la nueva conexion
-		void * buffer_in = malloc(5);
-		if (recv(socket_nuevo, buffer_in, 5, 0) == -1) {
-			printf("Error en el recv.");
-		}
-		t_header * handshake_in = deserializar_header(buffer_in);
+		int id = recibir_handshake(socket_nuevo);
 
 		//-------Averiguo quien es
-		switch (handshake_in->identificador) {
+		switch (id) {
 		case NUCLEO:
 			new_line();
-			printf("Se conecto Nucleo \n");
+			printf("Se conecto Nucleo en el socket: %d\n", socket_nuevo);
 
 			socket_nucleo = socket_nuevo;
 
@@ -314,25 +311,26 @@ void * escucha_conexiones() {
 			break;
 		case CPU:
 			new_line();
-			printf("Se conecto una CPU \n");
+			printf("Se conecto una CPU en el socket: %d\n", socket_nuevo);
 			pthread_mutex_lock(&mutex_lista_cpu);
 			t_sesion_cpu * cpu = malloc(sizeof(t_sesion_cpu));
 			cpu->socket_cpu = socket_nuevo;
 			cpu->id_cpu = ++id_cpu;
 			cpu->proceso_activo = -1;
 			list_add(cpu_conectadas, cpu);
+			printf("CPU ID: %d\n", cpu->id_cpu);
+			printf("CPU socket: %d\n", cpu->socket_cpu);
 			pthread_mutex_unlock(&mutex_lista_cpu);
 
 			enviar_pagina_size(socket_nuevo);
-			//creo el hilo para atender los cpu
+
+			pthread_t hilo_atiende_cpu;
+			pthread_create(&hilo_atiende_cpu, NULL, atiende_cpu, NULL);
 			break;
 		default:
 			printf("Se conecto alguien desconocido.\n");
 			break;
 		}
-
-		free(handshake_in);
-		free(buffer_in);
 
 		pthread_mutex_unlock(&mutex_servidor); //UNLOCK MUTEX SERVIDOR
 	}
@@ -514,4 +512,20 @@ void limpiar_tlb() {
 
 void marcar_paginas() {
 	printf("comando flush - memory\n");
+}
+
+int cambio_proceso_activo(int pid, int cpu) {
+	bool buscar_cpu(t_sesion_cpu * sesion) {
+		return (sesion->socket_cpu == cpu);
+	}
+	t_sesion_cpu * target = list_find(cpu_conectadas, (void *) buscar_cpu);
+
+	if (target == NULL) {
+		puts(
+				"No se encontró la cpu conectada para el cambio de proceso activo");
+		return -1;
+	}
+
+	target->proceso_activo = pid;
+	return EXIT_SUCCESS;
 }
