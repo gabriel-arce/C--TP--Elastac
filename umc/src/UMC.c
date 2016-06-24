@@ -454,11 +454,11 @@ void * atiende_cpu(void * args) {
 		switch (head_in->identificador) {
 		case Solicitar_pagina:
 			printf("Lectura de bytes\n");
-			resultado_operacion = solicitar_bytes(socket_cpu);
+			resultado_operacion = solicitar_bytes(socket_cpu, head_in->tamanio);
 			break;
 		case Almacenar_pagina:
 			printf("Almaceno bytes\n");
-			resultado_operacion = almacenar_bytes(socket_cpu);
+			resultado_operacion = almacenar_bytes(socket_cpu, head_in->tamanio);
 			break;
 		default:
 			printf("Cabecera desconocida\n");
@@ -476,22 +476,29 @@ void * atiende_cpu(void * args) {
 	return EXIT_SUCCESS;
 }
 
-int solicitar_bytes(int socket_cpu) {
-	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_escritura(
-			socket_cpu);
+int solicitar_bytes(int socket_cpu, int bytes) {
+	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_lectura(bytes, socket_cpu);
 
 	if (solicitud == NULL)
 		return -1;
+
+	printf("Pagina: %d\n",solicitud->nro_pagina);
+	printf("Offset: %d\n",solicitud->offset);
+	printf("bytes: %d\n",solicitud->bytes);
 
 	return EXIT_SUCCESS;
 }
 
-int almacenar_bytes(int socket_cpu) {
-	t_paquete_almacenar_pagina * solicitud = recibir_solicitud_escritura(
-			socket_cpu);
+int almacenar_bytes(int socket_cpu, int bytes) {
+	t_paquete_almacenar_pagina * solicitud = recibir_solicitud_escritura(bytes, socket_cpu);
 
 	if (solicitud == NULL)
 		return -1;
+
+	printf("Pagina: %d\n",solicitud->nro_pagina);
+	printf("Offset: %d\n",solicitud->offset);
+	printf("bytes: %d\n",solicitud->bytes);
+	printf("Buffer: %s\n", (char *) solicitud->buffer);
 
 	return EXIT_SUCCESS;
 }
@@ -553,12 +560,4 @@ t_paquete_inicializar_programa * recibir_inicializar_programa(
 
 	free(buffer);
 	return paquete;
-}
-
-t_paquete_solicitar_pagina * recibir_solicitud_lectura(int socket_cpu) {
-
-}
-
-t_paquete_almacenar_pagina * recibir_solicitud_escritura(int socket_cpu) {
-
 }

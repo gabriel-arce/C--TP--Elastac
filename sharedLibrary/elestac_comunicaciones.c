@@ -321,3 +321,69 @@ t_header * recibir_header(int socket) {
 
 	return header;
 }
+//----------------------------------------------------->
+int enviar_solicitud_lectura(int pagina, int offset, int bytes, int socket) {
+	int result = enviar_header(15, 12, socket);
+
+	if (result == -1)
+		return result;
+
+	void * solicitud = serializar_leer_pagina(pagina, offset, bytes);
+	result = send(socket, solicitud, 12, 0);
+
+	if (result == -1)
+		return result;
+
+	free(solicitud);
+	return EXIT_SUCCESS;
+}
+
+t_paquete_solicitar_pagina * recibir_solicitud_lectura(int bytes_to_recv,
+		int socket) {
+	void * buffer = malloc(bytes_to_recv);
+	int result = recv(socket, buffer, bytes_to_recv, 0);
+
+	if (result <= 0) {
+		puts("Error en el recv de ++Solicitud_lectura+++");
+		return NULL;
+	}
+
+	t_paquete_solicitar_pagina * solicitud = deserializar_leer_pagina(buffer);
+
+	return solicitud;
+}
+//----------------------------------------------------->
+int enviar_solicitud_escritura(int pagina, int offset, int bytes, void * buffer,
+		int socket) {
+
+	int bytes_to_send = 12 + bytes;
+	int result = enviar_header(16, bytes_to_send, socket);
+
+	if (result <= 0)
+		return result;
+
+	void * solicitud = serializar_almacenar_pagina(pagina, offset, bytes,
+			buffer);
+	result = send(socket, solicitud, bytes_to_send, 0);
+
+	if (result <= 0)
+		return result;
+
+	free(solicitud);
+	return EXIT_SUCCESS;
+}
+
+t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv,
+		int socket) {
+	void * buffer = malloc(bytes_to_recv);
+	int result = recv(socket, buffer, bytes_to_recv, 0);
+
+	if (result <= 0) {
+		puts("Error en el recv de +++Solicitud_lectura+++");
+		return NULL;
+	}
+
+	t_paquete_almacenar_pagina * solicitud = deserializar_almacenar_pagina(buffer);
+
+	return solicitud;
+}

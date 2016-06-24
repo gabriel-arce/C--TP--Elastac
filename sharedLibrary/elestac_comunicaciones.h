@@ -97,4 +97,11 @@ int recibir_handshake(int socket);
 int enviar_header(int id, int tamanio, int socket);
 t_header * recibir_header(int socket);
 
+int enviar_solicitud_lectura(int pagina, int offset, int bytes, int socket);
+t_paquete_solicitar_pagina * recibir_solicitud_lectura(int bytes_to_recv, int socket);
+
+int enviar_solicitud_escritura(int pagina, int offset, int bytes, void * buffer, int socket);
+t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv, int socket);
+
+
 #endif /* ELESTAC_COMUNICACIONES_H_ */

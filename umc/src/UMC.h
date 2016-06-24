@@ -130,15 +130,13 @@ void enviar_pagina_size(int sock_fd);
 int cambio_proceso_activo(int pid, int cpu);
 // begin OPERACIONES PRINCIPALES
 int inicializar_programa(t_paquete_inicializar_programa * paquete);
-int solicitar_bytes(int socket_cpu);
-int almacenar_bytes(int socket_cpu);
+int solicitar_bytes(int socket_cpu, int bytes);
+int almacenar_bytes(int socket_cpu, int bytes);
 int finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
 void * atiende_nucleo();
 void * atiende_cpu();
 int inicializar_en_swap(void * buffer);
 t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir);
-t_paquete_solicitar_pagina * recibir_solicitud_lectura(int socket_cpu);
-t_paquete_almacenar_pagina * recibir_solicitud_escritura(int socket_cpu);
 
 #endif /* UMC_H_ */
