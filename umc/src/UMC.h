@@ -129,13 +129,16 @@ void marcar_paginas();
 void enviar_pagina_size(int sock_fd);
 int cambio_proceso_activo(int pid, int cpu);
 // begin OPERACIONES PRINCIPALES
-void * inicializar_programa(int id_programa, int paginas_requeridas, char * codigo);
-void * solicitar_bytes(int nro_pagina, int offset, int tamanio); //cuidado que devuelve algo!!
-void * almacenar_bytes(int nro_pagina, int offset, int tamanio, char * buffer);
-void * finalizar_programa(int id_programa);
+int inicializar_programa(t_paquete_inicializar_programa * paquete);
+int solicitar_bytes(int socket_cpu);
+int almacenar_bytes(int socket_cpu);
+int finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
 void * atiende_nucleo();
 void * atiende_cpu();
-int pedir_espacio_swap(int pid, int paginas_necesarias);
+int inicializar_en_swap(void * buffer);
+t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir);
+t_paquete_solicitar_pagina * recibir_solicitud_lectura(int socket_cpu);
+t_paquete_almacenar_pagina * recibir_solicitud_escritura(int socket_cpu);
 
 #endif /* UMC_H_ */

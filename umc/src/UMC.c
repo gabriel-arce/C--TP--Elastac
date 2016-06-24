@@ -286,6 +286,7 @@ void * escucha_conexiones() {
 
 		if (socket_nuevo == -1) {
 			printf("Error en el accept.\n");
+			pthread_mutex_unlock(&mutex_servidor);
 			continue;
 		}
 
@@ -294,6 +295,11 @@ void * escucha_conexiones() {
 
 		//------Recibo un handshake de la nueva conexion
 		int id = recibir_handshake(socket_nuevo);
+
+		if (id <= 0) {
+			pthread_mutex_unlock(&mutex_servidor);
+			continue;
+		}
 
 		//-------Averiguo quien es
 		switch (id) {
@@ -325,7 +331,8 @@ void * escucha_conexiones() {
 			enviar_pagina_size(socket_nuevo);
 
 			pthread_t hilo_atiende_cpu;
-			pthread_create(&hilo_atiende_cpu, NULL, atiende_cpu, NULL);
+			pthread_create(&hilo_atiende_cpu, NULL, atiende_cpu,
+					(void *) socket_nuevo);
 			break;
 		default:
 			printf("Se conecto alguien desconocido.\n");
@@ -341,49 +348,35 @@ void * escucha_conexiones() {
 void * atiende_nucleo() {
 
 	int recibido = 1;
-	int proceso_activo = -1;
 
 	while (recibido > 0) {
 
-		void * buffer_in = malloc(5);
+		pthread_mutex_lock(&mutex_nucleo);
 
-		recibido = recv(socket_nucleo, buffer_in, 5, MSG_WAITALL);
+		t_header * head_in = recibir_header(socket_nucleo);
 
-		if (recibido == -1) {
-			printf("Error en el recv del header en atiende nucleo\n");
+		if (head_in == NULL) {
+			recibido = -1;
+			pthread_mutex_unlock(&mutex_nucleo);
 			continue;
 		}
-
-		t_header * head_in = malloc(sizeof(t_header));
-		memcpy(&(head_in->identificador), buffer_in, 1);
-		memcpy(&(head_in->tamanio), buffer_in + 1, 4);
-
-		printf("ID: %d\n", head_in->identificador);
-		printf("SIZE: %d\n", head_in->tamanio);
 
 		switch (head_in->identificador) {
 		case Inicializar_programa:
 			new_line();
-			pthread_mutex_lock(&mutex_nucleo);
+
 			void * buffer_stream = malloc(head_in->tamanio);
 
 			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
 			MSG_WAITALL)) == -1) {
-				printf("Error en el recv del header en atiende nucleo");
-				continue;
+				printf("Error en el recv de +++inicializar_programa+++ \n");
+				break;
 			}
+			if (recibido <= 0)
+				break;
 
-			t_paquete_inicializar_programa * iniciar_prog_pack = malloc(
-					sizeof(t_paquete_inicializar_programa));
-
-			memcpy(&(iniciar_prog_pack->pid), buffer_stream, 4);
-			memcpy(&(iniciar_prog_pack->paginas_requeridas), buffer_stream + 4,
-					4);
-			memcpy(&(iniciar_prog_pack->programa_length), buffer_stream + 8, 4);
-			iniciar_prog_pack->codigo_programa = malloc(
-					iniciar_prog_pack->programa_length);
-			memcpy(iniciar_prog_pack->codigo_programa, buffer_stream + 12,
-					iniciar_prog_pack->programa_length);
+			t_paquete_inicializar_programa * iniciar_prog_pack =
+					deserializar_iniciar_prog(buffer_stream);
 
 			printf("pid: %d\n", iniciar_prog_pack->pid);
 			printf("paginas: %d\n", iniciar_prog_pack->paginas_requeridas);
@@ -392,17 +385,13 @@ void * atiende_nucleo() {
 			printf("Inicializo programa...\n");
 			//inicializar_programa(iniciar_prog_pack);
 
-			free(buffer_stream);
 			free(iniciar_prog_pack);
 
-			pthread_mutex_unlock(&mutex_nucleo);
 			break;
 		case Finalizar_programa:
 			printf("Finalizo programa\n");
 			pthread_mutex_lock(&mutex_nucleo);
-			//al igual que inicializar, quizas deba hacerlo mediante hilos
-			finalizar_programa(
-					head_in->tamanio/*en nucleo setea el pid en el tamaño*/);
+			finalizar_programa(head_in->tamanio);
 			pthread_mutex_unlock(&mutex_nucleo);
 			break;
 		default:
@@ -411,78 +400,73 @@ void * atiende_nucleo() {
 		}
 
 		free(head_in);
-		free(buffer_in);
+
+		pthread_mutex_unlock(&mutex_nucleo);
 	}
 
 	return EXIT_SUCCESS;
 }
 
-void * inicializar_programa(int id_programa, int paginas_requeridas,
-		char * codigo) {
+int inicializar_programa(t_paquete_inicializar_programa * paquete) {
 
-	int marcos_libres = 0;
-
-	void contar_marcos_libres(t_mem_frame * list_aux) {
-		if (list_aux->libre == true)
-			marcos_libres++;
-	}
-
-	pthread_mutex_lock(&mutex_memoria);
-	list_iterate(marcos_memoria, (void *) contar_marcos_libres);
-	pthread_mutex_unlock(&mutex_memoria);
-
-	if (paginas_requeridas > marcos_libres) {
-		if (pedir_espacio_swap(id_programa, paginas_requeridas) == -1) {
-			//rechazo programa
-		}
-	} else {
-		if (paginas_requeridas <= umc_config->frame_x_prog) {
-			//le mando la cantidad de paginas a swap
-			//le mando el ok a nucleo
-		} else {
-			//va a swap porque excede el limite de marcos por programa
-		}
-	}
+	//mando a swap
+	//si me da el ok -> armo la tabla de paginas
+	//le doy el ok a nucleo
 
 	return EXIT_SUCCESS;
 }
 
-int pedir_espacio_swap(int pid, int paginas_necesarias) {
-	return 0;
+int inicializar_en_swap(void * buffer) {
+
+	//le envio a swap el buffer del paquete de inicializar programa
+	//espero a que me responda -> es un header id=Respuesta_inicio; size= 1->ok, 0->refused
+	//retorno la respuesta....o sea header->size
+
+	return EXIT_SUCCESS;
 }
 
-void * finalizar_programa(int id_programa) {
+int finalizar_programa(int id_programa) {
 	printf("Programa finalizado.\n");
+
+	//--le aviso a swap que libere el programa
+	//--luego libero aca: tabla de paginas, libero frames si estaba alocado en memoria, etc...
+	//--NOTA: puede que tenga que esperar algun tipo de respuesta de swap para antes avisarle a nucleo
+	//que libere el programa
+
 	return EXIT_SUCCESS;
 }
 
-void * atiende_cpu() {
+void * atiende_cpu(void * args) {
+
+	int socket_cpu = (int) args;
 
 	int recibido = 1;
 	void * buffer_in = malloc(5);
 
 	while (recibido > 0) {
 
-		if ((recibido = recv(socket_nucleo, buffer_in, 5, 0)) == -1) {
-			printf("Error en el recv de atiende cpu");
-			continue;
-		}
+		t_header * head_in = recibir_header(socket_cpu);
+		int resultado_operacion = -1; //**
 
-		t_header * head_in = malloc(sizeof(t_header));
-		memcpy(&head_in->identificador, buffer_in, 1);
-		memcpy(&head_in->tamanio, buffer_in + 1, 4);
+		if (head_in == NULL)
+			continue; //quizas aca le pueda responder con el mismo formato en el que usare para avisarle el error **
 
 		switch (head_in->identificador) {
 		case Solicitar_pagina:
 			printf("Lectura de bytes\n");
+			resultado_operacion = solicitar_bytes(socket_cpu);
 			break;
 		case Almacenar_pagina:
 			printf("Almaceno bytes\n");
+			resultado_operacion = almacenar_bytes(socket_cpu);
 			break;
 		default:
 			printf("Cabecera desconocida\n");
 			break;
 		}
+
+		//--luego del switch compruebo si resultado_operacion == -1
+		//--y handleo el error avisandole a cpu que se re pudrio
 
 		free(head_in);
 	}
@@ -492,9 +476,31 @@ void * atiende_cpu() {
 	return EXIT_SUCCESS;
 }
 
+int solicitar_bytes(int socket_cpu) {
+	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_escritura(
+			socket_cpu);
+
+	if (solicitud == NULL)
+		return -1;
+
+	return EXIT_SUCCESS;
+}
+
+int almacenar_bytes(int socket_cpu) {
+	t_paquete_almacenar_pagina * solicitud = recibir_solicitud_escritura(
+			socket_cpu);
+
+	if (solicitud == NULL)
+		return -1;
+
+	return EXIT_SUCCESS;
+}
+
 void modificar_retardo(int ret) {
-	printf("comando retardo %d\n", ret);
+	printf("Retardo modificado\n");
+	printf("Retardo anterior: %d\n", umc_config->retardo);
 	umc_config->retardo = ret;
+	printf("Retardo actual: %d\n", umc_config->retardo);
 }
 
 void reporte_estructuras() {
@@ -528,4 +534,31 @@ int cambio_proceso_activo(int pid, int cpu) {
 
 	target->proceso_activo = pid;
 	return EXIT_SUCCESS;
+}
+
+t_paquete_inicializar_programa * recibir_inicializar_programa(
+		int bytes_a_recibir) {
+	int recibido = -1;
+	void * buffer = malloc(bytes_a_recibir);
+
+	recibido = recv(socket_nucleo, buffer, bytes_a_recibir, 0);
+
+	if (recibido <= 0) {
+		puts("Error en el recv de ++inicializar_programa++");
+		return NULL;
+	}
+
+	t_paquete_inicializar_programa * paquete = deserializar_iniciar_prog(
+			buffer);
+
+	free(buffer);
+	return paquete;
+}
+
+t_paquete_solicitar_pagina * recibir_solicitud_lectura(int socket_cpu) {
+
+}
+
+t_paquete_almacenar_pagina * recibir_solicitud_escritura(int socket_cpu) {
+
 }

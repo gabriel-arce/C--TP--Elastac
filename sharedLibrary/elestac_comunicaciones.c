@@ -281,6 +281,8 @@ int recibir_handshake(int socket) {
 		puts("Error en el recv del handshake");
 		return result;
 	}
+	if (result <= 0)
+		return -1;
 
 	t_header * header = deserializar_header(buffer);
 
@@ -312,6 +314,8 @@ t_header * recibir_header(int socket) {
 		puts("Error en el recv del header");
 		return NULL;
 	}
+	if (result <= 0)
+		return NULL;
 
 	t_header * header = deserializar_header(buffer);
 
