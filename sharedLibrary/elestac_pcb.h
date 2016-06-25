@@ -42,7 +42,6 @@ typedef struct {
 	uint32_t retPos;
 	t_posicion * retVar;
 	bool stackActivo;
-	bool stackDeRetorno;				//para ver a que stack tengo que retornar luego de llamar a una funcion
 } t_stack;
 
 typedef struct {

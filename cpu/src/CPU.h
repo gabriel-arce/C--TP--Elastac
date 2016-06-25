@@ -83,6 +83,11 @@ void mandarTextoANucleo(char* texto);
 void rutina(int n);
 void desconectarCPU();
 void desactivarStackActivo();
+void asignarPosicionYDireccionDeRetorno(t_posicion donde_retornar, uint32_t posicionDeRetorno);
+void retornarValorAVariable(t_valor_variable retorno);
+void modificarElPC();
+void eliminarStackActivo();
+void activarUltimoStack();
 
 
 //------------------Primitivas
@@ -94,11 +99,11 @@ void asignar(t_posicion direccion_variable, t_valor_variable valor);
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable);
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable,t_valor_variable valor);
 void irAlLabel(t_nombre_etiqueta etiqueta);
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar);
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar);
 void retornar(t_valor_variable retorno);
-int imprimir(t_valor_variable valor_mostrar);
-int imprimirTexto(char* texto);
-int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
+void imprimir(t_valor_variable valor_mostrar);
+void imprimirTexto(char* texto);
+void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void wait(t_nombre_semaforo identificador_semaforo);
 void signals(t_nombre_semaforo identificador_semaforo);
 
