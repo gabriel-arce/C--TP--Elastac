@@ -76,10 +76,11 @@ void conectarConNucleo(){
 		exit(EXIT_FAILURE);
 	}
 
-//recibo de quantum
+//recibo de quantum  TODO:(tambien tengo que recibir el quantum_sleep)
 	t_header * head = recibir_header(socketNucleo);
 	quantum = head->tamanio;
 	free(head);
+
 
 //	 int recibido = 1;
 //	 while (recibido > 0) {
@@ -378,8 +379,8 @@ void imprimirTexto(char* texto){
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	//cambiar estado a bloqueado
-	//mandar a nucleo
+	cambiarEstadoABloqueado();
+	//mandar a nucleo la entrada salida
 
 }
 
@@ -610,5 +611,8 @@ void activarUltimoStack(){
 	stackAACtivar->stackActivo = true;
 }
 
+void cambiarEstadoABloqueado(){
 
+	pcbActual->estado = Bloqueado;
+}
 

@@ -24,15 +24,16 @@ int main(void){
 
 	while(!hotPlugActivado){
 
-		escucharAlNucleo();			//Escuchar al nucleo a la espera de nuevos PCBs
+		escucharAlNucleo();			//Escuchar al nucleo a la espera de nuevos PCBs (cuando recibe aviso al UMC cambio de PID)
 
 
 		while(pcbCorriendo()){
 
 			ejecutarProximaInstruccion();
+			//nanosleep()
 			actualizarQuantum();
 
-			if(getQuantumPcb() == getQuantum()){
+			if(getQuantumPcb() == getQuantum()){								//hay que ver si la ultima sentencia puede ser una entrada salida ( cambiaria a bloqueado y despues a findequantum)
 
 				restaurarQuantum();
 				cambiarEstadoAFinQuantum();

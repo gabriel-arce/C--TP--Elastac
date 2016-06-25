@@ -24,6 +24,7 @@
 #include <elestac_pcb.h>
 #include <signal.h>
 #include <elestac_comunicaciones.h>
+#include <time.h>
 
 #define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
 //#define CONFIG_PATH "CPU.conf"					//Terminal
@@ -43,6 +44,7 @@ typedef struct {
 
 t_pcb * pcbActual;					//PCB del programa ejecutando
 int quantum;
+int quantum_sleep;
 int tamanio_paginas;
 t_CPU_config * cpu;
 int socketNucleo, socketUMC;
@@ -88,6 +90,7 @@ void retornarValorAVariable(t_valor_variable retorno);
 void modificarElPC();
 void eliminarStackActivo();
 void activarUltimoStack();
+void cambiarEstadoABloqueado();
 
 
 //------------------Primitivas
