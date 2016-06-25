@@ -363,7 +363,13 @@ void imprimirTexto(char* texto){
 
 	if(string_equals_ignore_case(texto, "end")){
 
+		if(list_size(pcbActual->indice_stack) == 1){
+
 		cambiarEstadoATerminado();
+	}
+		else{
+			//tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
+		}
 	}
 
 	mandarTextoANucleo(texto);
