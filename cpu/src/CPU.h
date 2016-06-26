@@ -91,7 +91,8 @@ void modificarElPC();
 void eliminarStackActivo();
 void activarUltimoStack();
 void cambiarEstadoABloqueado();
-
+t_posicion  convertirPunteroAPosicion(t_puntero puntero);
+t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 
 //------------------Primitivas
 

@@ -219,37 +219,37 @@ void borrarPCBActual(){
 
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
-	// TODO enviar a UMC
+	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
+		salirPor("no se pudo concretar la solicitud de escritura");
+		cambiarEstadoATerminado();    											//si hay algun error se termina el programa
+	}
 
-	//si hay algun error devuelve -1 y se destruye el programa
 }
 
 t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){    //TODO ver si esta bien
 
-	t_valor_variable  valor;
-	void * buffer;
+	t_valor_variable valor;
 
-	buffer = serializar_leer_pagina(pagina,offset,size);
+	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
+		salirPor("No se concreto la solicitud de lectura");
+	}
 
-	int result = enviar_header(18, sizeof(buffer), socketUMC);
-
-	if (result == -1)
-		salirPor("No se pudo enviar header para leer bytes");
-
-	if (send(socketUMC, buffer, sizeof(buffer), 0) == -1) {
-			salirPor("No se pudo  leer bytes de la variable");
-		}
-		printf("Se ha enviado el tamanio de pagina \n");
-
-	//recibir bytes
+	//TODO falta recibir el valor
 
 	return valor;
-
 }
 
 char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	//TODO enviar a UMC
+	char * instruccion;
+
+	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
+			salirPor("No se concreto la solicitud de lectura");
+		}
+
+		//TODO falta recibir la instruccion
+
+	return instruccion;
 }
 
 void mandarTextoANucleo(char* texto){
@@ -534,7 +534,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (ver si hace falta mandar una solicitud por pagina)
 
 	char* instruccion = string_new();
 	uint32_t pagina;
@@ -606,7 +606,7 @@ void modificarElPC(){
 }
 
 
-void eliminarStackActivo(){
+void eliminarStackActivo(){			//todo free del stack
 	int ultimoStack;
 
 	ultimoStack = list_size(pcbActual->indice_stack);
@@ -631,21 +631,21 @@ void cambiarEstadoABloqueado(){
 	pcbActual->estado = Bloqueado;
 }
 
-t_posicion * convertirPunteroAPosicion(t_puntero puntero){				//para usar si explota con t_posicion
+t_posicion  convertirPunteroAPosicion(t_puntero puntero){				//para usar si explota con t_posicion
 
-	t_posicion * posicion;
+	t_posicion  posicion;
 	div_t output;
 
 	output = div(puntero, tamanio_paginas);
 
-	posicion->pagina = output.quot;
-	posicion->offset = output.rem;
-	posicion->size = 4;
+	posicion.pagina = output.quot;
+	posicion.offset = output.rem;
+	posicion.size = 4;
 
 	return posicion;
 }
 
-t_puntero * convertirPosicionAPuntero(t_posicion * posicion){
+t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 
 	uint32_t  puntero;
 
