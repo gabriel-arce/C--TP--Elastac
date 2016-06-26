@@ -68,11 +68,19 @@ void cargarConfiguracion(){
 void conectarConNucleo(){
 	if((socketNucleo = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
 		salirPor("[CPU} No se pudo conectar al Nucleo");
+
+//envio de handshake
 	int result = -1;
 	result = enviar_handshake(socketNucleo, 5);
 	if (result == -1) {
 		exit(EXIT_FAILURE);
 	}
+
+//recibo de quantum  TODO:(tambien tengo que recibir el quantum_sleep)
+	t_header * head = recibir_header(socketNucleo);
+	quantum = head->tamanio;
+	free(head);
+
 
 //	 int recibido = 1;
 //	 while (recibido > 0) {
@@ -102,6 +110,7 @@ void cambiar_proceso_activo(int pid) {
 	if (result == -1)
 		salirPor("No se pudo realizar el cambio de proceso activo");
 }
+
 
 // este servidor esta demas
 void escucharAlNucleo(){
@@ -210,22 +219,37 @@ void borrarPCBActual(){
 
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
-	// TODO enviar a UMC
+	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
+		salirPor("no se pudo concretar la solicitud de escritura");
+		cambiarEstadoATerminado();    											//si hay algun error se termina el programa
+	}
 
-	//si hay algun error devuelve -1 y se destruye el programa
 }
 
-t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
+t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){    //TODO ver si esta bien
 
-	t_valor_variable  valor;
+	t_valor_variable valor;
 
+	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
+		salirPor("No se concreto la solicitud de lectura");
+	}
 
+	//TODO falta recibir el valor
 
+	return valor;
 }
 
 char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	//TODO enviar a UMC
+	char * instruccion;
+
+	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
+			salirPor("No se concreto la solicitud de lectura");
+		}
+
+		//TODO falta recibir la instruccion
+
+	return instruccion;
 }
 
 void mandarTextoANucleo(char* texto){
@@ -326,40 +350,52 @@ void irAlLabel(t_nombre_etiqueta etiqueta){
 
 }
 
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar){							//faltan los argumentos!!
+	uint32_t direccionDeRetorno; 			//numero que debera tomar el PC al finalizar la funcion
 
+	direccionDeRetorno = pcbActual->pcb_pc + 1;
 	desactivarStackActivo();
 	crearStack();
+	asignarPosicionYDireccionDeRetorno(donde_retornar, direccionDeRetorno);
+	irAlLabel(etiqueta);		//hay que ver si el parser lo hace solo
 
 
 }
 
 void retornar(t_valor_variable retorno){
 
-	//cambiar stackActivo
+	retornarValorAVariable(retorno);
+	modificarElPC();
+	eliminarStackActivo();
+	activarUltimoStack();
 }
 
-int imprimir(t_valor_variable valor_mostrar){
+void imprimir(t_valor_variable valor_mostrar){
 
 	//mandar a nucleo
 }
 
-int imprimirTexto(char* texto){
+void imprimirTexto(char* texto){
 
 	if(string_equals_ignore_case(texto, "end")){
 
+		if(list_size(pcbActual->indice_stack) == 1){
+
 		cambiarEstadoATerminado();
+	}
+		else{
+			//tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
+		}
 	}
 
 	mandarTextoANucleo(texto);
 
-	return string_length(texto);
 }
 
-int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
+void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	//cambiar estado a bloqueado
-	//mandar a nucleo
+	cambiarEstadoABloqueado();
+	//mandar a nucleo la entrada salida
 
 }
 
@@ -498,7 +534,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (ver si hace falta mandar una solicitud por pagina)
 
 	char* instruccion = string_new();
 	uint32_t pagina;
@@ -540,9 +576,81 @@ void desactivarStackActivo(){
 
 	stackActivo = buscarStackActivo();
 	stackActivo->stackActivo = false;
-	stackActivo->stackDeRetorno = true;
+
+}
+
+void asignarPosicionYDireccionDeRetorno(t_posicion donde_retornar, uint32_t direccionDeRetorno){
+	t_stack * stackActivo;
+
+	stackActivo = buscarStackActivo();
+	stackActivo->retVar = &donde_retornar;
+	stackActivo->retPos = direccionDeRetorno;
 
 }
 
 
+void retornarValorAVariable(t_valor_variable retorno){
+	t_stack * stackActivo;
+
+	stackActivo = buscarStackActivo();
+	escribirBytes(stackActivo->retVar->pagina,stackActivo->retVar->offset,stackActivo->retVar->size, retorno);   //escribo el retorno de la funcion de la variable de retorno
+
+}
+
+
+void modificarElPC(){
+	t_stack * stackActivo;
+
+	stackActivo = buscarStackActivo();
+	pcbActual->pcb_pc = stackActivo->retPos;
+}
+
+
+void eliminarStackActivo(){			//todo free del stack
+	int ultimoStack;
+
+	ultimoStack = list_size(pcbActual->indice_stack);
+	list_remove(pcbActual->indice_stack, ultimoStack);
+
+}
+
+void activarUltimoStack(){
+
+	int ultimoStack;
+	t_stack * stackAACtivar;
+
+	ultimoStack = list_size(pcbActual->indice_stack);
+
+	stackAACtivar =  list_get(pcbActual->indice_stack, ultimoStack);
+
+	stackAACtivar->stackActivo = true;
+}
+
+void cambiarEstadoABloqueado(){
+
+	pcbActual->estado = Bloqueado;
+}
+
+t_posicion  convertirPunteroAPosicion(t_puntero puntero){				//para usar si explota con t_posicion
+
+	t_posicion  posicion;
+	div_t output;
+
+	output = div(puntero, tamanio_paginas);
+
+	posicion.pagina = output.quot;
+	posicion.offset = output.rem;
+	posicion.size = 4;
+
+	return posicion;
+}
+
+t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
+
+	uint32_t  puntero;
+
+	puntero = ((posicion->pagina * tamanio_paginas) + posicion->offset);
+
+	return puntero;
+}
 

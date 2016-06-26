@@ -24,6 +24,7 @@
 #include <elestac_pcb.h>
 #include <signal.h>
 #include <elestac_comunicaciones.h>
+#include <time.h>
 
 #define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
 //#define CONFIG_PATH "CPU.conf"					//Terminal
@@ -43,6 +44,7 @@ typedef struct {
 
 t_pcb * pcbActual;					//PCB del programa ejecutando
 int quantum;
+int quantum_sleep;
 int tamanio_paginas;
 t_CPU_config * cpu;
 int socketNucleo, socketUMC;
@@ -83,7 +85,14 @@ void mandarTextoANucleo(char* texto);
 void rutina(int n);
 void desconectarCPU();
 void desactivarStackActivo();
-
+void asignarPosicionYDireccionDeRetorno(t_posicion donde_retornar, uint32_t posicionDeRetorno);
+void retornarValorAVariable(t_valor_variable retorno);
+void modificarElPC();
+void eliminarStackActivo();
+void activarUltimoStack();
+void cambiarEstadoABloqueado();
+t_posicion  convertirPunteroAPosicion(t_puntero puntero);
+t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 
 //------------------Primitivas
 
@@ -94,11 +103,11 @@ void asignar(t_posicion direccion_variable, t_valor_variable valor);
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable);
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable,t_valor_variable valor);
 void irAlLabel(t_nombre_etiqueta etiqueta);
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar);
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar);
 void retornar(t_valor_variable retorno);
-int imprimir(t_valor_variable valor_mostrar);
-int imprimirTexto(char* texto);
-int entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
+void imprimir(t_valor_variable valor_mostrar);
+void imprimirTexto(char* texto);
+void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void wait(t_nombre_semaforo identificador_semaforo);
 void signals(t_nombre_semaforo identificador_semaforo);
 

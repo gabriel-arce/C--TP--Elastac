@@ -2,26 +2,34 @@
 #include "dummy_ansisop.h"
 #include <parser/metadata_program.h>
 
+
 static const int CONTENIDO_VARIABLE = 20;
-static const int POSICION_MEMORIA = 0x10;
 
-t_puntero dummy_definirVariable(t_nombre_variable variable) {
+
+
+
+t_posicion * dummy_definirVariable(t_nombre_variable variable) {
 	printf("definir la variable %c\n", variable);
-	return POSICION_MEMORIA;
+	 t_posicion * tipo_posicion = malloc(sizeof(t_posicion));
+	 tipo_posicion-> posicion = 10;
+
+	return tipo_posicion;
 }
 
-t_puntero dummy_obtenerPosicionVariable(t_nombre_variable variable) {
+t_posicion * dummy_obtenerPosicionVariable(t_nombre_variable variable) {
 	printf("Obtener posicion de %c\n", variable);
-	return POSICION_MEMORIA;
+	 t_posicion * tipo_posicion = malloc(sizeof(t_posicion));
+	 tipo_posicion-> posicion = 10;
+	return tipo_posicion;
 }
 
-t_valor_variable dummy_dereferenciar(t_puntero puntero) {
-	printf("Dereferenciar %d y su valor es: %d\n", puntero, CONTENIDO_VARIABLE);
+t_valor_variable dummy_dereferenciar(t_posicion * puntero) {
+	printf("Dereferenciar %d y su valor es: %d\n", puntero->posicion, CONTENIDO_VARIABLE);
 	return CONTENIDO_VARIABLE;
 }
 
-void dummy_asignar(t_puntero puntero, t_valor_variable variable) {
-	printf("Asignando en %d el valor %d\n", puntero, variable);
+void dummy_asignar(t_posicion * puntero, t_valor_variable variable) {
+	printf("Asignando en %d el valor %d\n", puntero->posicion, variable);
 }
 
 void dummy_imprimir(t_valor_variable valor) {
