@@ -24,8 +24,8 @@ int main(void){
 
 	while(!hotPlugActivado){
 
-		escucharAlNucleo();			//Escuchar al nucleo a la espera de nuevos PCBs (cuando recibe aviso al UMC cambio de PID)
-
+		escucharAlNucleo();								//Escuchar al nucleo a la espera de nuevos PCBs
+		cambiar_proceso_activo(pcbActual->pcb_pid);		//envio a umc nuevo PID
 
 		while(pcbCorriendo()){
 

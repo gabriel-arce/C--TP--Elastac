@@ -224,11 +224,26 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 	//si hay algun error devuelve -1 y se destruye el programa
 }
 
-t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){     //TODO puede retornar valor o un string
+t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){    //TODO ver si esta bien
 
 	t_valor_variable  valor;
+	void * buffer;
 
+	buffer = serializar_leer_pagina(pagina,offset,size);
 
+	int result = enviar_header(18, sizeof(buffer), socketUMC);
+
+	if (result == -1)
+		salirPor("No se pudo enviar header para leer bytes");
+
+	if (send(socketUMC, buffer, sizeof(buffer), 0) == -1) {
+			salirPor("No se pudo  leer bytes de la variable");
+		}
+		printf("Se ha enviado el tamanio de pagina \n");
+
+	//recibir bytes
+
+	return valor;
 
 }
 
@@ -342,7 +357,7 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar){			
 	desactivarStackActivo();
 	crearStack();
 	asignarPosicionYDireccionDeRetorno(donde_retornar, direccionDeRetorno);
-	irAlLabel(etiqueta);
+	irAlLabel(etiqueta);		//hay que ver si el parser lo hace solo
 
 
 }
@@ -614,5 +629,28 @@ void activarUltimoStack(){
 void cambiarEstadoABloqueado(){
 
 	pcbActual->estado = Bloqueado;
+}
+
+t_posicion * convertirPunteroAPosicion(t_puntero puntero){				//para usar si explota con t_posicion
+
+	t_posicion * posicion;
+	div_t output;
+
+	output = div(puntero, tamanio_paginas);
+
+	posicion->pagina = output.quot;
+	posicion->offset = output.rem;
+	posicion->size = 4;
+
+	return posicion;
+}
+
+t_puntero * convertirPosicionAPuntero(t_posicion * posicion){
+
+	uint32_t  puntero;
+
+	puntero = ((posicion->pagina * tamanio_paginas) + posicion->offset);
+
+	return puntero;
 }
 
