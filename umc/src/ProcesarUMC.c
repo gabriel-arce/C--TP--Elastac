@@ -27,7 +27,7 @@ int main() {
 
 	cpu_conectadas = list_create();
 	marcos_memoria = list_create();
-	tabla_de_paginas = list_create();
+	lista_procesos = list_create();
 
 	if (tlb_habilitada())
 		tlb = list_create();

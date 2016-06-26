@@ -38,6 +38,8 @@
 #define LENGTH_MAX_COMANDO 7
 #define CLOCK 99 //el condigo ascii de 'c' es 99
 #define CLOCK_MODIFICADO 100 //aca le "sumo" 1 a c
+#define Respuesta__SI 1
+#define Respuesta__NO 0
 
 //Cabeceras
 #define NUCLEO 2
@@ -81,8 +83,8 @@ typedef struct {
 typedef struct {
 	int pagina;
 	int frame;
-	int pid;
 	int dirtybit;
+	int presentbit;
 } t_pagina;
 
 typedef struct {
@@ -90,6 +92,11 @@ typedef struct {
 	int frame;
 	int pid;
 } t_tlb;
+
+typedef struct {
+	int pid;
+	t_list * tabla_paginas;
+} t_proceso;
 
 t_umc_config * umc_config;
 int nucleos_conectados;
@@ -108,7 +115,7 @@ t_log * logger;
 FILE * archivo_reporte;
 t_list * tlb;
 t_list * marcos_memoria;
-t_list * tabla_de_paginas;
+t_list * lista_procesos;
 
 void new_line();
 void cargar_config();
@@ -136,7 +143,7 @@ int finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
 void * atiende_nucleo();
 void * atiende_cpu();
-int inicializar_en_swap(void * buffer);
+int inicializar_en_swap(void * buffer, int buffer_size);
 t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir);
 
 #endif /* UMC_H_ */

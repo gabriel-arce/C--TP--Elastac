@@ -103,5 +103,9 @@ t_paquete_solicitar_pagina * recibir_solicitud_lectura(int bytes_to_recv, int so
 int enviar_solicitud_escritura(int pagina, int offset, int bytes, void * buffer, int socket);
 t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv, int socket);
 
+//respuesta: si -> 1  / no -> 0
+int enviar_respuesta_inicio(int socket, int respuesta);
+int recibir_respuesta_inicio(int socket);
+
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

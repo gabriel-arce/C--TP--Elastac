@@ -387,3 +387,28 @@ t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv,
 
 	return solicitud;
 }
+//----------------------------------------------------->
+int enviar_respuesta_inicio(int socket, int respuesta) {
+	void * buffer = serializar_respuesta_inicio(respuesta);
+	int r = send(socket, buffer, 5, 0);
+
+	if(r == -1) {
+		puts("Error en el envio de +++Respuesta_inicio_programa+++");
+		return r;
+	}
+
+	free(buffer);
+	return r;
+}
+
+int recibir_respuesta_inicio(int socket) {
+	void * buffer = malloc(5);
+	int r = recv(socket, buffer, 5, 0);
+
+	if (r <= 0)
+		return 0;
+
+	int respuesta = deserializar_respuesta_inicio(buffer);
+
+	return respuesta;
+}

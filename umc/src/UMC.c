@@ -410,19 +410,55 @@ void * atiende_nucleo() {
 int inicializar_programa(t_paquete_inicializar_programa * paquete) {
 
 	//mando a swap
-	//si me da el ok -> armo la tabla de paginas
-	//le doy el ok a nucleo
+	void * buffer = serializar_iniciar_prog(paquete->pid, paquete->paginas_requeridas, paquete->codigo_programa);
+	int reply = inicializar_en_swap(buffer, 12 + paquete->programa_length);
+	free(buffer);
 
-	return EXIT_SUCCESS;
+	if (reply == -1)
+		return Respuesta__NO;
+	//else: si me da el ok -> armo la tabla de paginas
+	t_proceso * new_process = malloc(sizeof(t_proceso));
+	new_process->pid = paquete->pid;
+	new_process->tabla_paginas = list_create();
+
+	int i;
+	for (i = 0; i < paquete->paginas_requeridas; i++) {
+		t_pagina * page_entry = malloc(sizeof(t_pagina));
+		page_entry->pagina = i;
+		page_entry->frame = -1;
+		page_entry->dirtybit = 0;
+		page_entry->presentbit = 0;
+
+		list_add(new_process->tabla_paginas, page_entry);
+	}
+
+	list_add(lista_procesos, new_process);
+
+	//le doy el ok a nucleo
+	int result = enviar_respuesta_inicio(socket_nucleo, 1);
+	//si no se pudo enviar la respuesta a nucleo lo mejor
+	//seria enviarle a swap que finalice el programa (libere memoria)
+	//en lugar de volver a tratar de enviarla
+
+	if(result <= 0)
+		return Respuesta__NO;
+
+	return Respuesta__SI;
 }
 
-int inicializar_en_swap(void * buffer) {
+int inicializar_en_swap(void * buffer, int buffer_size) {
 
-	//le envio a swap el buffer del paquete de inicializar programa
-	//espero a que me responda -> es un header id=Respuesta_inicio; size= 1->ok, 0->refused
-	//retorno la respuesta....o sea header->size
+	//primero le envio el header del inicializar programa a swap
+	enviar_header(Inicializar_programa, buffer_size, socket_cliente);
+	//luego le envio el buffer del paquete de inicializar programa
+	int r = send(socket_cliente, buffer, buffer_size, 0);
+	if (r <= 0)
+		return Respuesta__NO;
+	//espero a que me responda
+	int respuesta = recibir_respuesta_inicio(socket_cliente);
+	//retorno la respuesta
 
-	return EXIT_SUCCESS;
+	return respuesta;
 }
 
 int finalizar_programa(int id_programa) {
