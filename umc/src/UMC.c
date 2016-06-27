@@ -62,8 +62,23 @@ void imprimir_config() {
 	new_line();
 }
 
-int tlb_habilitada() {
-	return (umc_config->entradas_tlb > 0);
+bool tlb_habilitada() {
+	if (umc_config->entradas_tlb > 0) {
+		tlb = list_create();
+		int i;
+		for (i = 0; i < umc_config->entradas_tlb; i++) {
+			t_tlb * new_entry = malloc(sizeof(t_tlb));
+			new_entry->frame = -1;
+			new_entry->pagina = -1;
+			new_entry->pid = -1;
+			new_entry->referencebit = 0;
+
+			list_add_in_index(tlb, i, new_entry);
+		}
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void * lanzar_consola() {
@@ -410,7 +425,8 @@ void * atiende_nucleo() {
 int inicializar_programa(t_paquete_inicializar_programa * paquete) {
 
 	//mando a swap
-	void * buffer = serializar_iniciar_prog(paquete->pid, paquete->paginas_requeridas, paquete->codigo_programa);
+	void * buffer = serializar_iniciar_prog(paquete->pid,
+			paquete->paginas_requeridas, paquete->codigo_programa);
 	int reply = inicializar_en_swap(buffer, 12 + paquete->programa_length);
 	free(buffer);
 
@@ -440,7 +456,7 @@ int inicializar_programa(t_paquete_inicializar_programa * paquete) {
 	//seria enviarle a swap que finalice el programa (libere memoria)
 	//en lugar de volver a tratar de enviarla
 
-	if(result <= 0)
+	if (result <= 0)
 		return Respuesta__NO;
 
 	return Respuesta__SI;
@@ -465,11 +481,63 @@ int finalizar_programa(int id_programa) {
 	printf("Programa finalizado.\n");
 
 	//--le aviso a swap que libere el programa
+	finalizar_en_swap(id_programa);
 	//--luego libero aca: tabla de paginas, libero frames si estaba alocado en memoria, etc...
-	//--NOTA: puede que tenga que esperar algun tipo de respuesta de swap para antes avisarle a nucleo
-	//que libere el programa
+	bool buscar_proceso(t_proceso * target) {
+		return (target->pid == id_programa);
+	}
+	t_proceso * proceso = list_find(lista_procesos, (void *) buscar_proceso);
+
+	if (proceso == NULL)
+		return -1;
+
+	int cantidad_paginas = list_size(proceso->tabla_paginas);
+
+	int i;
+	for (i = 0; i < cantidad_paginas; i++) {
+		t_pagina * page_entry = list_get(proceso->tabla_paginas, i);
+
+		if (page_entry->presentbit == 1) {
+			//libero memoria en el frame en la cual esta cargado el proceso
+			bool buscar_frame(t_mem_frame * frame) {
+				return ((frame->pagina == page_entry->pagina)
+						&& (frame->pid == id_programa));
+			}
+			t_mem_frame * marco = list_find(marcos_memoria,
+					(void *) buscar_frame);
+
+			if (marco == NULL)
+				continue;
+
+			marco->libre = 1;
+			marco->pagina = -1;
+			marco->pid = -1;
+		}
+	}
+
+	//libero la tabla de paginas
+	void lib_entry(t_pagina * target) {
+		free(target);
+	}
+	list_destroy_and_destroy_elements(proceso->tabla_paginas,
+			(void *) lib_entry);
+
+	//elimino el proceso de la lista de procesos
+	void process_destroyer(t_proceso * self) {
+		free(self);
+	}
+	list_remove_and_destroy_by_condition(lista_procesos,
+			(void *) buscar_proceso, (void *) process_destroyer);
 
 	return EXIT_SUCCESS;
+}
+
+void finalizar_en_swap(int pid) {
+	void * buffer = serializar_fin_prog(pid);
+	int r = send(socket_cliente, buffer, 5, 0);
+
+	if (r == -1)
+		puts("Error en el send de +++Finalizar_programa+++");
 }
 
 void * atiende_cpu(void * args) {
@@ -490,11 +558,18 @@ void * atiende_cpu(void * args) {
 		switch (head_in->identificador) {
 		case Solicitar_pagina:
 			printf("Lectura de bytes\n");
-			resultado_operacion = solicitar_bytes(socket_cpu, head_in->tamanio);
+			resultado_operacion = leer_bytes(socket_cpu, head_in->tamanio);
 			break;
 		case Almacenar_pagina:
 			printf("Almaceno bytes\n");
 			resultado_operacion = almacenar_bytes(socket_cpu, head_in->tamanio);
+			break;
+		case Cambio_proceso_activo:
+			printf("Cambio de proceso activo\n");
+			resultado_operacion = cambio_proceso_activo(head_in->tamanio,
+					socket_cpu);
+			if (resultado_operacion == -1)
+				recibido = -1;
 			break;
 		default:
 			printf("Cabecera desconocida\n");
@@ -512,28 +587,44 @@ void * atiende_cpu(void * args) {
 	return EXIT_SUCCESS;
 }
 
-int solicitar_bytes(int socket_cpu, int bytes) {
-	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_lectura(bytes, socket_cpu);
+int leer_bytes(int socket_cpu, int bytes) {
+	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_lectura(bytes,
+			socket_cpu);
 
 	if (solicitud == NULL)
 		return -1;
 
-	printf("Pagina: %d\n",solicitud->nro_pagina);
-	printf("Offset: %d\n",solicitud->offset);
-	printf("bytes: %d\n",solicitud->bytes);
+	t_sesion_cpu * cpu = buscar_cpu(socket_cpu);
+	if (!cpu)
+		return -1;
+
+	bool sol_pag_val = pagina_valida(cpu->proceso_activo, solicitud->nro_pagina);
+	if(!sol_pag_val)
+		return -1;
+
+	if(tlb_on) {
+		read_with_tlb(cpu, solicitud);
+	} else {
+		read_without_tlb(cpu, solicitud);
+	}
+
+	printf("Pagina: %d\n", solicitud->nro_pagina);
+	printf("Offset: %d\n", solicitud->offset);
+	printf("bytes: %d\n", solicitud->bytes);
 
 	return EXIT_SUCCESS;
 }
 
 int almacenar_bytes(int socket_cpu, int bytes) {
-	t_paquete_almacenar_pagina * solicitud = recibir_solicitud_escritura(bytes, socket_cpu);
+	t_paquete_almacenar_pagina * solicitud = recibir_solicitud_escritura(bytes,
+			socket_cpu);
 
 	if (solicitud == NULL)
 		return -1;
 
-	printf("Pagina: %d\n",solicitud->nro_pagina);
-	printf("Offset: %d\n",solicitud->offset);
-	printf("bytes: %d\n",solicitud->bytes);
+	printf("Pagina: %d\n", solicitud->nro_pagina);
+	printf("Offset: %d\n", solicitud->offset);
+	printf("bytes: %d\n", solicitud->bytes);
 	printf("Buffer: %s\n", (char *) solicitud->buffer);
 
 	return EXIT_SUCCESS;
@@ -564,14 +655,10 @@ void marcar_paginas() {
 }
 
 int cambio_proceso_activo(int pid, int cpu) {
-	bool buscar_cpu(t_sesion_cpu * sesion) {
-		return (sesion->socket_cpu == cpu);
-	}
-	t_sesion_cpu * target = list_find(cpu_conectadas, (void *) buscar_cpu);
 
+	t_sesion_cpu * target = buscar_cpu(cpu);
 	if (target == NULL) {
-		puts(
-				"No se encontró la cpu conectada para el cambio de proceso activo");
+		puts("No se pudo realizar el cambio de proceso activo");
 		return -1;
 	}
 

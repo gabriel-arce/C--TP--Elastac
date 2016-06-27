@@ -91,6 +91,7 @@ typedef struct {
 	int pagina;
 	int frame;
 	int pid;
+	int referencebit;
 } t_tlb;
 
 typedef struct {
@@ -116,11 +117,12 @@ FILE * archivo_reporte;
 t_list * tlb;
 t_list * marcos_memoria;
 t_list * lista_procesos;
+bool tlb_on;
 
 void new_line();
 void cargar_config();
 void imprimir_config();
-int tlb_habilitada();
+bool tlb_habilitada();
 void inicializar_memoria();
 void crear_archivo_reporte();
 void crear_archivo_log();
@@ -137,7 +139,7 @@ void enviar_pagina_size(int sock_fd);
 int cambio_proceso_activo(int pid, int cpu);
 // begin OPERACIONES PRINCIPALES
 int inicializar_programa(t_paquete_inicializar_programa * paquete);
-int solicitar_bytes(int socket_cpu, int bytes);
+int leer_bytes(int socket_cpu, int bytes);
 int almacenar_bytes(int socket_cpu, int bytes);
 int finalizar_programa(int id_programa);
 // end OPERACIONES PRINCIPALES
@@ -145,5 +147,16 @@ void * atiende_nucleo();
 void * atiende_cpu();
 int inicializar_en_swap(void * buffer, int buffer_size);
 t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir);
+void finalizar_en_swap(int pid);
+t_sesion_cpu * buscar_cpu(int socket);
+
+//ADM
+bool pagina_valida(int pid, int pagina);
+t_sesion_cpu * buscar_cpu(int socket);
+t_proceso * buscar_proceso(int pid);
+t_mem_frame * buscar_frame(int pagina, int pid);
+int read_with_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
+int read_without_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
+int run_LRU_algorithm(t_tlb * entry_to_replace);
 
 #endif /* UMC_H_ */
