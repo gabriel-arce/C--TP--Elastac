@@ -58,7 +58,6 @@ void cargarConfiguracion(){
 	printf("IP UMC: %s\n", cpu->ip_UMC);
 	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
 
-	hotPlugActivado = malloc(sizeof(bool));
 	hotPlugActivado = false;
 
 
@@ -212,11 +211,6 @@ void enviarPCB(){
 
 }
 
-void borrarPCBActual(){
-
-	//TODO free
-}
-
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
 	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
@@ -260,6 +254,10 @@ void mandarTextoANucleo(char* texto){
 void desconectarCPU(){
 
 	//mandar a nucleo que muere este CPU
+
+	free(cpu->ip_UMC);
+	free(cpu->ip_nucleo);
+	free(cpu);
 }
 
 
@@ -652,5 +650,18 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 	puntero = ((posicion->pagina * tamanio_paginas) + posicion->offset);
 
 	return puntero;
+}
+
+void borrarPCBActual(){
+
+	t_stack * ultimoStack = list_get(pcbActual->indice_stack,1);
+
+	list_clean(ultimoStack->args);
+	list_clean(ultimoStack->vars);
+	list_clean(pcbActual->indice_codigo);
+	list_clean(pcbActual->indice_stack);
+	free(pcbActual->indice_etiquetas);
+	free(pcbActual->pcb_sp);
+	free(pcbActual);
 }
 
