@@ -20,6 +20,7 @@ static const char* IMPRIMIR_TEXTO = "textPrint foo\n";
 static const char* CODIGO_COMPLETO = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
 static const char* SALTO = "jnz b inicio_for";
 static const char* FUNCTION = "function doble";
+static const char* RETORNAR = "return a";
 
 
 
@@ -96,6 +97,11 @@ void correrFunction(){
 	printf("================\n");
 }
 
+void correrRetornar(){
+	printf("Ejecutando '%s'\n", RETORNAR);
+	analizadorLinea(strdup(RETORNAR), &functions, &kernel_functions);
+	printf("================\n");
+}
 
 int main(int argc, char **argv) {
 	correrAsignar();
@@ -104,9 +110,9 @@ int main(int argc, char **argv) {
 	correrImprimirTexto();
 	correrFinalizar();
 	correrSalto();
-	correrFunction();
+	correrRetornar();
+	correrFunction();			//TODO rompe al ejecutar
 	printf(" El numero de instrucciones del codigo completo es '%d'\n",metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_size);
-	leerArchivo();
 
 	return 0;
 }

@@ -348,14 +348,15 @@ void irAlLabel(t_nombre_etiqueta etiqueta){
 
 }
 
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar){							//faltan los argumentos!!
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar){							//TODO faltan los argumentos!!
 	uint32_t direccionDeRetorno; 			//numero que debera tomar el PC al finalizar la funcion
 
 	direccionDeRetorno = pcbActual->pcb_pc + 1;
+
 	desactivarStackActivo();
 	crearStack();
 	asignarPosicionYDireccionDeRetorno(donde_retornar, direccionDeRetorno);
-	irAlLabel(etiqueta);		//hay que ver si el parser lo hace solo
+	irAlLabel(etiqueta);		//TODO hay que ver si el parser lo hace solo
 
 
 }
@@ -370,7 +371,7 @@ void retornar(t_valor_variable retorno){
 
 void imprimir(t_valor_variable valor_mostrar){
 
-	//mandar a nucleo
+	//TODO mandar a nucleo
 }
 
 void imprimirTexto(char* texto){
@@ -382,7 +383,8 @@ void imprimirTexto(char* texto){
 		cambiarEstadoATerminado();
 	}
 		else{
-			//tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
+			//TODO tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
+			//(Creo que no hay que hacer nada en este caso)
 		}
 	}
 
@@ -393,18 +395,18 @@ void imprimirTexto(char* texto){
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 	cambiarEstadoABloqueado();
-	//mandar a nucleo la entrada salida
+	//TODO mandar a nucleo la entrada salida
 
 }
 
 void wait(t_nombre_semaforo identificador_semaforo){
 
-	// mandar a nucleo
+	//TODO mandar a nucleo
 }
 
 void signals(t_nombre_semaforo identificador_semaforo){
 
-	//mandar a nucleo
+	//TODO mandar a nucleo
 }
 
 
@@ -473,9 +475,8 @@ void ejecutarProximaInstruccion(){
 	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 	char* instruccionEnString;
 
-	actualizarPC();
 	instruccionACorrer = buscarProximaInstruccion();    // busco la instruccion en el indice de codigo
-
+	actualizarPC();
 
 	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
@@ -490,7 +491,7 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 	int pc;
 
 	pc = pcbActual->pcb_pc;
-	return list_get(pcbActual->indice_codigo, pc);   //hay que ver si la lista empieza en 0 o en 1
+	return list_get(pcbActual->indice_codigo, pc);   //TODO hay que ver si la lista empieza en 0 o en 1
 }
 
 bool pcbCorriendo(){
@@ -604,12 +605,18 @@ void modificarElPC(){
 }
 
 
-void eliminarStackActivo(){			//todo free del stack
-	int ultimoStack;
+void eliminarStackActivo(){
+	int posicionUltimoStack;
+	t_stack * ultimoStack;
 
-	ultimoStack = list_size(pcbActual->indice_stack);
-	list_remove(pcbActual->indice_stack, ultimoStack);
+	posicionUltimoStack = list_size(pcbActual->indice_stack);
+	ultimoStack = list_get(pcbActual->indice_stack, posicionUltimoStack);
 
+	list_clean(ultimoStack->args);
+	list_clean(ultimoStack->vars);
+	free(ultimoStack->retVar);
+	list_remove(pcbActual->indice_stack, posicionUltimoStack);
+	free(ultimoStack);
 }
 
 void activarUltimoStack(){
@@ -652,7 +659,7 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 	return puntero;
 }
 
-void borrarPCBActual(){
+void borrarPCBActual(){				//TODO tengo que ver si esta bien el list_clean (puede ser llist_destroy) (lo mismo para eliminarStackActivo())
 
 	t_stack * ultimoStack = list_get(pcbActual->indice_stack,1);
 
