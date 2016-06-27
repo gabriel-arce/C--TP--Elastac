@@ -29,8 +29,7 @@ int main() {
 	marcos_memoria = list_create();
 	lista_procesos = list_create();
 
-	if (tlb_habilitada())
-		tlb = list_create();
+	tlb_on = tlb_habilitada();
 
 	//inicializo semaforos
 	pthread_mutex_init(&mutex_servidor, 0);
