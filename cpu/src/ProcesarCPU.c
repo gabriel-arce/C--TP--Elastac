@@ -30,7 +30,7 @@ int main(void){
 		while(pcbCorriendo()){
 
 			ejecutarProximaInstruccion();
-			//nanosleep()
+			quantumSleep();
 			actualizarQuantum();
 
 			if(getQuantumPcb() == getQuantum()){								//hay que ver si la ultima sentencia puede ser una entrada salida ( cambiaria a bloqueado y despues a findequantum)
