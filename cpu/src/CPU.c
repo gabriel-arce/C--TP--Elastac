@@ -667,9 +667,13 @@ void borrarPCBActual(){
 
 void quantumSleep(){
 
+	div_t output;
+
+	output = div(quantum_sleep,1000);
+
 	   struct timespec time;
-	   time.tv_sec = 0;
-	   time.tv_nsec = (quantum_sleep*1000000);  //convierte milisegundos a nanosegundos
+	   time.tv_sec = output.quot;
+	   time.tv_nsec = (output.rem * 1000000);  //convierte milisegundos a nanosegundos
 
 	if (nanosleep(&time, NULL) < 0 ){
 		printf("Nano sleep system call failed \n");
