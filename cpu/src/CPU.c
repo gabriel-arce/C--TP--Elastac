@@ -58,7 +58,6 @@ void cargarConfiguracion(){
 	printf("IP UMC: %s\n", cpu->ip_UMC);
 	printf("Puerto UMC: %d\n", cpu->puerto_UMC);
 
-	hotPlugActivado = malloc(sizeof(bool));
 	hotPlugActivado = false;
 
 
@@ -259,7 +258,6 @@ void desconectarCPU(){
 	free(cpu->ip_UMC);
 	free(cpu->ip_nucleo);
 	free(cpu);
-	free(hotPlugActivado);
 }
 
 
@@ -656,7 +654,7 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 
 void borrarPCBActual(){
 
-	t_stack ultimoStack = list_get(pcbActual->indice_stack,1);
+	t_stack * ultimoStack = list_get(pcbActual->indice_stack,1);
 
 	list_clean(ultimoStack->args);
 	list_clean(ultimoStack->vars);

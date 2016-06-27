@@ -18,6 +18,8 @@ static const char* ASIGNACION = "a = b + 12";
 static const char* IMPRIMIR = "print b";
 static const char* IMPRIMIR_TEXTO = "textPrint foo\n";
 static const char* CODIGO_COMPLETO = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
+static const char* SALTO = "jnz b inicio_for";
+static const char* FUNCTION = "function doble";
 
 
 
@@ -29,6 +31,9 @@ AnSISOP_funciones functions = {
 		.AnSISOP_obtenerPosicionVariable = dummy_obtenerPosicionVariable,
 		.AnSISOP_dereferenciar			 = dummy_dereferenciar,
 		.AnSISOP_asignar				 = dummy_asignar,
+		.AnSISOP_irAlLabel 				 = dummy_irAlLabel,
+		.AnSISOP_llamarConRetorno        = dummy_llamarConRetorno,
+		.AnSISOP_retornar				 = dummy_retornar,
 		.AnSISOP_imprimir				 = dummy_imprimir,
 		.AnSISOP_imprimirTexto			 = dummy_imprimirTexto,
 
@@ -54,11 +59,10 @@ void correrImprimir() {
 }
 
 void correrImprimirTexto() {
-	printf("Ejecutando '%s'", IMPRIMIR_TEXTO);
+	printf("Ejecutando '%s\n'", IMPRIMIR_TEXTO);
 	analizadorLinea(strdup(IMPRIMIR_TEXTO), &functions, &kernel_functions);
 	printf("================\n");
 }
-
 
 
 void leerArchivo(){
@@ -72,12 +76,25 @@ if (file) {
     fclose(file);
 }
 }
+
+
 void correrFinalizar() {
-	printf("Ejecutando '%s'", FINALIZACION);
+	printf("Ejecutando '%s'\n", FINALIZACION);
 	analizadorLinea(strdup(IMPRIMIR_TEXTO), &functions, &kernel_functions);
 	printf("================\n");
 }
 
+void correrSalto(){
+	printf("Ejecutando '%s'\n", SALTO);
+	analizadorLinea(strdup(SALTO), &functions, &kernel_functions);
+	printf("================\n");
+}
+
+void correrFunction(){
+	printf("Ejecutando '%s'\n", FUNCTION);
+	analizadorLinea(strdup(FUNCTION), &functions, &kernel_functions);
+	printf("================\n");
+}
 
 
 int main(int argc, char **argv) {
@@ -86,6 +103,8 @@ int main(int argc, char **argv) {
 	correrImprimir();
 	correrImprimirTexto();
 	correrFinalizar();
+	correrSalto();
+	correrFunction();
 	printf(" El numero de instrucciones del codigo completo es '%d'\n",metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_size);
 	leerArchivo();
 
@@ -95,4 +114,4 @@ int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------------------------------------------------------------
 //lo que hay que saber es que el parser tiene dos funciones importantes:
 //			metadata_desde_literal que recibe el codigo completo y se usara en el nucleo para crear el PCB
-//			analizadorLinea que recibe una sola instruccion y llama a las funciones primitivas que tenemos que crear (creo que son todas en el UMC)
+//			analizadorLinea que recibe una sola instruccion y llama a las funciones primitivas que tenemos que crear

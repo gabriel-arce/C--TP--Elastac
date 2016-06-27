@@ -22,5 +22,9 @@
 	void dummy_imprimir(t_valor_variable valor);
 	void dummy_imprimirTexto(char* texto);
 
+	void dummy_retornar(t_valor_variable valor);
+	void dummy_llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar);
+	void dummy_irAlLabel(t_nombre_etiqueta etiqueta);
+
 #endif
 

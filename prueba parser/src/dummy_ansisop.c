@@ -37,5 +37,20 @@ void dummy_imprimir(t_valor_variable valor) {
 }
 
 void dummy_imprimirTexto(char* texto) {
-	printf("ImprimirTexto: %s", texto);
+	printf("ImprimirTexto: %s\n", texto);
+}
+
+void dummy_retornar(t_valor_variable valor){
+
+	printf("Retornar: %d\n", valor);
+}
+
+void dummy_llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar){
+
+	printf("llamar con retorno a %s y retornar a %d\n", etiqueta, donde_retornar.posicion);
+}
+
+void dummy_irAlLabel(t_nombre_etiqueta etiqueta){
+
+	printf("Ir a label: %s\n", etiqueta);
 }
