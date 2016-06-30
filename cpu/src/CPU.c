@@ -75,10 +75,26 @@ void conectarConNucleo(){
 		exit(EXIT_FAILURE);
 	}
 
-//recibo de quantum  TODO:(tambien tengo que recibir el quantum_sleep)
+//recibo de quantum										//TODO generalizar funcion
 	t_header * head = recibir_header(socketNucleo);
+	if(head->identificador == 28){
 	quantum = head->tamanio;
+	}
+	if(head->identificador == 29){
+	quantum_sleep = head->tamanio;
+	}
 	free(head);
+
+//recibo quantum sleep
+	t_header * head = recibir_header(socketNucleo);
+	if(head->identificador == 28){
+	quantum = head->tamanio;
+	}
+	if(head->identificador == 29){
+	quantum_sleep = head->tamanio;
+	}
+	free(head);
+
 
 
 //	 int recibido = 1;
