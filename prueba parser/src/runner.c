@@ -114,8 +114,9 @@ int main(int argc, char **argv) {
 	//correrFunction();			//TODO rompe al ejecutar
 	printf(" El numero de instrucciones del codigo completo es '%d'\n",metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_size);
 	t_intructions * instrucciones = metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_serializado;
-	printf("primera instruccion'%d'\n", instrucciones[1]->start);
-	printf("primera instruccion'%d'\n", instrucciones[0]->start);
+	printf("primera instruccion inicio:%d\n", instrucciones->start);
+	printf("primera instruccion offset:%d\n", instrucciones->offset);
+	printf("segunda instruccion inicio:%d\n", (instrucciones+1)->start);
 
 	return 0;
 }
