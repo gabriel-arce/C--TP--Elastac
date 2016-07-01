@@ -75,10 +75,26 @@ void conectarConNucleo(){
 		exit(EXIT_FAILURE);
 	}
 
-//recibo de quantum  TODO:(tambien tengo que recibir el quantum_sleep)
+//recibo de quantum										//TODO generalizar funcion
 	t_header * head = recibir_header(socketNucleo);
+	if(head->identificador == 28){
 	quantum = head->tamanio;
+	}
+	if(head->identificador == 29){
+	quantum_sleep = head->tamanio;
+	}
 	free(head);
+
+//recibo quantum sleep
+	t_header * head2 = recibir_header(socketNucleo);
+	if(head->identificador == 28){
+	quantum = head2->tamanio;
+	}
+	if(head->identificador == 29){
+	quantum_sleep = head2->tamanio;
+	}
+	free(head);
+
 
 
 //	 int recibido = 1;
@@ -111,83 +127,14 @@ void cambiar_proceso_activo(int pid) {
 }
 
 
-// este servidor esta demas
+// recibir PCB
 void escucharAlNucleo(){
-	 int listener;														//Descriptor de escucha
-	 int i;
-	 int maximo;													// Número de descriptor maximo
-	 int newfd;
-	 int nbytes;
-	 int reuse;
-	 char buffer[MAXIMO_BUFFER];
-
-	FD_ZERO(&master);
-	FD_ZERO(&read_fds);
-
-	//Crear socket de escucha
-	listener = crearSocket();
-
-	//descriptor para enlace
-	if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1)
-		salirPor("[CPU] No es posible reusar el socket\n");
-
-	//Enlazar
-	bindearSocket(listener, cpu->puerto_nucleo);
-
-	//Escuchar
-	escucharEn(listener);
-
-	// añadir listener al conjunto maestro
-	FD_SET(listener, &master);
-
-	maximo = listener; // por ahora es éste
-
 	while(1){
-
-		read_fds = master; 								// cópialo
-
-		if (select(maximo+1, &read_fds, NULL, NULL, NULL) == -1)
-			salirPor("select");
-
-		// explorar conexiones existentes en busca de datos que leer
-		for(i = 0; i <= maximo; i++){
-
-			if (FD_ISSET(i, &read_fds)){
-				// ¡¡tenemos datos!!
-
-				if (i == listener){
-
-					if ((newfd = aceptarEntrantes(listener)) == -1)						// gestionar nuevas conexiones
-						salirPor("accept");
-
-					else {
-
-						FD_SET(newfd, &master);														// añadir al conjunto maestro
-						if (newfd > maximo)
-							maximo = newfd;																	// actualizar el máximo
-					}
-
-				} else	{
-
-					if ((nbytes = recv(i, buffer, sizeof(buffer), 0)) <= 0){			// gestionar datos de un cliente
-						// error o conexión cerrada por el cliente
-						if (nbytes == 0)																			// conexión cerrada
-							printf("[CPU] socket %d desconectado\n", i);
-						else
-							salirPor("recv");
-
-						close(i); 																						// ¡Hasta luego!
-						FD_CLR(i, &master); 																	// eliminar del conjunto maestro
-
-					} else {
-					// tenemos datos de algún cliente
-						if (FD_ISSET(i, &master))	{
-							recibirPCB(buffer);
-
-						}
-					}
-				}
-			}
+		t_header * head = recibir_header(socketNucleo);
+		if(head->identificador == 20){
+			void * buffer = malloc(head->tamanio);
+			recv(socketNucleo,buffer, head->tamanio,0);
+			recibirPCB(buffer);
 		}
 	}
 }
@@ -197,11 +144,13 @@ void recibirPCB(char *buffer){
 
 	pcbActual = malloc(sizeof(t_pcb));
 
-	pcbActual = convertirPCB(buffer);					//Deserializar pcb
+	pcbActual = convertirPCB(buffer);					//Deserializar pcb (TODO)
 
 	puts("PCB recibido");
 
 	cambiarEstadoACorriendo();
+
+
 
 }
 
