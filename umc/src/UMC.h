@@ -155,8 +155,11 @@ bool pagina_valida(int pid, int pagina);
 t_sesion_cpu * buscar_cpu(int socket);
 t_proceso * buscar_proceso(int pid);
 t_mem_frame * buscar_frame(int pagina, int pid);
-int read_with_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
-int read_without_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
-int run_LRU_algorithm(t_tlb * entry_to_replace);
+void read_with_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
+void read_without_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
+void run_LRU_algorithm(t_tlb * entry_to_replace);
+void * leer_datos(int frame, int offset, int bytes);
+void escribir_datos(int frame, t_paquete_almacenar_pagina * solicitud);
+bool supera_limite_frames(int pid);
 
 #endif /* UMC_H_ */
