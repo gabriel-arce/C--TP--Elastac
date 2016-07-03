@@ -26,7 +26,7 @@ int main(void) {
 			salirPor("[NUCLEO] No pudo conectarse al swap");
 
 	//Crear cliente para UMC
-	crearClienteUMC();
+	//crearClienteUMC();
 
 	//Crear semaforos
 	crearSemaforos();

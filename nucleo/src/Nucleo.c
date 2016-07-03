@@ -539,6 +539,7 @@ void crearServerConsola(){
 	 char buffer[MAXIMO_BUFFER];
 	t_pcb *pcb_aux;
 	t_header *header;
+	 t_paquete_programa *programa;
 
 
 	//Crear socket de escucha
@@ -567,24 +568,41 @@ void crearServerConsola(){
 		} else {
 			//Crear PCB por consola entrante
 
+			if (recibir_handshake(newfd) != CONSOLA)
+				salirPor("Proceso desconocido por puerto de Consola");
+
+		    puts("[NUCLEO] Recepcion hanshake Consola" );
+
+		    header = malloc(sizeof(t_header));
+		    if ((header = recibir_header(newfd)) == NULL)
+		    	puts("No se pudo recibir header de consola");
+
+		    programa = malloc(sizeof(t_paquete_programa));
+		    programa = obtener_programa(header, newfd);
+
+		    printf("Creando PCB.. \n");
+			pcb_aux = malloc(sizeof(t_pcb));
+			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
+
+			//Agregar PCB a la cola de listos
+			queue_push(cola_listos, pcb_aux);
+
+			//Signal por consola nueva
+			signalSemaforo(semListos);
+
+
+/*
 			if ((recibirHandshakeConsola(buffer)) != CONSOLA)
 				salirPor("Proceso desconocido por puerto de Consola");
 
 		    puts("[NUCLEO] Recepcion hanshake Consola" );
 
+
 		    t_header *header = malloc(sizeof(t_header));
 			header = recibirHeaderConsola(newfd);
 
-			void *buffer2 = malloc(header->tamanio);
-			t_paquete_programa *programa = malloc(sizeof(t_paquete_programa));
-			programa->codigo_programa = malloc(programa->programa_length);
 
-			if (recv(newfd, buffer2, header->tamanio, 0) < 0)
-				salirPor("No se pudo obtener el codigo del programa");
 
-			memcpy(&programa->programa_length, buffer2, 4);
-			memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
-			printf("Codigo programa: %s\n", programa->codigo_programa);
 
 
 
@@ -605,6 +623,7 @@ void crearServerConsola(){
 
 			//Signal por consola nueva
 			signalSemaforo(semListos);
+*/
 
 			}
 
@@ -805,4 +824,20 @@ void recibirHandshakeDeUMC(){
 	free(buffer_entrada);
 	free(head_tamanio_pagina);
 
+}
+
+t_paquete_programa *obtener_programa(t_header *header, int fd){
+	void *buffer2 = malloc(header->tamanio);
+	t_paquete_programa *programa;
+
+	programa 										= malloc(sizeof(t_paquete_programa));
+	programa->codigo_programa	= malloc(programa->programa_length);
+
+	if (recv(fd, buffer2, header->tamanio, 0) < 0)
+		salirPor("No se pudo obtener el codigo del programa");
+
+	memcpy(programa->programa_length, buffer2, 4);
+	memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
+	printf("Codigo programa: %s\n", programa->codigo_programa);
+	return programa;
 }

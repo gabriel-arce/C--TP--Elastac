@@ -7,25 +7,80 @@
 
 #include "elestac_pcb.h"
 t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
-	t_pcb *pcb = malloc(sizeof(t_pcb));
+
+    char * prog1 = "begin \n variables a, b, c \n a = b + 12 \n print b \n textPrint foo\n end\"";
+    char * prog2 = "begin \n print b \n end";
+    char * prog3 = "begin\nend";
+    char * prog4 = "end";
+    char * prog5 = "begin";
+    t_metadata_program * meta1 = metadata_desde_literal(prog1);
+    t_metadata_program * meta2 = metadata_desde_literal(prog2);
+    t_metadata_program * meta3 = metadata_desde_literal(prog3);
+    t_metadata_program * meta4 = metadata_desde_literal(prog4);
+    t_metadata_program * meta5 = metadata_desde_literal(prog5);
+
+    printf("instrucciones_size prog1 :%d\n", meta1->instrucciones_size);
+    printf("instrucciones_size prog2 :%d\n", meta2->instrucciones_size);
+    printf("instrucciones_size prog3 :%d\n", meta3->instrucciones_size);
+    printf("instrucciones_size prog4 :%d\n", meta4->instrucciones_size);
+    printf("instrucciones_size prog5 :%d\n", meta5->instrucciones_size);
+
+//	t_pcb *pcb;
+//	t_metadata_program *metadata;
+
+//	if ((pcb = malloc(sizeof(t_pcb))) == NULL)
+//		puts("No se pudo alocar para el pcb");
+
+
+	//if ((metadata = malloc(sizeof(t_medatada_program))) == NULL)
+	//	puts("No pudo alocarse metadata");
+
+	//t_metadata_program *metadata = malloc(sizeof(t_metadata_program));
+	//metadata->instrucciones_serializado = malloc(sizeof(t_intructions));
+
+	//metadata = metadata_desde_literal(programa);
+
+/*
+
+	pcb->pcb_sp = malloc(sizeof(t_sp));
+	t_sp *nodoPCBsp;
+
+	//t_indice_de_codigo indiceCodigo = NULL;
+
 
 	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
 
 	//Obtener metadata del programa
 	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
-	metadata = metadata_desde_literal(PROGRAMA);
-	/*
+	metadata = metadata_desde_literal(programa);
+
 	pcb->pcb_pid	= crearPCBID(cola_pcb);
 	pcb->pcb_pc	= metadata->instruccion_inicio;
-	pcb->pcb_sp	= 0;
-	pcb->indice_etiquetas = metadata->etiquetas;
 	pcb->paginas_codigo = stack_size;
-	pcb->indice_codigo.posicion	= metadata->instrucciones_serializado[0].start;
-	pcb->indice_codigo.tamanio	= metadata->instrucciones_serializado[0].offset ;
-	pcb->indice_stack.args = NULL;
-	pcb->indice_stack.retPos = 0;
-	pcb->indice_stack.retVar = 0;
-	pcb->quantum = 0;
+
+	list_create(pcb->indice_codigo);
+
+//	pcb->pcb_sp	= 0;
+	pcb->indice_etiquetas = metadata->etiquetas;
+
+	list_create(pcb->indice_stack);
+
+	nodoPCBsp->offset  = 0;
+	nodoPCBsp->pagina = 0;
+
+
+	//indiceCodigo->posicion	= metadata->instrucciones_serializado->start;
+	//indiceCodigo->tamanio	= metadata->instrucciones_serializado->offset;
+	//list_add(pcb->indice_codigo, indiceCodigo);
+
+//	pcb->indice_codigo.posicion	= metadata->instrucciones_serializado[0].start;
+//	pcb->indice_codigo.tamanio	= metadata->instrucciones_serializado[0].offset ;
+	list_create(pcb->indice_stack);
+
+//	pcb->indice_stack.args = NULL;
+//	pcb->indice_stack.retPos = 0;
+//	pcb->indice_stack.retVar = 0;
+	pcb->quantum_actual= 0;
 	pcb->estado = Listo;
 	pcb->consola = fd;
 
@@ -35,9 +90,11 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	printf("SP: %d\n", pcb->pcb_sp);
 	printf("Indice Etiquetas: %s\n", pcb->indice_etiquetas);
 	printf("Paginas de Codigo: %d\n", pcb->paginas_codigo);
-	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
+//	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
 */
-	return pcb;
+
+	//return pcb;
+	return NULL;
 }
 
 

@@ -18,10 +18,9 @@
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
 #include <pthread.h>
-#include <parser/metadata_program.h>
-#include <parser/parser.h>
 #include <elestac_pcb.h>
 #include <elestac_comunicaciones.h>
+#include <parser/metadata_program.h>
 
 /****** Constantes ******/
 
@@ -35,7 +34,7 @@
 #define SERIALIZADOR				"##"
 #define Tamanio_pagina 31
 
-#define CONSOLA	2
+#define CONSOLA	10
 #define CPU				5
 
 
@@ -60,11 +59,6 @@ typedef struct {
 	uint8_t cpuID;
 	uint8_t disponible;
 } t_clienteCPU;
-
-typedef struct {
-	uint32_t programa_length;
-	char * codigo_programa;
-} t_paquete_programa;
 
 /****** Variables Globales ******/
 t_nucleo *nucleo;
@@ -132,5 +126,5 @@ t_header *recibirHeaderConsola(buffer);
 void enviarHandshakeAUMC();
 void recibirHandshakeDeUMC();
 //void recibirDatosConsola(buffer);
-
+t_paquete_programa *obtener_programa(t_header *header, int fd);
 #endif /* NUCLEO_H_ */
