@@ -836,7 +836,7 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 	if (recv(fd, buffer2, header->tamanio, 0) < 0)
 		salirPor("No se pudo obtener el codigo del programa");
 
-	memcpy(programa->programa_length, buffer2, 4);
+	memcpy(&programa->programa_length, buffer2, 4);
 	memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
 	printf("Codigo programa: %s\n", programa->codigo_programa);
 	return programa;
