@@ -25,76 +25,33 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
     printf("instrucciones_size prog4 :%d\n", meta4->instrucciones_size);
     printf("instrucciones_size prog5 :%d\n", meta5->instrucciones_size);
 
-//	t_pcb *pcb;
-//	t_metadata_program *metadata;
+	t_pcb *pcb;
 
-//	if ((pcb = malloc(sizeof(t_pcb))) == NULL)
-//		puts("No se pudo alocar para el pcb");
+	if ((pcb = malloc(sizeof(t_pcb))) == NULL)
+		puts("No se pudo alocar para el pcb");
 
-
-	//if ((metadata = malloc(sizeof(t_medatada_program))) == NULL)
-	//	puts("No pudo alocarse metadata");
-
-	//t_metadata_program *metadata = malloc(sizeof(t_metadata_program));
-	//metadata->instrucciones_serializado = malloc(sizeof(t_intructions));
-
-	//metadata = metadata_desde_literal(programa);
-
-/*
-
-	pcb->pcb_sp = malloc(sizeof(t_sp));
-	t_sp *nodoPCBsp;
-
-	//t_indice_de_codigo indiceCodigo = NULL;
-
-
-	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
-
-	//Obtener metadata del programa
-	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
-	metadata = metadata_desde_literal(programa);
-
-	pcb->pcb_pid	= crearPCBID(cola_pcb);
-	pcb->pcb_pc	= metadata->instruccion_inicio;
-	pcb->paginas_codigo = stack_size;
+	pcb->pcb_pid 					= 1;
+	pcb->pcb_pc					= meta1->instruccion_inicio;
+	pcb->paginas_codigo	= stack_size;
 
 	list_create(pcb->indice_codigo);
+	list_clean(pcb->indice_codigo);
 
-//	pcb->pcb_sp	= 0;
-	pcb->indice_etiquetas = metadata->etiquetas;
-
-	list_create(pcb->indice_stack);
-
-	nodoPCBsp->offset  = 0;
-	nodoPCBsp->pagina = 0;
-
-
-	//indiceCodigo->posicion	= metadata->instrucciones_serializado->start;
-	//indiceCodigo->tamanio	= metadata->instrucciones_serializado->offset;
-	//list_add(pcb->indice_codigo, indiceCodigo);
-
-//	pcb->indice_codigo.posicion	= metadata->instrucciones_serializado[0].start;
-//	pcb->indice_codigo.tamanio	= metadata->instrucciones_serializado[0].offset ;
-	list_create(pcb->indice_stack);
-
-//	pcb->indice_stack.args = NULL;
-//	pcb->indice_stack.retPos = 0;
-//	pcb->indice_stack.retVar = 0;
-	pcb->quantum_actual= 0;
+//	pcb->pcb_sp->offset 	= meta1->instrucciones_serializado[pcb->pcb_pc].offset;
+//	pcb->pcb_sp->pagina	= meta1->instrucciones_serializado[pcb->pcb_pc].start;
+	pcb->cantidad_de_etiquetas	= meta1->cantidad_de_etiquetas;
 	pcb->estado = Listo;
-	pcb->consola = fd;
+	pcb->consola	= fd;
+	pcb->quantum_actual	= 0;
 
-	printf("PCB creado..\n");
-	printf("PID: %d\n", pcb->pcb_pid);
-	printf("PC: %d\n", pcb->pcb_pc);
-	printf("SP: %d\n", pcb->pcb_sp);
-	printf("Indice Etiquetas: %s\n", pcb->indice_etiquetas);
-	printf("Paginas de Codigo: %d\n", pcb->paginas_codigo);
-//	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
-*/
 
-	//return pcb;
-	return NULL;
+	pcb->indice_etiquetas = meta1->etiquetas;
+
+	list_create(pcb->indice_stack);
+	list_clean(pcb->indice_stack);
+
+	return pcb;
+
 }
 
 

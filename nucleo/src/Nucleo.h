@@ -34,7 +34,7 @@
 #define SERIALIZADOR				"##"
 #define Tamanio_pagina 31
 
-#define CONSOLA	10
+#define CONSOLA	1
 #define CPU				5
 
 

@@ -536,7 +536,6 @@ void crearServerConsola(){
 	 int nbytes;
 	 int reuse;
 	 int newfd;
-	 char buffer[MAXIMO_BUFFER];
 	t_pcb *pcb_aux;
 	t_header *header;
 	 t_paquete_programa *programa;
@@ -560,72 +559,25 @@ void crearServerConsola(){
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
-		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0)
-			printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", listener);
+		if (recibir_handshake(newfd) != CONSOLA)
+			salirPor("Proceso desconocido por puerto de Consola");
 
-		if (nbytes == 0){
-				printf("[NUCLEO] Conexion con socket de consola nro. %d cerrada.\n", listener);
-		} else {
-			//Crear PCB por consola entrante
+	    puts("[NUCLEO] Recepcion hanshake Consola" );
 
-			if (recibir_handshake(newfd) != CONSOLA)
-				salirPor("Proceso desconocido por puerto de Consola");
+	    if ((header = recibir_header(newfd)) == NULL)
+	    	puts("No se pudo recibir header de consola");
 
-		    puts("[NUCLEO] Recepcion hanshake Consola" );
+	    programa = obtener_programa(header, newfd);
 
-		    header = malloc(sizeof(t_header));
-		    if ((header = recibir_header(newfd)) == NULL)
-		    	puts("No se pudo recibir header de consola");
+	    puts("Creando PCB.. \n");
+		pcb_aux = malloc(sizeof(t_pcb));
+		pcb_aux = crearPCB(programa->codigo_programa, newfd, nucleo->stack_size, cola_listos);
 
-		    programa = malloc(sizeof(t_paquete_programa));
-		    programa = obtener_programa(header, newfd);
+		//Agregar PCB a la cola de listos
+		queue_push(cola_listos, pcb_aux);
 
-		    printf("Creando PCB.. \n");
-			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
-
-			//Agregar PCB a la cola de listos
-			queue_push(cola_listos, pcb_aux);
-
-			//Signal por consola nueva
-			signalSemaforo(semListos);
-
-
-/*
-			if ((recibirHandshakeConsola(buffer)) != CONSOLA)
-				salirPor("Proceso desconocido por puerto de Consola");
-
-		    puts("[NUCLEO] Recepcion hanshake Consola" );
-
-
-		    t_header *header = malloc(sizeof(t_header));
-			header = recibirHeaderConsola(newfd);
-
-
-
-
-
-
-			//enviarAUMC(buffer);
-			//cantidadpaginas = lengh programa / tamanio_pagina + stacksize conf / tamanio_pagina
-			//programa
-			//pid
-			//recibo una estructura donde tengo el tamanio y ahi tengo la respuesta!
-
-
-
-			printf("Creando PCB.. \n");
-			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
-
-			//Agregar PCB a la cola de listos
-			queue_push(cola_listos, pcb_aux);
-
-			//Signal por consola nueva
-			signalSemaforo(semListos);
-*/
-
-			}
+		//Signal por consola nueva
+		signalSemaforo(semListos);
 
 	}
 }
@@ -830,14 +782,11 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 	void *buffer2 = malloc(header->tamanio);
 	t_paquete_programa *programa;
 
-	programa 										= malloc(sizeof(t_paquete_programa));
-	programa->codigo_programa	= malloc(programa->programa_length);
-
 	if (recv(fd, buffer2, header->tamanio, 0) < 0)
 		salirPor("No se pudo obtener el codigo del programa");
 
-	memcpy(&programa->programa_length, buffer2, 4);
-	memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
+	programa = deserializar_ansisop(buffer2);
+
 	printf("Codigo programa: %s\n", programa->codigo_programa);
 	return programa;
 }
