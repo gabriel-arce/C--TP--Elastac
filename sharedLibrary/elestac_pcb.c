@@ -8,7 +8,7 @@
 #include "elestac_pcb.h"
 t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
-    char * prog1 = "begin \n variables a, b, c \n a = b + 12 \n print b \n textPrint foo\n end\"";
+/*    char * prog1 = "begin \n variables a, b, c \n a = b + 12 \n print b \n textPrint foo\n end\"";
     char * prog2 = "begin \n print b \n end";
     char * prog3 = "begin\nend";
     char * prog4 = "end";
@@ -17,16 +17,16 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
     t_metadata_program * meta2 = metadata_desde_literal(prog2);
     t_metadata_program * meta3 = metadata_desde_literal(prog3);
     t_metadata_program * meta4 = metadata_desde_literal(prog4);
-    t_metadata_program * meta5 = metadata_desde_literal(prog5);
+    t_metadata_program * meta5 = metadata_desde_literal(prog5);*/
 
     t_metadata_program *meta = metadata_desde_literal(programa);
 
-    printf("instrucciones_size prog1 :%d\n", meta1->instrucciones_size);
+/*    printf("instrucciones_size prog1 :%d\n", meta1->instrucciones_size);
     printf("instrucciones_size prog2 :%d\n", meta2->instrucciones_size);
     printf("instrucciones_size prog3 :%d\n", meta3->instrucciones_size);
     printf("instrucciones_size prog4 :%d\n", meta4->instrucciones_size);
     printf("instrucciones_size prog5 :%d\n", meta5->instrucciones_size);
-    printf("instrucciones_size prog5 :%d\n", meta->instrucciones_size);
+    printf("instrucciones_size prog5 :%d\n", meta->instrucciones_size);*/
 
 	t_pcb *pcb;
 	t_sp *sp;
@@ -37,7 +37,7 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	if ((sp = malloc(sizeof(t_sp))) == NULL)
 		puts("No se pudo alocar indice de codigo en PCB");
 
-	pcb->pcb_pid 					= 1;
+	pcb->pcb_pid 					= crearPCBID(cola_pcb);
 	pcb->pcb_pc					= meta->instruccion_inicio;
 	pcb->paginas_codigo	= stack_size;
 
