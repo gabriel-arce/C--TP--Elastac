@@ -83,6 +83,7 @@ sem_t *semListos;
 sem_t *semBloqueados;
 sem_t *semCPU;
 sem_t *semFinalizados;
+sem_t *mutexConsolas;
 
 
 pthread_t pIDServerNucleo;

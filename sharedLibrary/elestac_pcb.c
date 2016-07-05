@@ -19,36 +19,43 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
     t_metadata_program * meta4 = metadata_desde_literal(prog4);
     t_metadata_program * meta5 = metadata_desde_literal(prog5);
 
+    t_metadata_program *meta = metadata_desde_literal(programa);
+
     printf("instrucciones_size prog1 :%d\n", meta1->instrucciones_size);
     printf("instrucciones_size prog2 :%d\n", meta2->instrucciones_size);
     printf("instrucciones_size prog3 :%d\n", meta3->instrucciones_size);
     printf("instrucciones_size prog4 :%d\n", meta4->instrucciones_size);
     printf("instrucciones_size prog5 :%d\n", meta5->instrucciones_size);
+    printf("instrucciones_size prog5 :%d\n", meta->instrucciones_size);
 
 	t_pcb *pcb;
+	t_sp *sp;
 
 	if ((pcb = malloc(sizeof(t_pcb))) == NULL)
 		puts("No se pudo alocar para el pcb");
 
+	if ((sp = malloc(sizeof(t_sp))) == NULL)
+		puts("No se pudo alocar indice de codigo en PCB");
+
 	pcb->pcb_pid 					= 1;
-	pcb->pcb_pc					= meta1->instruccion_inicio;
+	pcb->pcb_pc					= meta->instruccion_inicio;
 	pcb->paginas_codigo	= stack_size;
 
 	list_create(pcb->indice_codigo);
-	list_clean(pcb->indice_codigo);
 
-//	pcb->pcb_sp->offset 	= meta1->instrucciones_serializado[pcb->pcb_pc].offset;
-//	pcb->pcb_sp->pagina	= meta1->instrucciones_serializado[pcb->pcb_pc].start;
-	pcb->cantidad_de_etiquetas	= meta1->cantidad_de_etiquetas;
+	sp->pagina 	= meta->instrucciones_serializado[pcb->pcb_pc].start;
+	sp->offset	= meta->instrucciones_serializado[pcb->pcb_pc].offset;
+
+	pcb->pcb_sp = sp;
+	pcb->cantidad_de_etiquetas	= meta->cantidad_de_etiquetas;
 	pcb->estado = Listo;
 	pcb->consola	= fd;
 	pcb->quantum_actual	= 0;
 
 
-	pcb->indice_etiquetas = meta1->etiquetas;
+	pcb->indice_etiquetas = meta->etiquetas;
 
 	list_create(pcb->indice_stack);
-	list_clean(pcb->indice_stack);
 
 	return pcb;
 

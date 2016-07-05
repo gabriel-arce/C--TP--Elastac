@@ -107,6 +107,7 @@ void crearSemaforos(){
 	mutexListos				= crearMutex();
 	mutexCPU					= crearMutex();
 	mutexEjecutando		= crearMutex();
+	mutexConsolas			= crearMutex();
 	semListos						= crearSemaforo(0);
 	semCpuDisponible	= crearSemaforo(0);
 	semBloqueados			= crearSemaforo(0);
@@ -559,16 +560,21 @@ void crearServerConsola(){
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
+		waitSemaforo(mutexConsolas);
+		//Recibir Handshake de Consola
 		if (recibir_handshake(newfd) != CONSOLA)
 			salirPor("Proceso desconocido por puerto de Consola");
 
 	    puts("[NUCLEO] Recepcion hanshake Consola" );
 
+	    //Recibir Header de Consola
 	    if ((header = recibir_header(newfd)) == NULL)
 	    	puts("No se pudo recibir header de consola");
 
+	    //Obtener Programa
 	    programa = obtener_programa(header, newfd);
 
+	    //Crear PCB
 	    puts("Creando PCB.. \n");
 		pcb_aux = malloc(sizeof(t_pcb));
 		pcb_aux = crearPCB(programa->codigo_programa, newfd, nucleo->stack_size, cola_listos);
@@ -578,6 +584,8 @@ void crearServerConsola(){
 
 		//Signal por consola nueva
 		signalSemaforo(semListos);
+
+		signalSemaforo(mutexConsolas);
 
 	}
 }
