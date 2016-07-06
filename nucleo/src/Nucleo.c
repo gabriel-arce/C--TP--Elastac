@@ -407,7 +407,7 @@ t_pcb *enviarAEjecutar(t_pcb *pcb, int fd){
 	}
 
 	//Recibir respuesta del CPU
-	waitSemaforo(semCPU);
+	//waitSemaforo(semCPU);
 	if ((nbytes = recv(fd, buffer, sizeof(buffer), 0)) <= 0){
 		printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", fd);
 		return pcb;
@@ -534,7 +534,6 @@ void pasarAListos(t_pcb *pcb){
 
 void crearServerConsola(){
 	 int listener;														//Descriptor de escucha
-	 int nbytes;
 	 int reuse;
 	 int newfd;
 	t_pcb *pcb_aux;
@@ -594,8 +593,6 @@ void crearServerCPU(){
 	 int listener;														//Descriptor de escucha
 	 int reuse;
 	 int newfd;
-	 int nbytes;
-	 char buffer[MAXIMO_BUFFER];
 
 	//Crear socket de escucha
 	listener = crearSocket();
@@ -615,9 +612,10 @@ void crearServerCPU(){
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
-		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0){
-			printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", listener);
-			}
+		if (recibir_handshake(newfd) != CPU)
+			puts("Proceso desconocido por puerto de CPU");
+
+	    puts("[NUCLEO] Recepcion hanshake CPU" );
 
 		//Crea una CPU
 		t_clienteCPU *nuevaCPU = malloc(sizeof(t_clienteCPU));
@@ -627,6 +625,14 @@ void crearServerCPU(){
 
 		//Agregar CPU a la lista
 		list_add(lista_cpu, nuevaCPU);
+
+		//Enviar Quantum
+		if (enviar_header(28, nucleo->quantum, newfd) == -1)
+			puts("[NUCLEO] Envio de Quantum fallido");
+
+		//Enviar Quantum Sleep
+		if (enviar_header(28, nucleo->quantum, newfd) == -1)
+			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);

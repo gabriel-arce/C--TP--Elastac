@@ -77,15 +77,24 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pc));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_sp));
+	string_append(&serial, string_itoa(pcb->pcb_sp->offset));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->pcb_sp->pagina));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->paginas_codigo));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_etiquetas));
+	string_append(&serial, pcb->indice_etiquetas);
 	string_append(&serial, SERIALIZADOR);
-//	string_append(&serial, string_itoa(pcb->indice_codigo.posicion));
+	string_append(&serial, string_itoa(pcb->cantidad_de_etiquetas));
 	string_append(&serial, SERIALIZADOR);
-//	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
+	string_append(&serial, string_itoa(pcb->estado));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->consola));
+	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(pcb->quantum_actual));
+
+// TODO Me falta agregar las listas del PCB para serializar..
+
 
 	return serial;
 }
