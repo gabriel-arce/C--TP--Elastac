@@ -209,7 +209,7 @@ void mandarTextoANucleo(char* texto){
 
 void desconectarCPU(){
 
-	//mandar a nucleo que muere este CPU
+	//TODO mandar a nucleo que muere este CPU
 
 	free(cpu->ip_UMC);
 	free(cpu->ip_nucleo);
@@ -447,7 +447,7 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 	int pc;
 
 	pc = pcbActual->pcb_pc;
-	return list_get(pcbActual->indice_codigo, pc);   //TODO hay que ver si la lista empieza en 0 o en 1
+	return list_get(pcbActual->indice_codigo, pc);
 }
 
 bool pcbCorriendo(){
@@ -489,7 +489,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (ver si hace falta mandar una solicitud por pagina)
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
 
 	char* instruccion = string_new();
 	uint32_t pagina;
