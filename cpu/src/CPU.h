@@ -30,6 +30,22 @@
 //#define CONFIG_PATH "CPU.conf"					//Terminal
 #define MAXIMO_BUFFER 2000
 #define SERIALIZADOR				"##"
+#define IMPRIMIR_VALOR 11
+#define IMPRIMIR_TEXTO 12
+#define SOLICITAR_PAGINA 15
+#define ALMACENAR_PAGINA 16
+#define CAMBIO_DE_PROCESO_ACTIVO 18
+#define TAMANIO_PAGINA 19.
+#define EJECUTAR_PCB 20
+#define RETORNO_PCB 21
+#define WAIT 22
+#define SIGNAL 23
+#define ENTRADA_SALIDA 24
+#define OBTERNER_VALOR_COMPARTIDO 25
+#define ASIGNAR_VALOR_COMPARTIDO 26
+#define FINALIZACION_DE_CPU 27
+#define QUANTUM 28
+#define QUANTUM_SLEEP 29
 
 //------------------Estructuras
 
@@ -60,7 +76,7 @@ void conectarConNucleo();
 void conectarConUMC();
 void cambiar_proceso_activo(int pid);
 void escucharAlNucleo();
-void recibirPCB(char *buffer);
+void recibirPCB(void *buffer);
 t_stack * buscarStackActivo();
 void crearStack();
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id);
@@ -94,6 +110,8 @@ void cambiarEstadoABloqueado();
 t_posicion  convertirPunteroAPosicion(t_puntero puntero);
 t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 void quantumSleep();
+void recibirQuantums(t_header * header);
+void stack_destroy(t_stack * stack);
 
 //------------------Primitivas
 

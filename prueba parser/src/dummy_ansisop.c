@@ -54,3 +54,8 @@ void dummy_irAlLabel(t_nombre_etiqueta etiqueta){
 
 	printf("Ir a label: %s\n", etiqueta);
 }
+
+void dummy_finalizar(){
+
+	printf("finalizar programa\n");
+}

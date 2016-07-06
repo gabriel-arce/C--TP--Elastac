@@ -25,6 +25,7 @@
 	void dummy_retornar(t_valor_variable valor);
 	void dummy_llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar);
 	void dummy_irAlLabel(t_nombre_etiqueta etiqueta);
+	void dummy_finalizar();
 
 #endif
 

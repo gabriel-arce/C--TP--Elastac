@@ -37,6 +37,7 @@ AnSISOP_funciones functions = {
 		.AnSISOP_retornar				 = dummy_retornar,
 		.AnSISOP_imprimir				 = dummy_imprimir,
 		.AnSISOP_imprimirTexto			 = dummy_imprimirTexto,
+		.AnSISOP_finalizar				 = dummy_finalizar,
 
 };
 AnSISOP_kernel kernel_functions = { };
