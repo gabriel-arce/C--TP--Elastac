@@ -221,7 +221,7 @@ void desconectarCPU(){
 //=================================================================================================================================================================
 //----------------------------------------------------------------Primitivas
 
-t_posicion definirVariable(t_nombre_variable identificador_variable) {
+t_puntero definirVariable(t_nombre_variable identificador_variable) {
 
 	t_variable_stack * variableStack = malloc(sizeof(variableStack));
 	t_stack * stackActivo;
@@ -257,31 +257,36 @@ t_posicion definirVariable(t_nombre_variable identificador_variable) {
 
 	escribirBytes(variableStack->posicion->pagina, variableStack->posicion->offset, variableStack->posicion->size, 0);		//En realidad no se tendrian que inicializar las variables
 
-	return * variableStack->posicion;
+	return convertirPosicionAPuntero(variableStack->posicion);
 	}
 
 
-t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable) {
+t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable) {
 
 	t_variable_stack * variableStack;
 
 	variableStack =  buscarVariableEnStack(identificador_variable);  //busco la variable por el identificador
-	return * variableStack->posicion;
+	return convertirPosicionAPuntero(variableStack->posicion);
 }
 
-t_valor_variable dereferenciar(t_posicion direccion_variable) {
+t_valor_variable dereferenciar(t_puntero direccion_variable) {
 
 	t_valor_variable  valorVariable;
+	t_posicion  posicion;
 
-	valorVariable = leerBytesDeVariable(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size);
+	posicion = convertirPunteroAPosicion(direccion_variable);
+
+	valorVariable = leerBytesDeVariable(posicion.pagina, posicion.offset, posicion.size);
 
 	return  valorVariable;
 
 }
 
-void asignar(t_posicion direccion_variable, t_valor_variable valor) {
+void asignar(t_puntero direccion_variable, t_valor_variable valor) {
 
-	escribirBytes(direccion_variable.pagina, direccion_variable.offset, direccion_variable.size, valor);
+	t_posicion posicion = convertirPunteroAPosicion(direccion_variable);
+
+	escribirBytes(posicion.pagina, posicion.offset, posicion.size, valor);
 
 }
 
@@ -304,14 +309,17 @@ void irAlLabel(t_nombre_etiqueta etiqueta){
 
 }
 
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar){							//TODO faltan los argumentos!!
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){	//TODO faltan los argumentos!!
 	uint32_t direccionDeRetorno; 			//numero que debera tomar el PC al finalizar la funcion
+	t_posicion posicionDeRetorno;
+
+	posicionDeRetorno = convertirPunteroAPosicion(donde_retornar);
 
 	direccionDeRetorno = pcbActual->pcb_pc + 1;
 
 	desactivarStackActivo();
 	crearStack();
-	asignarPosicionYDireccionDeRetorno(donde_retornar, direccionDeRetorno);
+	asignarPosicionYDireccionDeRetorno(posicionDeRetorno, direccionDeRetorno);
 	irAlLabel(etiqueta);		//TODO hay que ver si el parser lo hace solo
 
 
