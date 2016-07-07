@@ -110,7 +110,7 @@ void cambiarEstadoABloqueado();
 t_posicion  convertirPunteroAPosicion(t_puntero puntero);
 t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 void quantumSleep();
-void recibirQuantums(t_header * header);
+void recibirHeader(t_header * header);
 void stack_destroy(t_stack * stack);
 
 //------------------Primitivas

@@ -75,34 +75,45 @@ void conectarConNucleo(){
 		exit(EXIT_FAILURE);
 	}
 
-//recibo de quantum
-	t_header * head = recibir_header(socketNucleo);
-	recibirQuantums(head);
+	//escucho a la espera del quantum y el quantum_sleep
+	escucharPorSocket(socketNucleo);
+	escucharPorSocket(socketNucleo);
 
-//recibo quantum sleep
-	t_header * head2 = recibir_header(socketNucleo);
-	recibirQuantums(head2);
-
-
-
-//	 int recibido = 1;
-//	 while (recibido > 0) {
-//		 aca recibe el pcb y ejecuta			<<<<---------EMPEZAR DESDE ACA A PROCESAR EL PCB!!
-//	 }
 }
 
-void recibirQuantums(t_header * header){
+void escucharPorSocket(int socket){			//unifico todos los recibos de headers
+	int recibido = -1;
+	t_header * header;
+
+	while(recibido < 0){
+		header = recibir_header(socket);
+		if(header != NULL){
+			recibido = 1;
+		}
+	}
 
 	if(header->identificador == QUANTUM){
-	quantum = header->tamanio;
+		quantum = header->tamanio;
 	}
 
 	if(header->identificador == QUANTUM_SLEEP){
-	quantum_sleep = header->tamanio;
+		quantum_sleep = header->tamanio;
 	}
 
-	free(header);
+	if(header->identificador == TAMANIO_PAGINA){
+		tamanio_paginas = header->tamanio;
+	}
 
+	if(header->identificador == EJECUTAR_PCB){
+
+		void * buffer = malloc(header->tamanio);
+		recv(socketNucleo,buffer, header->tamanio,0);
+		recibirPCB(buffer);
+	}
+
+
+
+	free(header);
 }
 
 void conectarConUMC(){
@@ -116,9 +127,7 @@ void conectarConUMC(){
 		exit(EXIT_FAILURE);
 	}
 //	---------recibo el tamaño de pagina
-	t_header * head = recibir_header(socketUMC);
-	tamanio_paginas = head->tamanio;
-	free(head);
+	escucharPorSocket(socketUMC);
 }
 
 void cambiar_proceso_activo(int pid) {
@@ -129,21 +138,11 @@ void cambiar_proceso_activo(int pid) {
 }
 
 
-// recibir PCB
+// escucho a la espera de algun PCB
 void escucharAlNucleo(){
-	int recibido = -1;
 
-	while(recibido < 0){
-		t_header * head = recibir_header(socketNucleo);
+	escucharPorSocket(socketNucleo);
 
-			if(head->identificador == EJECUTAR_PCB){
-				recibido = 1;
-
-				void * buffer = malloc(head->tamanio);
-				recv(socketNucleo,buffer, head->tamanio,0);
-				recibirPCB(buffer);
-			}
-		}
 	}
 
 
