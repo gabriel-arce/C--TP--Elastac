@@ -204,12 +204,14 @@ char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
 void mandarTextoANucleo(char* texto){
 
-	//TODO enviar a Nucleo
+	if(enviar_texto(texto, socketNucleo) == -1){
+		salirPor("no se pudo enviar texto a nucleo");
+	}
 }
 
 void desconectarCPU(){
 
-	//TODO mandar a nucleo que muere este CPU
+	enviar_header(FINALIZACION_DE_CPU,0,socketNucleo);
 
 	free(cpu->ip_UMC);
 	free(cpu->ip_nucleo);
@@ -292,13 +294,13 @@ void asignar(t_puntero direccion_variable, t_valor_variable valor) {
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){				//TODO enviar a nucleo
 
-	//mandar a nucleo
+	//TODO mandar a nucleo
 
 }
 
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){			//TODO enviar a nucleo
 
-	//mandar a nucleo
+	//TODO mandar a nucleo
 	return valor;
 }
 
@@ -335,7 +337,9 @@ void retornar(t_valor_variable retorno){
 
 void imprimir(t_valor_variable valor_mostrar){
 
-	//TODO mandar a nucleo
+	if(enviar_valor_de_variable(valor_mostrar,socketNucleo) == -1){
+			salirPor("No se concreto la impresion por pantalla");
+		}
 }
 
 void imprimirTexto(char* texto){
@@ -365,12 +369,12 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 void wait(t_nombre_semaforo identificador_semaforo){
 
-	//TODO mandar a nucleo
+	enviar_header(WAIT,0,socketNucleo);
 }
 
 void signals(t_nombre_semaforo identificador_semaforo){
 
-	//TODO mandar a nucleo
+	enviar_header(SIGNAL,0,socketNucleo);
 }
 
 

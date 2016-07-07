@@ -31,9 +31,9 @@ int main(void){
 
 			ejecutarProximaInstruccion();
 			quantumSleep();
-			if(!pcbCorriendo()) {break;}
-
 			actualizarQuantum();
+
+			if(!pcbCorriendo()) {break;}
 
 			if(getQuantumPcb() == getQuantum()){
 
