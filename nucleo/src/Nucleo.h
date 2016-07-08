@@ -38,8 +38,17 @@
 #define CONSOLA	1
 #define CPU				5
 
-
 /****** Estructuras ******/
+typedef enum {
+	RetornoPCB = 21,
+	Wait,
+	Signal,
+	EntradaSalida,
+	ObtenerValorCompartido,
+	AsignarValorCompartido,
+	FinalizacionCPU,
+} t_accionesPCB;
+
 typedef struct {
 	int puerto_programas;
 	int puerto_cpu;
@@ -123,14 +132,14 @@ int obtenerCPUID();
 t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 t_header * deserializar_header(void * buffer);
-uint8_t recibirHandshakeConsola(void *buffer);
 t_paquete_programa *recibirDatosConsola(int fd);
 void finalizar();
-t_header *recibirHeaderConsola(buffer);
 void enviarHandshakeAUMC();
 void recibirHandshakeDeUMC();
 //void recibirDatosConsola(buffer);
 t_paquete_programa *obtener_programa(t_header *header, int fd);
 void accionesDeCPU(t_clienteCPU *cpu);
+void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb);
+void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb);
 
 #endif /* NUCLEO_H_ */

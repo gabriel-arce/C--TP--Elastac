@@ -70,11 +70,13 @@ void destruirPCB(t_pcb *pcb){
 
 char* serializarPCB (t_pcb* pcb)
 {
+	t_indice_de_codigo *indiceCodigo = malloc(sizeof(t_indice_de_codigo));
 	char* serial = string_new();
+
 	string_append(&serial,"0");											//Tipo de Proceso
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pid));
-	/*string_append(&serial, SERIALIZADOR);
+	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pc));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_sp->offset));
@@ -83,7 +85,18 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->paginas_codigo));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, pcb->indice_etiquetas);
+
+	if (list_is_empty(pcb->indice_codigo) == false){
+		string_append(&serial, string_itoa(list_size(pcb->indice_codigo)));
+		for(int i = 0; i < list_size(pcb->indice_codigo); i++){
+			indiceCodigo = (t_indice_de_codigo*) list_get(pcb->indice_codigo,i);
+			string_append(&serial, SERIALIZADOR);
+			string_append(&serial, string_itoa(indiceCodigo->posicion));
+			string_append(&serial, string_itoa(indiceCodigo->tamanio));
+		}
+	}
+
+	string_append(&serial, &pcb->indice_etiquetas);
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->cantidad_de_etiquetas));
 	string_append(&serial, SERIALIZADOR);
@@ -91,11 +104,11 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->consola));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->quantum_actual));*/
+	string_append(&serial, string_itoa(pcb->quantum_actual));
 
 // TODO Me falta agregar las listas del PCB para serializar..
 
-
+	free(indiceCodigo);
 	return serial;
 }
 

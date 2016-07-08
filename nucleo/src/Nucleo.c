@@ -310,50 +310,13 @@ void procesarMensaje(int fd, char *buffer){
 }
 
 void crearClienteUMC(){
+
+	//Crear socket de Nucleo para escuchar
+	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
+			salirPor("[NUCLEO] No pudo conectarse al swap");
+
 	enviarHandshakeAUMC();
 	recibirHandshakeDeUMC();
-	/*	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
-		salirPor("[NUCLEO] No pudo conectarse al swap");
-
-	//----------Envio el handshake a UMC
-	t_header * handshake = malloc(sizeof(t_header));
-	handshake->identificador = (uint8_t) 2;
-	handshake->tamanio = (uint32_t) 0;
-	void * buffer_handshake = malloc(5);
-	memcpy(buffer_handshake, &(handshake->identificador), 1);
-	memcpy(buffer_handshake + 1, &(handshake->tamanio), 4);
-	int resultado = -1;
-	resultado = send(socketNucleo, buffer_handshake, 5, 0);
-	free(handshake);
-	free(buffer_handshake);
-	if (resultado == -1) {
-		printf("Error en el send del handshake a UMC\n");
-		exit(EXIT_FAILURE);
-	}
-
-	//---------Recibo el tamanio de pagina
-	void * buffer_entrada = malloc(5);
-	resultado = recv(socketNucleo, buffer_entrada, 5, MSG_WAITALL);
-
-	if (resultado == -1) {
-		printf("Error en el recv del tamanio de pagina desde UMC\n");
-		exit(EXIT_FAILURE);
-	}
-
-	t_header * head_tamanio_pagina = malloc(sizeof(t_header));
-	memcpy(&(head_tamanio_pagina->identificador), buffer_entrada, 1);
-	memcpy(&(head_tamanio_pagina->tamanio), buffer_entrada + 1, 4);
-
-	if (head_tamanio_pagina->identificador != (uint8_t) Tamanio_pagina) {
-		printf("Error en el ID de la cabecera de recibirPagina\n");
-		exit(EXIT_FAILURE);
-	}
-
-	tamanio_pagina = head_tamanio_pagina->tamanio;
-	printf("El tamanio de pagina es: %d", tamanio_pagina);
-
-	free(buffer_entrada);
-	free(head_tamanio_pagina);*/
 }
 
 void planificar_consolas(){
@@ -473,6 +436,7 @@ void pasarAEjecutar(){
 void pasarAListos(t_pcb *pcb){
 
 	//Agrega el PCB a la cola de Listos
+	puts("Pasando a listos..");
 	waitSemaforo(mutexListos);
 	queue_push(cola_listos, (void *) pcb);
 	signalSemaforo(mutexListos);
@@ -600,6 +564,7 @@ void destruirSemaforos(){
 }
 
 void sacarDeEjecutar(t_pcb *pcb){
+	puts("Saliendo de ejecutando..");
 	waitSemaforo(mutexEjecutando);
 
 	signalSemaforo(mutexEjecutando);
@@ -668,23 +633,6 @@ t_header * deserializar_header(void * buffer) {
 	return header;
 }
 
-
-uint8_t recibirHandshakeConsola(void *buffer){
-	t_header *handshake = malloc(sizeof(t_header));
-
-	handshake = deserializar_header(buffer);
-
-	return handshake->identificador;
-}
-
-t_header *recibirHeaderConsola(int fd){
-	char buffer[MAXIMO_BUFFER];
-
-	if( recv(fd, buffer, sizeof(buffer), 0) < 0)
-		return NULL;
-
-	return deserializar_header(buffer);
-}
 
 t_paquete_programa *recibirDatosConsola(int fd){
 	t_paquete_programa *programa;
@@ -767,7 +715,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 			puts("Error");
 
 	  switch(header->identificador){
-	  	  case 21:{		//Retorno PCB
+	  	  case RetornoPCB:{
 	  		  buffer	= malloc(header->tamanio);
 	  		  pcb		= malloc(sizeof(t_pcb));
 	  		  recv(cpu->fd, buffer, header->tamanio, 0);
@@ -775,66 +723,40 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		  PCBRetornado = false;
 
 	  		switch(pcb->estado){
-	  			case Bloqueado:{
-	  				//Agregar a cola de bloqueados
-	  				puts("Bloqueado por I/O..");
-	  				puts("Pasando a bloqueados..");
-	  				queue_push(cola_bloqueados, pcb);
-	  				signalSemaforo(semBloqueados);
-	  				break;
-	  				}
+	  			case Bloqueado:{					//Agregar a cola de bloqueados
+	  				agregarPCBaBloqueados(cola_bloqueados, pcb);
+	  				break;}
 
-	  			case Terminado:{
-	  				//Agregar a lista de finalizados
-	  				puts("Programa ANSISOP finalizado..");
-	  				waitSemaforo(mutexFinalizados);
-	  				puts("Agregando a finalizados..");
-	  				list_add(lista_finalizados, pcb);
-	  				signalSemaforo(semFinalizados);
-	  				signalSemaforo(mutexFinalizados);
-	  				break;
-	  				}
+	  			case Terminado:{				//Agregar a lista de finalizados
+	  				agregarPCBaFinalizados(lista_finalizados, pcb);
+	  				break;}
 
 	  			case FinQuantum:{
-	  				puts("Saliendo de ejecutando..");
 	  				sacarDeEjecutar(pcb);				//Sacar de la lista de Ejecutando
-	  				puts("Pasando a listos..");
 	  				pasarAListos(pcb);						//Pasar a la cola de Listos
-	  				break;
-	  			}
-
+	  				break;}
 	  		}
+	  			free(buffer);
+	  			free(pcb);
+	  			break;}	//Fin switch interno
 
-	  		break;
-	  	  }
+	  	  case Wait:{	 // wait
+	  		  break; }
 
+	  	  case Signal: {	 // Signal
+	  		  break; }
 
-	  	  case 22:{	 // wait
+	  	  case EntradaSalida:{ 	 //Entrada salida
+	  	  	  break;}
 
-	  	  }
+	  	  case ObtenerValorCompartido:{ 	  //obtener valor de una compartida
+	  	  	  break;}
 
-	  	  case 23: {	 // Signal
+	  	  case AsignarValorCompartido:{		 //asignar valor
+	  	  	  break;}
 
-	  	  }
-
-	  	  case 24:{
-	  		  //Entrada salida
-	  	  }
-
-	  	  case 25:{
-	  		  //obtener valor de una compartida
-	  	  }
-
-	  	  case 26:{
-	  		  //asignar valor
-	  	  }
-
-	  	  case 27:{
-	  		  //finalizacion de cpu
-	  		  // a ver... hay que testear!
-
-	  	  }
-
+	  	  case FinalizacionCPU:{		  //finalizacion de cpu
+	  		  break;}// a ver... hay que testear!
 	  }
 
 
@@ -902,3 +824,19 @@ void accionesDeCPU(t_clienteCPU *cpu){
 		}
 	}	*/
 }
+
+void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb){
+	puts("Bloqueado por I/O..");
+	puts("Pasando a bloqueados..");
+	queue_push(cola, pcb);
+	signalSemaforo(semBloqueados);
+};
+
+void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb){
+		puts("Programa ANSISOP finalizado..");
+		waitSemaforo(mutexFinalizados);
+		puts("Agregando a finalizados..");
+		list_add(lista, pcb);
+		signalSemaforo(semFinalizados);
+		signalSemaforo(mutexFinalizados);
+};

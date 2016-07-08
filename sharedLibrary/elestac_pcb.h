@@ -13,7 +13,7 @@
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 
-#define SERIALIZADOR				"##"
+#define SERIALIZADOR				"#"
 
 typedef enum {
 	Listo, Corriendo, Terminado, Bloqueado, Nuevo, FinQuantum,
