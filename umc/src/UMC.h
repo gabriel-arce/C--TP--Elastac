@@ -27,8 +27,8 @@
 #include <elestac_semaforos.h>
 #include <elestac_comunicaciones.h>
 
-#define CONFIG_PATH "umc.conf" //para runear en terminal
-//#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
+//#define CONFIG_PATH "umc.conf" //para runear en terminal
+#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
 //#define REPORT_PATH "reporte.txt"
 #define REPORT_PATH "../umc/src/reporte.txt"
 #define LOG_FILE "../umc/src/umc.log"
