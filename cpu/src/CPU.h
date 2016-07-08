@@ -35,7 +35,7 @@
 #define SOLICITAR_PAGINA 15
 #define ALMACENAR_PAGINA 16
 #define CAMBIO_DE_PROCESO_ACTIVO 18
-#define TAMANIO_PAGINA 19.
+#define TAMANIO_PAGINA 19
 #define EJECUTAR_PCB 20
 #define RETORNO_PCB 21
 #define WAIT 22
@@ -112,6 +112,8 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 void quantumSleep();
 void recibirHeader(t_header * header);
 void stack_destroy(t_stack * stack);
+void almacenarPCB(uint32_t tamanioBuffer);
+void escucharPorSocket(int socket);
 
 //------------------Primitivas
 

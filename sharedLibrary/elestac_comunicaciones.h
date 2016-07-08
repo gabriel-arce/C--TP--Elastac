@@ -107,5 +107,8 @@ t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv, int 
 int enviar_respuesta_inicio(int socket, int respuesta);
 int recibir_respuesta_inicio(int socket);
 
+int enviar_texto(char * texto, int socket);
+int enviar_valor_de_variable(uint32_t valor, int socket);
+
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

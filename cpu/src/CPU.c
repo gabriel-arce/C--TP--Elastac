@@ -92,28 +92,31 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
 		}
 	}
 
-	if(header->identificador == QUANTUM){
+	switch(header->identificador){
+
+	case QUANTUM:
 		quantum = header->tamanio;
-	}
+		break;
 
-	if(header->identificador == QUANTUM_SLEEP){
+	case QUANTUM_SLEEP:
 		quantum_sleep = header->tamanio;
-	}
+		break;
 
-	if(header->identificador == TAMANIO_PAGINA){
+	case TAMANIO_PAGINA:
 		tamanio_paginas = header->tamanio;
+		break;
+
+	case EJECUTAR_PCB:
+		almacenarPCB(header->tamanio);
+		break;
 	}
-
-	if(header->identificador == EJECUTAR_PCB){
-
-		void * buffer = malloc(header->tamanio);
-		recv(socketNucleo,buffer, header->tamanio,0);
-		recibirPCB(buffer);
-	}
-
-
-
 	free(header);
+}
+
+void almacenarPCB(uint32_t tamanioBuffer){
+	void * buffer = malloc(tamanioBuffer);
+	recv(socketNucleo,buffer, tamanioBuffer,0);
+	recibirPCB(buffer);
 }
 
 void conectarConUMC(){
@@ -183,20 +186,27 @@ t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t 
 		salirPor("No se concreto la solicitud de lectura");
 	}
 
-	//TODO falta recibir el valor
+	//TODO ver si hace falta un while o un void*
+	if(recv(socketUMC, &valor, sizeof(t_valor_variable), 0) <= 0){
+		salirPor("no se pudo recibir valor de la variable");
+	}
 
 	return valor;
 }
 
+
 char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	char * instruccion;
+	char * instruccion = string_new();
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 			salirPor("No se concreto la solicitud de lectura");
 		}
 
-		//TODO falta recibir la instruccion
+	//TODO ver si hace falta un while o un void*
+	if(recv(socketUMC, instruccion, size, 0) <= 0){
+		salirPor("no se pudo recibir la instruccion");
+	}
 
 	return instruccion;
 }
@@ -293,13 +303,13 @@ void asignar(t_puntero direccion_variable, t_valor_variable valor) {
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){				//TODO enviar a nucleo
 
-	//TODO mandar a nucleo
+	// mandar a nucleo
 
 }
 
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){			//TODO enviar a nucleo
 
-	//TODO mandar a nucleo
+	//mandar a nucleo
 	return valor;
 }
 
@@ -366,7 +376,7 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 }
 
-void wait(t_nombre_semaforo identificador_semaforo){
+void wait(t_nombre_semaforo identificador_semaforo){		//ID semaforo
 
 	enviar_header(WAIT,0,socketNucleo);
 }
