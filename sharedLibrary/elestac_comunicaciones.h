@@ -91,6 +91,9 @@ char * deserializar_imprimir_texto(void * buffer);
 void * serializar_imprimir_valor(int valor);
 int deserializar_imprimir_valor(void * buffer);
 
+void * serializar_identificador_semaforo(char* id);
+char * deserializar_identificador_semaforo(void * buffer);
+
 int enviar_handshake(int socket, int id);
 int recibir_handshake(int socket);
 
@@ -106,6 +109,15 @@ t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv, int 
 //respuesta: si -> 1  / no -> 0
 int enviar_respuesta_inicio(int socket, int respuesta);
 int recibir_respuesta_inicio(int socket);
+
+int enviar_texto(char * texto, int socket);
+
+int enviar_valor_de_variable(uint32_t valor, int socket);
+
+int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket);
+
+int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket);
+
 
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

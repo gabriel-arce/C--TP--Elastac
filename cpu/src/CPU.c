@@ -378,12 +378,12 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 void wait(t_nombre_semaforo identificador_semaforo){		//TODO ID semaforo
 
-	enviar_header(WAIT,0,socketNucleo);
+	enviar_wait_identificador_semaforo(identificador_semaforo, socketNucleo);
 }
 
 void signals(t_nombre_semaforo identificador_semaforo){
 
-	enviar_header(SIGNAL,0,socketNucleo);
+	enviar_signal_identificador_semaforo(identificador_semaforo, socketNucleo);
 }
 
 
