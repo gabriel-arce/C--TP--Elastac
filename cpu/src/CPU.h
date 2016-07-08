@@ -35,7 +35,7 @@
 #define SOLICITAR_PAGINA 15
 #define ALMACENAR_PAGINA 16
 #define CAMBIO_DE_PROCESO_ACTIVO 18
-#define TAMANIO_PAGINA 19.
+#define TAMANIO_PAGINA 19
 #define EJECUTAR_PCB 20
 #define RETORNO_PCB 21
 #define WAIT 22
@@ -110,19 +110,19 @@ void cambiarEstadoABloqueado();
 t_posicion  convertirPunteroAPosicion(t_puntero puntero);
 t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 void quantumSleep();
-void recibirQuantums(t_header * header);
 void stack_destroy(t_stack * stack);
-
+void escucharPorSocket(int socket);
+void almacenarPCB(uint32_t tamanioBuffer);
 //------------------Primitivas
 
-t_posicion definirVariable(t_nombre_variable identificador_variable);
-t_posicion obtenerPosicionVariable(t_nombre_variable identificador_variable);
-t_valor_variable dereferenciar(t_posicion direccion_variable);
-void asignar(t_posicion direccion_variable, t_valor_variable valor);
+t_puntero definirVariable(t_nombre_variable identificador_variable);
+t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable);
+t_valor_variable dereferenciar(t_puntero direccion_variable);
+void asignar(t_puntero direccion_variable, t_valor_variable valor);
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable);
 t_valor_variable asignarValorCompartida(t_nombre_compartida variable,t_valor_variable valor);
 void irAlLabel(t_nombre_etiqueta etiqueta);
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_posicion donde_retornar);
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar);
 void retornar(t_valor_variable retorno);
 void imprimir(t_valor_variable valor_mostrar);
 void imprimirTexto(char* texto);

@@ -387,6 +387,7 @@ t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv,
 
 	return solicitud;
 }
+
 //----------------------------------------------------->
 int enviar_respuesta_inicio(int socket, int respuesta) {
 	void * buffer = serializar_respuesta_inicio(respuesta);
@@ -412,3 +413,38 @@ int recibir_respuesta_inicio(int socket) {
 
 	return respuesta;
 }
+
+//----------------------------------------------------->
+ int enviar_texto(char * texto, int socket) {
+ 	int result = enviar_header(12, sizeof(texto), socket);
+
+ 	if (result == -1)
+ 		return result;
+
+ 	void * buffer_out = serializar_imprimir_texto(texto);
+ 	result = send(socket, buffer_out, 12, 0);
+
+ 	if (result == -1)
+ 		return result;
+
+ 	free(buffer_out);
+ 	return EXIT_SUCCESS;
+ }
+
+ //------------------------------------------------------>
+ int enviar_valor_de_variable(uint32_t valor, int socket) {
+ 	int result = enviar_header(11, sizeof(uint32_t), socket);
+
+ 	if (result == -1)
+ 		return result;
+
+ 	void * buffer_out = serializar_imprimir_valor(valor);
+ 	result = send(socket, buffer_out, 11, 0);
+
+ 	if (result == -1)
+ 		return result;
+
+ 	free(buffer_out);
+ 	return EXIT_SUCCESS;
+ }
+
