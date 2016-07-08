@@ -447,7 +447,18 @@ int recibir_respuesta_inicio(int socket) {
  	return EXIT_SUCCESS;
  }
 
+char* recibir_texto(int buffer_size, int socket){
 
+	void * buffer = malloc(buffer_size);
+		int r = recv(socket, buffer, buffer_size, 0);
+
+		if (r <= 0)
+			return 0;
+
+		char * respuesta = deserializar_imprimir_texto(buffer);
+
+		return respuesta;
+}
 
 
 
@@ -466,6 +477,19 @@ int recibir_respuesta_inicio(int socket) {
 
  	free(buffer_out);
  	return EXIT_SUCCESS;
+ }
+
+ int recibir_valor_de_variable(int socket){
+
+		void * buffer = malloc(5);
+			int r = recv(socket, buffer, 5, 0);
+
+			if (r <= 0)
+				return 0;
+
+			int respuesta = deserializar_imprimir_valor(buffer);
+
+			return respuesta;
  }
 
  //---------------------------------------------------->

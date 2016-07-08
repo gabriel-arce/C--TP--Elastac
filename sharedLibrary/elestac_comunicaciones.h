@@ -111,8 +111,10 @@ int enviar_respuesta_inicio(int socket, int respuesta);
 int recibir_respuesta_inicio(int socket);
 
 int enviar_texto(char * texto, int socket);
+char* recibir_texto(int buffer_size, int socket);
 
 int enviar_valor_de_variable(uint32_t valor, int socket);
+int recibir_valor_de_variable(int socket);
 
 int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket);
 

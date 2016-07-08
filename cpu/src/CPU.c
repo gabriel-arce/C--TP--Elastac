@@ -173,6 +173,7 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
 		salirPor("no se pudo concretar la solicitud de escritura");
+		imprimirTexto("Hubo un error al intentar escribir una variable, finalizando el programa");
 		cambiarEstadoATerminado();    											//si hay algun error se termina el programa
 	}
 
@@ -376,7 +377,7 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 }
 
-void wait(t_nombre_semaforo identificador_semaforo){		//TODO ID semaforo
+void wait(t_nombre_semaforo identificador_semaforo){
 
 	enviar_wait_identificador_semaforo(identificador_semaforo, socketNucleo);
 }
