@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <elestac_config.h>
@@ -93,6 +94,8 @@ pthread_t pIDProcesarMensaje;
 pthread_t pIDPlanificador;
 pthread_t hiloEjecucion;
 pthread_t hiloBloqueado;
+pthread_t pIDCpu;
+
 
 fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;				// conjunto temporal de descriptores de fichero para select()
@@ -111,7 +114,7 @@ void planificar_consolas();
 void mainEjecucion();
 void mainBloqueado();
 void pasarAEjecutar();
-t_pcb *enviarAEjecutar(t_pcb *pcb, int fd);
+void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu);
 void entradaSalida();
 void pasarAListos(t_pcb *pcb);
 void destruirSemaforos();
@@ -128,4 +131,6 @@ void enviarHandshakeAUMC();
 void recibirHandshakeDeUMC();
 //void recibirDatosConsola(buffer);
 t_paquete_programa *obtener_programa(t_header *header, int fd);
+void accionesDeCPU(t_clienteCPU *cpu);
+
 #endif /* NUCLEO_H_ */

@@ -74,7 +74,7 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial,"0");											//Tipo de Proceso
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pid));
-	string_append(&serial, SERIALIZADOR);
+	/*string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pc));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_sp->offset));
@@ -91,7 +91,7 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->consola));
 	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->quantum_actual));
+	string_append(&serial, string_itoa(pcb->quantum_actual));*/
 
 // TODO Me falta agregar las listas del PCB para serializar..
 

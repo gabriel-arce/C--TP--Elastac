@@ -397,64 +397,14 @@ int CPUestaDisponible(t_clienteCPU *cpu){
 	return cpu->disponible == 0;
 }
 
-t_pcb *enviarAEjecutar(t_pcb *pcb, int fd){
-	int nbytes = 0;
-	 char buffer[MAXIMO_BUFFER];
+void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
-	if ((enviarPorSocket(fd, serializarPCB(pcb))) == -1){			//Enviar al CPU
-		printf("[NUCLEO] Error al enviar el PCB al CPU", fd);
-		return pcb;
-	}
+	 enviar_header(20,  serializarPCB(pcb), cpu->fd );
 
-	//Recibir respuesta del CPU
-	//waitSemaforo(semCPU);
-	if ((nbytes = recv(fd, buffer, sizeof(buffer), 0)) <= 0){
-		printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", fd);
-		return pcb;
-	}
+	//Crear hilo para CPU entrante
+	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
+	pthread_join(pIDCpu, NULL);
 
-	if(nbytes == 0){
-		//Conexion cerrada
-		printf("[NUCLEO] Conexion con CPU cerrada, socket %d\n", fd);
-		return pcb;
-
-	} else {
-		//Convertir
-		t_pcb *PCBActualizado = convertirPCB(buffer);
-
-		switch(PCBActualizado->estado){
-			case Bloqueado:{
-				//Agregar a cola de bloqueados
-				puts("Bloqueado por I/O..");
-				puts("Pasando a bloqueados..");
-				queue_push(cola_bloqueados, PCBActualizado);
-				signalSemaforo(semBloqueados);
-				return PCBActualizado;
-				break;
-				}
-
-			case Terminado:{
-				//Agregar a lista de finalizados
-				puts("Programa ANSISOP finalizado..");
-				waitSemaforo(mutexFinalizados);
-				puts("Agregando a finalizados..");
-				list_add(lista_finalizados, PCBActualizado);
-				signalSemaforo(semFinalizados);
-				signalSemaforo(mutexFinalizados);
-				return PCBActualizado;
-				break;
-				}
-
-			case FinQuantum:{
-				puts("Saliendo de ejecutando..");
-				sacarDeEjecutar(PCBActualizado);				//Sacar de la lista de Ejecutando
-				puts("Pasando a listos..");
-				pasarAListos(PCBActualizado);						//Pasar a la cola de Listos
-				return PCBActualizado;
-				break;
-			}
-		}
-	}
 
 }
 
@@ -490,8 +440,8 @@ void pasarAEjecutar(){
 		//Enviar a Ejecutar
 		waitSemaforo(mutexEjecutando);
 		puts("Ejecutando consola..");
-		pcbActual = enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
-		pcbEjecutando = pcbActual;
+		enviarAEjecutar(pcbEjecutando, cpuDeEjecucion);
+		//pcbEjecutando = pcbActual;
 		signalSemaforo(mutexEjecutando);
 
 /*		//Mientras tenga quantum
@@ -803,4 +753,152 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 
 	printf("Codigo programa: %s\n", programa->codigo_programa);
 	return programa;
+}
+
+void accionesDeCPU(t_clienteCPU *cpu){
+
+	t_header *header;
+	t_pcb *pcb;
+	void *buffer;
+	bool PCBRetornado = true;
+
+	while(PCBRetornado){
+		if ((header = recibir_header(cpu->fd)) == NULL)
+			puts("Error");
+
+	  switch(header->identificador){
+	  	  case 21:{		//Retorno PCB
+	  		  buffer	= malloc(header->tamanio);
+	  		  pcb		= malloc(sizeof(t_pcb));
+	  		  recv(cpu->fd, buffer, header->tamanio, 0);
+	  		  pcb = convertirPCB(buffer);
+	  		  PCBRetornado = false;
+
+	  		switch(pcb->estado){
+	  			case Bloqueado:{
+	  				//Agregar a cola de bloqueados
+	  				puts("Bloqueado por I/O..");
+	  				puts("Pasando a bloqueados..");
+	  				queue_push(cola_bloqueados, pcb);
+	  				signalSemaforo(semBloqueados);
+	  				break;
+	  				}
+
+	  			case Terminado:{
+	  				//Agregar a lista de finalizados
+	  				puts("Programa ANSISOP finalizado..");
+	  				waitSemaforo(mutexFinalizados);
+	  				puts("Agregando a finalizados..");
+	  				list_add(lista_finalizados, pcb);
+	  				signalSemaforo(semFinalizados);
+	  				signalSemaforo(mutexFinalizados);
+	  				break;
+	  				}
+
+	  			case FinQuantum:{
+	  				puts("Saliendo de ejecutando..");
+	  				sacarDeEjecutar(pcb);				//Sacar de la lista de Ejecutando
+	  				puts("Pasando a listos..");
+	  				pasarAListos(pcb);						//Pasar a la cola de Listos
+	  				break;
+	  			}
+
+	  		}
+
+	  		break;
+	  	  }
+
+
+	  	  case 22:{	 // wait
+
+	  	  }
+
+	  	  case 23: {	 // Signal
+
+	  	  }
+
+	  	  case 24:{
+	  		  //Entrada salida
+	  	  }
+
+	  	  case 25:{
+	  		  //obtener valor de una compartida
+	  	  }
+
+	  	  case 26:{
+	  		  //asignar valor
+	  	  }
+
+	  	  case 27:{
+	  		  //finalizacion de cpu
+	  		  // a ver... hay que testear!
+
+	  	  }
+
+	  }
+
+
+	}
+
+
+	//cpu libre
+	cpu->disponible = 0;
+
+	//matar hilo
+	pthread_detach(&pIDCpu);
+
+/*	if ((enviarPorSocket(fd, serializarPCB(pcb))) == -1){			//Enviar al CPU
+		printf("[NUCLEO] Error al enviar el PCB al CPU", fd);
+		return pcb;
+	}
+
+	//Recibir respuesta del CPU
+	//waitSemaforo(semCPU);
+	if ((nbytes = recv(fd, buffer, sizeof(buffer), 0)) <= 0){
+		printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", fd);
+		return pcb;
+	}
+
+	if(nbytes == 0){
+		//Conexion cerrada
+		printf("[NUCLEO] Conexion con CPU cerrada, socket %d\n", fd);
+		return pcb;
+
+	} else {
+		//Convertir
+		t_pcb *PCBActualizado = convertirPCB(buffer);
+
+		switch(PCBActualizado->estado){
+			case Bloqueado:{
+				//Agregar a cola de bloqueados
+				puts("Bloqueado por I/O..");
+				puts("Pasando a bloqueados..");
+				queue_push(cola_bloqueados, PCBActualizado);
+				signalSemaforo(semBloqueados);
+				return PCBActualizado;
+				break;
+				}
+
+			case Terminado:{
+				//Agregar a lista de finalizados
+				puts("Programa ANSISOP finalizado..");
+				waitSemaforo(mutexFinalizados);
+				puts("Agregando a finalizados..");
+				list_add(lista_finalizados, PCBActualizado);
+				signalSemaforo(semFinalizados);
+				signalSemaforo(mutexFinalizados);
+				return PCBActualizado;
+				break;
+				}
+
+			case FinQuantum:{
+				puts("Saliendo de ejecutando..");
+				sacarDeEjecutar(PCBActualizado);				//Sacar de la lista de Ejecutando
+				puts("Pasando a listos..");
+				pasarAListos(PCBActualizado);						//Pasar a la cola de Listos
+				return PCBActualizado;
+				break;
+			}
+		}
+	}	*/
 }
