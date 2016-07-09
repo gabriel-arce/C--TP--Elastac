@@ -30,6 +30,7 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
 	t_pcb *pcb;
 	t_sp *sp;
+	t_indice_de_codigo *indiceCodigo;
 
 	if ((pcb = malloc(sizeof(t_pcb))) == NULL)
 		puts("No se pudo alocar para el pcb");
@@ -37,14 +38,27 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	if ((sp = malloc(sizeof(t_sp))) == NULL)
 		puts("No se pudo alocar indice de codigo en PCB");
 
+	if ((indiceCodigo = malloc(sizeof(t_indice_de_codigo))) == NULL)
+		puts("No se pudo alocar para indice de codigo");
+
 	pcb->pcb_pid 					= crearPCBID(cola_pcb);
 	pcb->pcb_pc					= meta->instruccion_inicio;
 	pcb->paginas_codigo	= stack_size;
+	sp->offset	= 0;
+	sp->pagina	= 0;
 
 	list_create(pcb->indice_codigo);
+	if ((pcb->indice_codigo = malloc(sizeof(t_list))) == NULL)
+		puts("No se pudo alocar para indice de codigo");
 
-	sp->pagina 	= meta->instrucciones_serializado[pcb->pcb_pc].start;
-	sp->offset	= meta->instrucciones_serializado[pcb->pcb_pc].offset;
+	for(int i = 0; i <= meta->instrucciones_size; i++){
+		indiceCodigo->posicion	= meta->instrucciones_serializado[i].start;
+		indiceCodigo->tamanio	= meta->instrucciones_serializado[i].offset;
+		list_add(pcb->indice_codigo, indiceCodigo);
+	}
+
+/*	sp->pagina 	= meta->instrucciones_serializado[pcb->pcb_pc].start;
+	sp->offset	= meta->instrucciones_serializado[pcb->pcb_pc].offset;*/
 
 	pcb->pcb_sp = sp;
 	pcb->cantidad_de_etiquetas	= meta->cantidad_de_etiquetas;
@@ -56,6 +70,8 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	pcb->indice_etiquetas = meta->etiquetas;
 
 	list_create(pcb->indice_stack);
+	if ((pcb->indice_stack = malloc(sizeof(t_list))) == NULL)
+		puts("No se pudo alocar para indice de stack");
 
 	return pcb;
 
@@ -71,6 +87,9 @@ void destruirPCB(t_pcb *pcb){
 char* serializarPCB (t_pcb* pcb)
 {
 	t_indice_de_codigo *indiceCodigo = malloc(sizeof(t_indice_de_codigo));
+	t_stack *indiceStack = malloc(sizeof(t_stack));
+	t_posicion *args = malloc(sizeof(t_posicion));
+	t_variable_stack *variableStack = malloc(sizeof(t_variable_stack));
 	char* serial = string_new();
 
 	string_append(&serial,"0");											//Tipo de Proceso
@@ -85,21 +104,56 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->paginas_codigo));
 	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(list_size(pcb->indice_codigo)));
 
-	if (list_is_empty(pcb->indice_codigo) == false){
-		string_append(&serial, string_itoa(list_size(pcb->indice_codigo)));
-		for(int i = 0; i < list_size(pcb->indice_codigo); i++){
-			indiceCodigo = (t_indice_de_codigo*) list_get(pcb->indice_codigo,i);
-			string_append(&serial, SERIALIZADOR);
-			string_append(&serial, string_itoa(indiceCodigo->posicion));
-			string_append(&serial, string_itoa(indiceCodigo->tamanio));
-		}
+	for(int i = 0; i < list_size(pcb->indice_codigo); i++){
+		indiceCodigo = list_get(pcb->indice_codigo,i);
+		string_append(&serial, SERIALIZADOR);
+		string_append(&serial, string_itoa(indiceCodigo->posicion));
+		string_append(&serial, string_itoa(indiceCodigo->tamanio));
 	}
 
+	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, &pcb->indice_etiquetas);
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->cantidad_de_etiquetas));
 	string_append(&serial, SERIALIZADOR);
+	string_append(&serial, string_itoa(list_size(pcb->indice_stack)));
+
+	for(int i = 0; i < list_size(pcb->indice_stack); i++){
+		indiceStack = list_get(pcb->indice_stack,i);
+		string_append(&serial, SERIALIZADOR);
+		for(int j = 0; j < list_size(indiceStack->args); j++){
+			args = list_get(indiceStack->args, j);
+			string_append(&serial, string_itoa(args->offset));
+			string_append(&serial, SERIALIZADOR);
+			string_append(&serial, string_itoa(args->pagina));
+			string_append(&serial, SERIALIZADOR);
+			string_append(&serial, string_itoa(args->size));
+			string_append(&serial, SERIALIZADOR);
+		}
+		for(int k =1; k < list_size(indiceStack->vars); k++){
+			variableStack = list_get(indiceStack->vars, k);
+			string_append(&serial, string_itoa(variableStack->posicion->offset));
+			string_append(&serial, SERIALIZADOR);
+			string_append(&serial, string_itoa(variableStack->posicion->pagina));
+			string_append(&serial, SERIALIZADOR);
+			string_append(&serial, string_itoa(variableStack->posicion->size));
+			string_append(&serial, SERIALIZADOR);
+			string_append(&serial, variableStack->id);
+		}
+		string_append(&serial, SERIALIZADOR);
+		string_append(&serial, string_itoa(indiceStack->retPos));
+		string_append(&serial, SERIALIZADOR);
+		string_append(&serial, string_itoa(indiceStack->retVar->offset));
+		string_append(&serial, SERIALIZADOR);
+		string_append(&serial, string_itoa(indiceStack->retVar->pagina));
+		string_append(&serial, SERIALIZADOR);
+		string_append(&serial, string_itoa(indiceStack->retVar->size));
+		string_append(&serial, SERIALIZADOR);
+		string_append(&serial, string_itoa(indiceStack->stackActivo));
+	}
+
 	string_append(&serial, string_itoa(pcb->estado));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->consola));
