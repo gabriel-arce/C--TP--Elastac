@@ -47,9 +47,7 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	sp->offset	= 0;
 	sp->pagina	= 0;
 
-	list_create(pcb->indice_codigo);
-	if ((pcb->indice_codigo = malloc(sizeof(t_list))) == NULL)
-		puts("No se pudo alocar para indice de codigo");
+	pcb->indice_codigo = list_create();
 
 	for(int i = 0; i <= meta->instrucciones_size; i++){
 		indiceCodigo->posicion	= meta->instrucciones_serializado[i].start;
@@ -105,6 +103,7 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, string_itoa(pcb->paginas_codigo));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(list_size(pcb->indice_codigo)));
+
 
 	for(int i = 0; i < list_size(pcb->indice_codigo); i++){
 		indiceCodigo = list_get(pcb->indice_codigo,i);
