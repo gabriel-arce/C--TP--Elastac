@@ -624,16 +624,6 @@ void finalizar(){
 	signalSemaforo(mutexFinalizados);
 }
 
-t_header * deserializar_header(void * buffer) {
-	t_header * header = malloc(sizeof(t_header));
-
-	memcpy(&header->identificador, buffer, 1);
-	memcpy(&header->tamanio, buffer + 1, 4);
-
-	return header;
-}
-
-
 t_paquete_programa *recibirDatosConsola(int fd){
 	t_paquete_programa *programa;
 	return programa;

@@ -69,5 +69,6 @@ char* serializarPCB(t_pcb* pcb);
 t_pcb *convertirPCB(char *mensaje);
 int crearPCBID(t_queue *cola_pcb);
 void salirPor(const char *msg);
+t_indice_de_codigo *crearIndiceCodigo(int start, int offset);
 
 #endif /* ELESTAC_PCB_H_ */

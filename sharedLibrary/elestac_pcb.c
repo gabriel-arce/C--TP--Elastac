@@ -8,8 +8,8 @@
 #include "elestac_pcb.h"
 t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
-/*    char * prog1 = "begin \n variables a, b, c \n a = b + 12 \n print b \n textPrint foo\n end\"";
-    char * prog2 = "begin \n print b \n end";
+    /*       char * prog1 = "begin \n variables a, b, c \n a = b + 12 \n print b \n textPrint foo\n end\"";
+ 	 char * prog2 = "begin \n print b \n end";
     char * prog3 = "begin\nend";
     char * prog4 = "end";
     char * prog5 = "begin";
@@ -30,16 +30,12 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
 	t_pcb *pcb;
 	t_sp *sp;
-	t_indice_de_codigo *indiceCodigo;
 
 	if ((pcb = malloc(sizeof(t_pcb))) == NULL)
 		puts("No se pudo alocar para el pcb");
 
 	if ((sp = malloc(sizeof(t_sp))) == NULL)
 		puts("No se pudo alocar indice de codigo en PCB");
-
-	if ((indiceCodigo = malloc(sizeof(t_indice_de_codigo))) == NULL)
-		puts("No se pudo alocar para indice de codigo");
 
 	pcb->pcb_pid 					= crearPCBID(cola_pcb);
 	pcb->pcb_pc					= meta->instruccion_inicio;
@@ -49,11 +45,8 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
 	pcb->indice_codigo = list_create();
 
-	for(int i = 0; i <= meta->instrucciones_size; i++){
-		indiceCodigo->posicion	= meta->instrucciones_serializado[i].start;
-		indiceCodigo->tamanio	= meta->instrucciones_serializado[i].offset;
-		list_add(pcb->indice_codigo, indiceCodigo);
-	}
+	for(int i = 0; i <= meta->instrucciones_size; i++)
+		list_add(pcb->indice_codigo, crearIndiceCodigo(meta->instrucciones_serializado[i].start, meta->instrucciones_serializado[i].offset));
 
 /*	sp->pagina 	= meta->instrucciones_serializado[pcb->pcb_pc].start;
 	sp->offset	= meta->instrucciones_serializado[pcb->pcb_pc].offset;*/
@@ -84,10 +77,13 @@ void destruirPCB(t_pcb *pcb){
 
 char* serializarPCB (t_pcb* pcb)
 {
-	t_indice_de_codigo *indiceCodigo = malloc(sizeof(t_indice_de_codigo));
+
 	t_stack *indiceStack = malloc(sizeof(t_stack));
 	t_posicion *args = malloc(sizeof(t_posicion));
 	t_variable_stack *variableStack = malloc(sizeof(t_variable_stack));
+	t_indice_de_codigo *indiceCodigo;
+	t_list *lista;
+
 	char* serial = string_new();
 
 	string_append(&serial,"0");											//Tipo de Proceso
@@ -104,9 +100,9 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(list_size(pcb->indice_codigo)));
 
-
 	for(int i = 0; i < list_size(pcb->indice_codigo); i++){
-		indiceCodigo = list_get(pcb->indice_codigo,i);
+
+		indiceCodigo = list_get(pcb->indice_codigo, i);
 		string_append(&serial, SERIALIZADOR);
 		string_append(&serial, string_itoa(indiceCodigo->posicion));
 		string_append(&serial, string_itoa(indiceCodigo->tamanio));
@@ -159,9 +155,6 @@ char* serializarPCB (t_pcb* pcb)
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->quantum_actual));
 
-// TODO Me falta agregar las listas del PCB para serializar..
-
-	free(indiceCodigo);
 	return serial;
 }
 
@@ -173,7 +166,7 @@ t_pcb *convertirPCB(char *mensaje){
 	pcb->pcb_pc								= atoi(componentes[1]);
 	pcb->pcb_sp								= atoi(componentes[2]);
 	//pcb->indice_etiquetas 				= componentes[3];
-	pcb->paginas_codigo 				= atoi(componentes[4]);
+	pcb->paginas_codigo 				= atoi(componentes[3]);
 	/*
 	pcb->indice_codigo.posicion	= atoi(componentes[5]);
 	pcb->indice_codigo.tamanio	= atoi(componentes[6]);
@@ -198,3 +191,9 @@ void salirPor(const char *msg){
 	exit(EXIT_FAILURE);
 }
 
+t_indice_de_codigo *crearIndiceCodigo(int start, int offset){
+	t_indice_de_codigo *indiceCodigo =  malloc(sizeof(t_indice_de_codigo));
+	indiceCodigo->posicion	= start;
+	indiceCodigo->tamanio	= offset;
+	return indiceCodigo;
+}
