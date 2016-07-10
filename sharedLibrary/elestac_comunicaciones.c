@@ -298,7 +298,7 @@ int enviar_header(int id, int tamanio, int socket) {
 	int result = send(socket, buffer, 5, 0);
 
 	if (result == -1) {
-		puts("Error en el envio del header");
+		printf("Error en el envio del header %d\n", id);
 	}
 
 	free(buffer);
@@ -383,7 +383,8 @@ t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv,
 		return NULL;
 	}
 
-	t_paquete_almacenar_pagina * solicitud = deserializar_almacenar_pagina(buffer);
+	t_paquete_almacenar_pagina * solicitud = deserializar_almacenar_pagina(
+			buffer);
 
 	return solicitud;
 }
@@ -392,7 +393,7 @@ int enviar_respuesta_inicio(int socket, int respuesta) {
 	void * buffer = serializar_respuesta_inicio(respuesta);
 	int r = send(socket, buffer, 5, 0);
 
-	if(r == -1) {
+	if (r == -1) {
 		puts("Error en el envio de +++Respuesta_inicio_programa+++");
 		return r;
 	}
@@ -411,4 +412,34 @@ int recibir_respuesta_inicio(int socket) {
 	int respuesta = deserializar_respuesta_inicio(buffer);
 
 	return respuesta;
+}
+
+int enviar_inicializar_programa(int pid, int paginas, char * codigo, int socket) {
+	void * buffer = serializar_iniciar_prog(pid, paginas, codigo);
+	int tamanio_buffer = 12 + strlen(codigo);
+
+	int r = send(socket, buffer, tamanio_buffer, 0);
+
+	if (r <= 0)
+		puts("Error en el envio de ++inicializar_programa++");
+
+	free(buffer);
+	return r;
+}
+
+t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir, int socket) {
+	int recibido = -1;
+	void * buffer = malloc(bytes_a_recibir);
+
+	recibido = recv(socket, buffer, bytes_a_recibir, 0);
+
+	if (recibido <= 0) {
+		puts("Error en el recv de ++inicializar_programa++");
+		return NULL;
+	}
+
+	t_paquete_inicializar_programa * paquete = deserializar_iniciar_prog(
+			buffer);
+
+	return paquete;
 }

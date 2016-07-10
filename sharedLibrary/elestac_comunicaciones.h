@@ -107,5 +107,7 @@ t_paquete_almacenar_pagina * recibir_solicitud_escritura(int bytes_to_recv, int 
 int enviar_respuesta_inicio(int socket, int respuesta);
 int recibir_respuesta_inicio(int socket);
 
+int enviar_inicializar_programa(int pid, int paginas, char * codigo, int socket);
+t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir, int socket);
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

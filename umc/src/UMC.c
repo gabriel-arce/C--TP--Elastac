@@ -14,9 +14,9 @@ void new_line() {
 	printf("\n");
 }
 
-void cargar_config() {
+void cargar_config(char ** config_path) {
 
-	t_config * config_file = config_create(CONFIG_PATH);
+	t_config * config_file = config_create(config_path[1]);
 	umc_config = malloc(sizeof(t_umc_config));
 	memset(umc_config, 0, sizeof(t_umc_config));
 
@@ -33,6 +33,8 @@ void cargar_config() {
 	umc_config->entradas_tlb = getIntProperty(config_file, "ENTRADAS_TLB");
 	umc_config->retardo = getIntProperty(config_file, "RETARDO");
 	umc_config->algoritmo = getIntProperty(config_file, "ALGORITMO");
+
+	its_clock_m = (umc_config->algoritmo == CLOCK_MODIFICADO);
 
 	config_destroy(config_file);
 }
@@ -64,7 +66,7 @@ void imprimir_config() {
 
 bool tlb_habilitada() {
 	if (umc_config->entradas_tlb > 0) {
-		tlb = list_create();
+		tabla_tlb = list_create();
 		int i;
 		for (i = 0; i < umc_config->entradas_tlb; i++) {
 			t_tlb * new_entry = malloc(sizeof(t_tlb));
@@ -73,7 +75,7 @@ bool tlb_habilitada() {
 			new_entry->pid = -1;
 			new_entry->referencebit = 0;
 
-			list_add_in_index(tlb, i, new_entry);
+			list_add_in_index(tabla_tlb, i, new_entry);
 		}
 		return true;
 	} else {
@@ -161,10 +163,10 @@ void * lanzar_consola() {
 		if (string_equals_ignore_case(cmd_in, "flush")) {
 			switch (opt_var) {
 			case 1:
-				limpiar_tlb();
+				flush_tlb();
 				break;
 			case 2:
-				marcar_paginas();
+				//flush_memory();
 				break;
 			default:
 				puts(MSJ_ERROR2);
@@ -177,7 +179,6 @@ void * lanzar_consola() {
 	free(buffer_in);
 
 	return EXIT_SUCCESS;
-
 }
 
 int no_es_comando(char * com) {
@@ -195,40 +196,7 @@ int no_es_comando(char * com) {
 	return true;
 }
 
-void inicializar_memoria() {
-
-	memoria_size = umc_config->frames_size * umc_config->cant_frames;
-
-	memoria_principal = malloc(memoria_size);
-	memset(memoria_principal, 0, memoria_size);
-
-	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
-			memoria_size);
-
-	int indice_frame = 0;
-
-	for (indice_frame = 0; indice_frame < memoria_size; indice_frame++) {
-		t_mem_frame * frame = malloc(sizeof(t_mem_frame));
-
-		frame->nro_frame = indice_frame;
-		frame->pagina = -1;
-		frame->pid = -1;
-		frame->libre = true;
-
-		list_add(marcos_memoria, frame);
-	}
-}
-
 void crear_archivo_reporte() {
-	/*
-	 * Aca en realidad iria una implementacion diferente con respecto
-	 * a la representacion del contenido de la memoria
-	 *
-	 * TASK: AVERIGUAR ESTRATEGIAS DE DUMP!!
-	 *
-	 * */
-	archivo_reporte = txt_open_for_append(REPORT_PATH);
-	txt_write_in_file(archivo_reporte, "Reporte de estructuras:\n");
 }
 
 void crear_archivo_log() {
@@ -236,36 +204,27 @@ void crear_archivo_log() {
 	log_info(logger, "UMC iniciado.");
 }
 
+void inicializar_semaforos() {
+	pthread_mutex_init(&mutex_servidor, 0);
+	pthread_mutex_init(&mutex_lista_cpu, 0);
+	pthread_mutex_init(&mutex_nucleo, 0);
+	pthread_mutex_init(&mutex_memoria, 0);
+}
+
 void * conecta_swap() {
 	if ((socket_cliente = clienteDelServidor(umc_config->ip_swap,
 			umc_config->puerto_swap)) == -1)
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 
-	void * buffer_out;
-	buffer_out = serializar_header((uint8_t) UMC, 0);
-
-	if (send(socket_cliente, buffer_out, 5, 0) == -1) {
-		printf("Error en el send\n");
-	}
-
-	free(buffer_out);
+	if (enviar_handshake(socket_cliente, UMC) == -1)
+		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
-
 }
 
 void enviar_pagina_size(int sock_fd) {
-
-	void * buffer_out;
-	buffer_out = serializar_header((uint8_t) Tamanio_pagina,
-			umc_config->frames_size);
-
-	if (send(sock_fd, buffer_out, 5, 0) == -1) {
-		printf("No se pudo responder el handshake a nucleo. \n");
-	}
-	printf("Se ha enviado el tamanio de pagina \n");
-
-	free(buffer_out);
+	if (enviar_header(Tamanio_pagina, umc_config->frames_size, sock_fd))
+		printf("Se ha enviado el tamanio de pagina \n");
 }
 
 void * escucha_conexiones() {
@@ -380,34 +339,26 @@ void * atiende_nucleo() {
 		case Inicializar_programa:
 			new_line();
 
-			void * buffer_stream = malloc(head_in->tamanio);
+			t_paquete_inicializar_programa * paquete_init =
+					recibir_inicializar_programa(head_in->tamanio,
+							socket_nucleo);
 
-			if ((recibido = recv(socket_nucleo, buffer_stream, head_in->tamanio,
-			MSG_WAITALL)) == -1) {
-				printf("Error en el recv de +++inicializar_programa+++ \n");
-				break;
+			if (!paquete_init) {
+				//escribo en el log el error
+				pthread_mutex_unlock(&mutex_nucleo);
+				continue;
 			}
-			if (recibido <= 0)
-				break;
 
-			t_paquete_inicializar_programa * iniciar_prog_pack =
-					deserializar_iniciar_prog(buffer_stream);
-
-			printf("pid: %d\n", iniciar_prog_pack->pid);
-			printf("paginas: %d\n", iniciar_prog_pack->paginas_requeridas);
-			printf("%s", iniciar_prog_pack->codigo_programa);
+			printf("pid: %d\n", paquete_init->pid);
+			printf("paginas: %d\n", paquete_init->paginas_requeridas);
+			printf("%s", paquete_init->codigo_programa);
 			new_line();
 			printf("Inicializo programa...\n");
-			//inicializar_programa(iniciar_prog_pack);
-
-			free(iniciar_prog_pack);
-
+			inicializar_programa(paquete_init);
 			break;
 		case Finalizar_programa:
 			printf("Finalizo programa\n");
-			pthread_mutex_lock(&mutex_nucleo);
 			finalizar_programa(head_in->tamanio);
-			pthread_mutex_unlock(&mutex_nucleo);
 			break;
 		default:
 			printf("Cabecera desconocida\n");
@@ -422,89 +373,63 @@ void * atiende_nucleo() {
 	return EXIT_SUCCESS;
 }
 
-int inicializar_programa(t_paquete_inicializar_programa * paquete) {
+void inicializar_programa(t_paquete_inicializar_programa * paquete) {
 
-	//mando a swap
-	void * buffer = serializar_iniciar_prog(paquete->pid,
-			paquete->paginas_requeridas, paquete->codigo_programa);
-	int reply = inicializar_en_swap(buffer, 12 + paquete->programa_length);
-	free(buffer);
+	int reply = -1;
+	int result = -1;
 
-	if (reply == -1)
-		return Respuesta__NO;
-	//else: si me da el ok -> armo la tabla de paginas
-	t_proceso * new_process = malloc(sizeof(t_proceso));
-	new_process->pid = paquete->pid;
-	new_process->tabla_paginas = list_create();
+	reply = inicializar_en_swap(paquete);
 
-	int i;
-	for (i = 0; i < paquete->paginas_requeridas; i++) {
-		t_pagina * page_entry = malloc(sizeof(t_pagina));
-		page_entry->pagina = i;
-		page_entry->frame = -1;
-		page_entry->dirtybit = 0;
-		page_entry->presentbit = 0;
+	if (reply)
+		result = inicializar_proceso(paquete->pid, paquete->paginas_requeridas);
 
-		list_add(new_process->tabla_paginas, page_entry);
+	if (result == EXIT_FAILURE) {
+		//OCURRIO UN ERROR PARA CREAR EL PROCESO
+		reply = Respuesta__NO;
+		finalizar_en_swap(paquete->pid);
 	}
 
-	list_add(lista_procesos, new_process);
+	enviar_respuesta_inicio(socket_nucleo, reply);
 
-	//le doy el ok a nucleo
-	int result = enviar_respuesta_inicio(socket_nucleo, 1);
-	//si no se pudo enviar la respuesta a nucleo lo mejor
-	//seria enviarle a swap que finalice el programa (libere memoria)
-	//en lugar de volver a tratar de enviarla
-
-	if (result <= 0)
-		return Respuesta__NO;
-
-	return Respuesta__SI;
+	free(paquete);
 }
 
-int inicializar_en_swap(void * buffer, int buffer_size) {
+int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
 
-	//primero le envio el header del inicializar programa a swap
+	int buffer_size = string_length(paquete->codigo_programa) + 12;
+
 	enviar_header(Inicializar_programa, buffer_size, socket_cliente);
-	//luego le envio el buffer del paquete de inicializar programa
-	int r = send(socket_cliente, buffer, buffer_size, 0);
+
+	int r = enviar_inicializar_programa(paquete->pid,
+			paquete->paginas_requeridas, paquete->codigo_programa,
+			socket_cliente);
 	if (r <= 0)
 		return Respuesta__NO;
-	//espero a que me responda
+
 	int respuesta = recibir_respuesta_inicio(socket_cliente);
-	//retorno la respuesta
 
 	return respuesta;
 }
 
-int finalizar_programa(int id_programa) {
-	printf("Programa finalizado.\n");
+void finalizar_programa(int id_programa) {
 
 	//--le aviso a swap que libere el programa
 	finalizar_en_swap(id_programa);
-	//--luego libero aca: tabla de paginas, libero frames si estaba alocado en memoria, etc...
-	bool buscar_proceso(t_proceso * target) {
-		return (target->pid == id_programa);
-	}
-	t_proceso * proceso = list_find(lista_procesos, (void *) buscar_proceso);
 
-	if (proceso == NULL)
-		return -1;
+	//--luego libero aca: tabla de paginas, libero frames si estaba alocado en memoria, etc...
+	t_proceso * proceso = buscar_proceso(id_programa);
 
 	int cantidad_paginas = list_size(proceso->tabla_paginas);
 
-	int i;
-	for (i = 0; i < cantidad_paginas; i++) {
-		t_pagina * page_entry = list_get(proceso->tabla_paginas, i);
+	int nro_pagina;
+	for (nro_pagina = 0; nro_pagina < cantidad_paginas; nro_pagina++) {
+		t_tabla_pagina * page_entry = list_get(proceso->tabla_paginas,
+				nro_pagina);
 
 		if (page_entry->presentbit == 1) {
 			//libero memoria en el frame en la cual esta cargado el proceso
-			bool buscar_frame(t_mem_frame * frame) {
-				return ((frame->pagina == page_entry->pagina)
-						&& (frame->pid == id_programa));
-			}
-			t_mem_frame * marco = list_find(marcos_memoria,
-					(void *) buscar_frame);
+			t_mem_frame * marco = buscar_frame_por_pagina(nro_pagina,
+					id_programa);
 
 			if (marco == NULL)
 				continue;
@@ -516,101 +441,125 @@ int finalizar_programa(int id_programa) {
 	}
 
 	//libero la tabla de paginas
-	void lib_entry(t_pagina * target) {
-		free(target);
-	}
-	list_destroy_and_destroy_elements(proceso->tabla_paginas,
-			(void *) lib_entry);
+	list_destroy_and_destroy_elements(proceso->tabla_paginas, (void *) free);
+
+	//libero la lista de referencias
+	list_destroy_and_destroy_elements(proceso->referencias, (void *) free);
+
+	//Hago un flush en tlb
+	flush_tlb_by_certain_pid(proceso->pid);
 
 	//elimino el proceso de la lista de procesos
-	void process_destroyer(t_proceso * self) {
-		free(self);
-	}
 	list_remove_and_destroy_by_condition(lista_procesos,
-			(void *) buscar_proceso, (void *) process_destroyer);
+			(void *) buscar_proceso, (void *) free);
 
-	return EXIT_SUCCESS;
 }
 
 void finalizar_en_swap(int pid) {
-	void * buffer = serializar_fin_prog(pid);
-	int r = send(socket_cliente, buffer, 5, 0);
-
-	if (r == -1)
-		puts("Error en el send de +++Finalizar_programa+++");
+	enviar_header(Finalizar_programa, pid, socket_cliente);
 }
 
 void * atiende_cpu(void * args) {
 
 	int socket_cpu = (int) args;
+	pthread_mutex_t mutex_cpu;
+	pthread_mutex_init(&mutex_cpu, 0);
 
 	int recibido = 1;
-	void * buffer_in = malloc(5);
 
 	while (recibido > 0) {
 
-		t_header * head_in = recibir_header(socket_cpu);
-		int resultado_operacion = -1; //**
+		pthread_mutex_lock(&mutex_cpu);
 
-		if (head_in == NULL)
-			continue; //quizas aca le pueda responder con el mismo formato en el que usare para avisarle el error **
+		t_header * head_in = recibir_header(socket_cpu);
+
+		if (head_in == NULL) {
+			//handleo el error del header
+			pthread_mutex_unlock(&mutex_cpu);
+			continue;
+		}
 
 		switch (head_in->identificador) {
 		case Solicitar_pagina:
 			printf("Lectura de bytes\n");
-			resultado_operacion = leer_bytes(socket_cpu, head_in->tamanio);
+			leer_bytes(socket_cpu, head_in->tamanio);
 			break;
 		case Almacenar_pagina:
 			printf("Almaceno bytes\n");
-			resultado_operacion = almacenar_bytes(socket_cpu, head_in->tamanio);
+			almacenar_bytes(socket_cpu, head_in->tamanio);
 			break;
 		case Cambio_proceso_activo:
 			printf("Cambio de proceso activo\n");
-			resultado_operacion = cambio_proceso_activo(head_in->tamanio,
-					socket_cpu);
-			if (resultado_operacion == -1)
-				recibido = -1;
+			cambio_proceso_activo(head_in->tamanio, socket_cpu);
 			break;
 		default:
 			printf("Cabecera desconocida\n");
 			break;
 		}
 
-		//--luego del switch compruebo si resultado_operacion == -1
-		//--y handleo el error avisandole a cpu que se re pudrio
-
 		free(head_in);
-	}
 
-	free(buffer_in);
+		pthread_mutex_unlock(&mutex_cpu);
+	}
 
 	return EXIT_SUCCESS;
 }
 
 int leer_bytes(int socket_cpu, int bytes) {
+
 	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_lectura(bytes,
 			socket_cpu);
-
 	if (solicitud == NULL)
 		return -1;
 
 	t_sesion_cpu * cpu = buscar_cpu(socket_cpu);
-	if (!cpu)
+	if (!cpu) {
+		free(solicitud);
 		return -1;
-
-	bool sol_pag_val = pagina_valida(cpu->proceso_activo, solicitud->nro_pagina);
-	if(!sol_pag_val)
-		return -1;
-
-	if(tlb_on) {
-		read_with_tlb(cpu, solicitud);
-	} else {
-		read_without_tlb(cpu, solicitud);
 	}
 
+	printf("PID: %d\n", cpu->proceso_activo);
 	printf("Pagina: %d\n", solicitud->nro_pagina);
 	printf("Offset: %d\n", solicitud->offset);
 	printf("bytes: %d\n", solicitud->bytes);
+
+	bool sol_pag_val = pagina_valida(cpu->proceso_activo,
+			solicitud->nro_pagina);
+	if (!sol_pag_val) {
+		free(solicitud);
+		return -1;
+	}
+
+	t_tlb * tlb_entry = NULL;
+	t_proceso * proceso = NULL;
+	proceso = buscar_proceso(cpu->proceso_activo);
+
+	if (tlb_on)
+		tlb_entry = buscar_en_tlb(solicitud->nro_pagina, proceso->pid);
+
+	if (tlb_entry) {
+		//TLB HIT
+		tlb_entry->referencebit = 0;
+		t_tabla_pagina * page = buscar_pagina(solicitud->nro_pagina,
+				proceso->tabla_paginas);
+		page->accessedbit = 1;
+	} else {
+		//TLB MISS
+		if (!esta_en_memoria(solicitud->nro_pagina, proceso, 0)) {
+			//PAGE FAULT
+			switch (umc_config->algoritmo) {
+			case CLOCK:
+				clock_algorithm(solicitud->nro_pagina, proceso);
+				break;
+			case CLOCK_MODIFICADO:
+				clock_modificado(solicitud->nro_pagina, proceso, 0);
+				break;
+			}
+		}
+	}
+
+	agregar_referencia(solicitud->nro_pagina, proceso);
+	free(solicitud);
 
 	return EXIT_SUCCESS;
 }
@@ -622,18 +571,66 @@ int almacenar_bytes(int socket_cpu, int bytes) {
 	if (solicitud == NULL)
 		return -1;
 
+	t_sesion_cpu * cpu = buscar_cpu(socket_cpu);
+	if (!cpu) {
+		free(solicitud);
+		return -1;
+	}
+
+	printf("PID: %d\n", cpu->proceso_activo);
 	printf("Pagina: %d\n", solicitud->nro_pagina);
 	printf("Offset: %d\n", solicitud->offset);
 	printf("bytes: %d\n", solicitud->bytes);
 	printf("Buffer: %s\n", (char *) solicitud->buffer);
 
+	bool sol_pag_val = pagina_valida(cpu->proceso_activo,
+			solicitud->nro_pagina);
+	if (!sol_pag_val) {
+		free(solicitud);
+		return -1;
+	}
+
+	t_tlb * tlb_entry = NULL;
+	t_proceso * proceso = NULL;
+	proceso = buscar_proceso(cpu->proceso_activo);
+
+	if (tlb_on)
+		tlb_entry = buscar_en_tlb(solicitud->nro_pagina, proceso->pid);
+
+	if (tlb_entry) {
+		//TLB HIT
+		tlb_entry->referencebit = 0;
+		t_tabla_pagina * page = buscar_pagina(solicitud->nro_pagina,
+				proceso->tabla_paginas);
+		page->accessedbit = 1;
+		if (!(page->dirtybit))
+			page->dirtybit = 1;
+	} else {
+		//TLB MISS
+		if (!esta_en_memoria(solicitud->nro_pagina, proceso, 1)) {
+			//PAGE FAULT
+			switch (umc_config->algoritmo) {
+			case CLOCK:
+				clock_algorithm(solicitud->nro_pagina, proceso);
+				break;
+			case CLOCK_MODIFICADO:
+				clock_modificado(solicitud->nro_pagina, proceso, 1);
+				break;
+			}
+		}
+	}
+
+	agregar_referencia(solicitud->nro_pagina, proceso);
+
+	free(solicitud);
+
 	return EXIT_SUCCESS;
 }
 
-void modificar_retardo(int ret) {
-	printf("Retardo modificado\n");
+void modificar_retardo(int new_ret) {
+	printf("Modificando Retardo...\n");
 	printf("Retardo anterior: %d\n", umc_config->retardo);
-	umc_config->retardo = ret;
+	umc_config->retardo = new_ret;
 	printf("Retardo actual: %d\n", umc_config->retardo);
 }
 
@@ -645,13 +642,39 @@ void reporte_contenido() {
 	puts("comando dump - contenido");
 }
 
-void limpiar_tlb() {
-	puts("comando flush - tlb");
-//list_clean(tlb);
+void flush_tlb() {
+	puts("Comando flush - tlb");
+
+	void flush_entry(t_tlb * tlb_entry) {
+		tlb_entry->pagina = -1;
+		tlb_entry->frame = -1;
+		tlb_entry->pid = -1;
+	}
+	list_iterate(tabla_tlb, (void *) flush_entry);
 }
 
-void marcar_paginas() {
-	printf("comando flush - memory\n");
+void flush_tlb_by_certain_pid(int pid) {
+	void flush_entry_by_pid(t_tlb * tlb_entry) {
+		if (tlb_entry->pid == pid) {
+			tlb_entry->pagina = -1;
+			tlb_entry->frame = -1;
+			tlb_entry->pid = -1;
+		}
+	}
+	list_iterate(tabla_tlb, (void *) flush_entry_by_pid);
+}
+
+void flush_memory(int pid) {
+	printf("Comando flush - memory - pid #%d\n", pid);
+
+	t_proceso * proceso = buscar_proceso(pid);
+
+	if (proceso) {
+		void flush_page(t_tabla_pagina * entry) {
+			entry->dirtybit = 1;
+		}
+		list_iterate(proceso->tabla_paginas, (void *) flush_page);
+	}
 }
 
 int cambio_proceso_activo(int pid, int cpu) {
@@ -662,25 +685,10 @@ int cambio_proceso_activo(int pid, int cpu) {
 		return -1;
 	}
 
+	if (tlb_on)
+		flush_tlb_by_certain_pid(pid);
+
 	target->proceso_activo = pid;
+
 	return EXIT_SUCCESS;
-}
-
-t_paquete_inicializar_programa * recibir_inicializar_programa(
-		int bytes_a_recibir) {
-	int recibido = -1;
-	void * buffer = malloc(bytes_a_recibir);
-
-	recibido = recv(socket_nucleo, buffer, bytes_a_recibir, 0);
-
-	if (recibido <= 0) {
-		puts("Error en el recv de ++inicializar_programa++");
-		return NULL;
-	}
-
-	t_paquete_inicializar_programa * paquete = deserializar_iniciar_prog(
-			buffer);
-
-	free(buffer);
-	return paquete;
 }

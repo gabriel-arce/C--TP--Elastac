@@ -26,6 +26,7 @@
 #include <elestac_sockets.h>
 #include <elestac_semaforos.h>
 #include <elestac_comunicaciones.h>
+#include "ADM.h"
 
 #define CONFIG_PATH "umc.conf" //para runear en terminal
 //#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
@@ -67,38 +68,6 @@ typedef struct {
 	int algoritmo;
 } t_umc_config;
 
-typedef struct {
-	int socket_cpu;
-	int id_cpu;
-	int proceso_activo;
-} t_sesion_cpu;
-
-typedef struct {
-	int nro_frame;
-	int pagina;
-	int pid;
-	int libre;
-} t_mem_frame;
-
-typedef struct {
-	int pagina;
-	int frame;
-	int dirtybit;
-	int presentbit;
-} t_pagina;
-
-typedef struct {
-	int pagina;
-	int frame;
-	int pid;
-	int referencebit;
-} t_tlb;
-
-typedef struct {
-	int pid;
-	t_list * tabla_paginas;
-} t_proceso;
-
 t_umc_config * umc_config;
 int nucleos_conectados;
 int socket_nucleo;
@@ -107,59 +76,48 @@ pthread_t hiloConsola, hilo_server, hilo_cliente;
 int id_cpu;
 t_list * cpu_conectadas;
 pthread_mutex_t mutex_servidor;
-pthread_mutex_t mutex_hilos, mutex_lista_cpu;
+pthread_mutex_t mutex_lista_cpu;
 pthread_mutex_t mutex_nucleo;
 pthread_mutex_t mutex_memoria;
 int memoria_size;
 void * memoria_principal;
 t_log * logger;
-FILE * archivo_reporte;
-t_list * tlb;
-t_list * marcos_memoria;
-t_list * lista_procesos;
 bool tlb_on;
 
 void new_line();
+bool tlb_habilitada();
+void enviar_pagina_size(int sock_fd);
+int cambio_proceso_activo(int pid, int cpu);
+int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
+void finalizar_en_swap(int pid);
+void flush_tlb_by_certain_pid(int pid);
+
+//INTERFAZ DE UMC
+void inicializar_programa(t_paquete_inicializar_programa * paquete);
+int leer_bytes(int socket_cpu, int bytes);
+int almacenar_bytes(int socket_cpu, int bytes);
+void finalizar_programa(int id_programa);
+
+//MANEJO DE ARCHIVOS Y LOGS
 void cargar_config();
 void imprimir_config();
-bool tlb_habilitada();
-void inicializar_memoria();
 void crear_archivo_reporte();
 void crear_archivo_log();
-void * lanzar_consola();
-void * escucha_conexiones();
-void * conecta_swap();
+void * atiende_nucleo();
+void * atiende_cpu();
+
+//FUNCIONES DE LA CONSOLA
 int no_es_comando();
 void modificar_retardo(int ret);
 void reporte_estructuras();
 void reporte_contenido();
-void limpiar_tlb();
-void marcar_paginas();
-void enviar_pagina_size(int sock_fd);
-int cambio_proceso_activo(int pid, int cpu);
-// begin OPERACIONES PRINCIPALES
-int inicializar_programa(t_paquete_inicializar_programa * paquete);
-int leer_bytes(int socket_cpu, int bytes);
-int almacenar_bytes(int socket_cpu, int bytes);
-int finalizar_programa(int id_programa);
-// end OPERACIONES PRINCIPALES
-void * atiende_nucleo();
-void * atiende_cpu();
-int inicializar_en_swap(void * buffer, int buffer_size);
-t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir);
-void finalizar_en_swap(int pid);
-t_sesion_cpu * buscar_cpu(int socket);
+void flush_tlb();
+void flush_memory(int pid);
 
-//ADM
-bool pagina_valida(int pid, int pagina);
-t_sesion_cpu * buscar_cpu(int socket);
-t_proceso * buscar_proceso(int pid);
-t_mem_frame * buscar_frame(int pagina, int pid);
-void read_with_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
-void read_without_tlb(t_sesion_cpu * cpu, t_paquete_solicitar_pagina * solicitud);
-void run_LRU_algorithm(t_tlb * entry_to_replace);
-void * leer_datos(int frame, int offset, int bytes);
-void escribir_datos(int frame, t_paquete_almacenar_pagina * solicitud);
-bool supera_limite_frames(int pid);
+//FUNCIONES CON HILOS
+void * lanzar_consola();
+void * escucha_conexiones();
+void * conecta_swap();
+void inicializar_semaforos();
 
 #endif /* UMC_H_ */

@@ -14,6 +14,9 @@
 #include <commons/string.h>
 #include <commons/config.h>
 
+int chequear_argumentos(int argc, int shouldc);
+void cargar_archivo_config(char ** ruta_config, void(*funcion_de_carga)(void**));
+
 bool chequearProperty(t_config* config, char* property);		//Chequear propiedad
 char* getStringProperty(t_config* config, char* property);	//Obtener valor de un string
 int getIntProperty(t_config* config, char* property);		//Obtener valor de un int

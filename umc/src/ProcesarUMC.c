@@ -7,7 +7,13 @@
 
 #include <UMC.h>
 
-int main() {
+int main(int argc, char * argv[]) {
+
+	if (chequear_argumentos(argc, 2))
+		return EXIT_FAILURE;
+
+	cargar_archivo_config(argv, (void *) cargar_config);
+	imprimir_config();
 
 	socket_nucleo = -1;
 	socket_cliente = -1;
@@ -16,36 +22,24 @@ int main() {
 	printf("***Proceso UMC***\n");
 	new_line();
 
-	//carga archivo de configuracion y sus parametros
-	cargar_config();
-	imprimir_config();
-
-	//creo estructuras
+	//----creo estructuras
 	//crear_archivo_log();
 	//inicializar_memoria();
 	//crear_archivo_reporte();
 
 	cpu_conectadas = list_create();
-	marcos_memoria = list_create();
 	lista_procesos = list_create();
 
 	tlb_on = tlb_habilitada();
 
 	//inicializo semaforos
-	pthread_mutex_init(&mutex_servidor, 0);
-	pthread_mutex_init(&mutex_hilos, 0);
-	pthread_mutex_init(&mutex_lista_cpu, 0);
-	pthread_mutex_init(&mutex_nucleo, 0);
-	pthread_mutex_init(&mutex_memoria, 0);
+	inicializar_semaforos();
 
-	//pthread_create(&hilo_cliente, NULL, conecta_swap,NULL);
-	//pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
+	//pthread_create(&hilo_cliente, NULL, conecta_swap, NULL);
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
 
 	//pthread_join(hilo_cliente, NULL);
 	//pthread_detach(hilo_cliente, NULL);
-	//pthread_join(hiloConsola, NULL);
-	//pthread_detach(hiloConsola);
 	pthread_join(hilo_server, NULL);
 	pthread_detach(hilo_server);
 
