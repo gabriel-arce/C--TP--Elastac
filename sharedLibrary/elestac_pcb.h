@@ -9,12 +9,11 @@
 #define ELESTAC_PCB_H_
 
 #include <parser/metadata_program.h>
-#include <parser/parser.h>
 #include <stdint.h>
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 
-#define SERIALIZADOR				"##"
+#define SERIALIZADOR				"#"
 
 typedef enum {
 	Listo, Corriendo, Terminado, Bloqueado, Nuevo, FinQuantum,
@@ -60,8 +59,8 @@ typedef struct {
 	uint32_t cantidad_de_etiquetas;
 	t_list * indice_stack;											//Indice del Stack	  (t_stack)
 	t_estado estado;												//Codigo interno para ver los estados del pcb
-	uint32_t consola;															//Consola
-	uint32_t quantum_actual;										//Numero de instrucciones ejecutadas en la rafaga actual
+	uint32_t consola;												//Consola
+	uint32_t quantum_actual;								//Numero de instrucciones ejecutadas en la rafaga actual
 } t_pcb;
 
 t_pcb *crearPCB(char *programa, int fd,  uint8_t stack_size, t_queue *cola_pcb);
@@ -70,5 +69,6 @@ char* serializarPCB(t_pcb* pcb);
 t_pcb *convertirPCB(char *mensaje);
 int crearPCBID(t_queue *cola_pcb);
 void salirPor(const char *msg);
+t_indice_de_codigo *crearIndiceCodigo(int start, int offset);
 
 #endif /* ELESTAC_PCB_H_ */

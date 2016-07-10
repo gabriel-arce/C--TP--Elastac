@@ -20,8 +20,8 @@
 #include <elestac_comunicaciones.h>
 #include <pthread.h>
 
-#define CONFIG_PATH "consola.conf"
-//#define CONFIG_PATH "../consola/src/consola.conf"
+//#define CONFIG_PATH "consola.conf"
+#define CONFIG_PATH "../consola/src/consola.conf"
 #define Iniciar_ansisop 10
 #define Imprimir_valor 11
 #define Imprimir_texto 12

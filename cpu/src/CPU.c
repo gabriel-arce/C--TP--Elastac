@@ -75,25 +75,13 @@ void conectarConNucleo(){
 		exit(EXIT_FAILURE);
 	}
 
-//recibo de quantum										//TODO generalizar funcion
+//recibo de quantum
 	t_header * head = recibir_header(socketNucleo);
-	if(head->identificador == 28){
-	quantum = head->tamanio;
-	}
-	if(head->identificador == 29){
-	quantum_sleep = head->tamanio;
-	}
-	free(head);
+	recibirQuantums(head);
 
 //recibo quantum sleep
 	t_header * head2 = recibir_header(socketNucleo);
-	if(head->identificador == 28){
-	quantum = head2->tamanio;
-	}
-	if(head->identificador == 29){
-	quantum_sleep = head2->tamanio;
-	}
-	free(head);
+	recibirQuantums(head2);
 
 
 
@@ -101,6 +89,20 @@ void conectarConNucleo(){
 //	 while (recibido > 0) {
 //		 aca recibe el pcb y ejecuta			<<<<---------EMPEZAR DESDE ACA A PROCESAR EL PCB!!
 //	 }
+}
+
+void recibirQuantums(t_header * header){
+
+	if(header->identificador == QUANTUM){
+	quantum = header->tamanio;
+	}
+
+	if(header->identificador == QUANTUM_SLEEP){
+	quantum_sleep = header->tamanio;
+	}
+
+	free(header);
+
 }
 
 void conectarConUMC(){
@@ -120,7 +122,7 @@ void conectarConUMC(){
 }
 
 void cambiar_proceso_activo(int pid) {
-	int result = enviar_header(18, pid, socketUMC);
+	int result = enviar_header(CAMBIO_DE_PROCESO_ACTIVO, pid, socketUMC);
 
 	if (result == -1)
 		salirPor("No se pudo realizar el cambio de proceso activo");
@@ -129,18 +131,23 @@ void cambiar_proceso_activo(int pid) {
 
 // recibir PCB
 void escucharAlNucleo(){
-	while(1){
+	int recibido = -1;
+
+	while(recibido < 0){
 		t_header * head = recibir_header(socketNucleo);
-		if(head->identificador == 20){
-			void * buffer = malloc(head->tamanio);
-			recv(socketNucleo,buffer, head->tamanio,0);
-			recibirPCB(buffer);
+
+			if(head->identificador == EJECUTAR_PCB){
+				recibido = 1;
+
+				void * buffer = malloc(head->tamanio);
+				recv(socketNucleo,buffer, head->tamanio,0);
+				recibirPCB(buffer);
+			}
 		}
 	}
-}
 
 
-void recibirPCB(char *buffer){
+void recibirPCB(void *buffer){
 
 	pcbActual = malloc(sizeof(t_pcb));
 
@@ -202,7 +209,7 @@ void mandarTextoANucleo(char* texto){
 
 void desconectarCPU(){
 
-	//mandar a nucleo que muere este CPU
+	//TODO mandar a nucleo que muere este CPU
 
 	free(cpu->ip_UMC);
 	free(cpu->ip_nucleo);
@@ -440,7 +447,7 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 	int pc;
 
 	pc = pcbActual->pcb_pc;
-	return list_get(pcbActual->indice_codigo, pc);   //TODO hay que ver si la lista empieza en 0 o en 1
+	return list_get(pcbActual->indice_codigo, pc);
 }
 
 bool pcbCorriendo(){
@@ -482,7 +489,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo (ver si hace falta mandar una solicitud por pagina)
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
 
 	char* instruccion = string_new();
 	uint32_t pagina;
@@ -561,9 +568,7 @@ void eliminarStackActivo(){
 	posicionUltimoStack = list_size(pcbActual->indice_stack);
 	ultimoStack = list_get(pcbActual->indice_stack, posicionUltimoStack);
 
-	list_clean(ultimoStack->args);
-	list_clean(ultimoStack->vars);
-	free(ultimoStack->retVar);
+	stack_destroy(ultimoStack);
 	list_remove(pcbActual->indice_stack, posicionUltimoStack);
 	free(ultimoStack);
 }
@@ -608,17 +613,14 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 	return puntero;
 }
 
-void borrarPCBActual(){				//TODO tengo que ver si esta bien el list_clean (puede ser llist_destroy) (lo mismo para eliminarStackActivo())
+void borrarPCBActual(){
 
-	t_stack * ultimoStack = list_get(pcbActual->indice_stack,1);
-
-	list_clean(ultimoStack->args);
-	list_clean(ultimoStack->vars);
-	list_clean(pcbActual->indice_codigo);
-	list_clean(pcbActual->indice_stack);
+	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
+	list_destroy(pcbActual->indice_codigo);
 	free(pcbActual->indice_etiquetas);
 	free(pcbActual->pcb_sp);
 	free(pcbActual);
+
 }
 
 void quantumSleep(){
@@ -635,3 +637,13 @@ void quantumSleep(){
 		printf("Nano sleep system call failed \n");
 	}
 }
+
+void stack_destroy(t_stack * stack){
+
+	list_destroy(stack->args);
+	list_destroy(stack->vars);
+	free(stack->retVar);
+
+}
+
+

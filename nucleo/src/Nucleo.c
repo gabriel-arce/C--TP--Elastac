@@ -66,47 +66,11 @@ int dameMaximo (int *tabla, int n)
 	return max;
 }
 
-
-/*t_pcb *crearPCB(char *programa, int fd){
-	t_pcb *pcb = malloc(sizeof(t_pcb));
-
-	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
-
-	//Obtener metadata del programa
-	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
-	metadata = metadata_desde_literal(PROGRAMA);
-
-	pcb->pcb_pid	= crearPCBID();
-	pcb->pcb_pc	= metadata->instruccion_inicio;
-	pcb->pcb_sp	= 0;
-	pcb->indice_etiquetas = metadata->etiquetas;
-	pcb->paginas_codigo = nucleo->stack_size;
-	pcb->indice_codigo.posicion	= metadata->instrucciones_serializado[0].start;
-	pcb->indice_codigo.tamanio	= metadata->instrucciones_serializado[0].offset ;
-	pcb->indice_stack.args = NULL;
-	pcb->indice_stack.retPos = 0;
-	pcb->indice_stack.retVar = 0;
-	pcb->quantum = 0;
-	pcb->estado = Listo;
-	pcb->consola = fd;
-
-	printf("PCB creado..\n");
-	printf("PID: %d\n", pcb->pcb_pid);
-	printf("PC: %d\n", pcb->pcb_pc);
-	printf("SP: %d\n", pcb->pcb_sp);
-	printf("Indice Etiquetas: %s\n", pcb->indice_etiquetas);
-	printf("Paginas de Codigo: %d\n", pcb->paginas_codigo);
-	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
-
-	return pcb;
-}*/
-
-
-
 void crearSemaforos(){
 	mutexListos				= crearMutex();
 	mutexCPU					= crearMutex();
 	mutexEjecutando		= crearMutex();
+	mutexConsolas			= crearMutex();
 	semListos						= crearSemaforo(0);
 	semCpuDisponible	= crearSemaforo(0);
 	semBloqueados			= crearSemaforo(0);
@@ -127,31 +91,36 @@ void crearListasYColas(){
 
 	lista_ejecutando	=	list_create();
 	lista_cpu					= list_create();
+
+	lista_semaforos		= list_create();
+	lista_io						= list_create();
+
+	t_list *semaforos	= list_map(nucleo->sem_ids, getSemaforo);
+	t_list *semValue	= list_map(nucleo->sem_init, getSemValue);
+	t_list *io_id				= list_map(nucleo->io_ids, getIOId);
+	t_list *io_value		= list_map(nucleo->io_sleep, getIOSleep);
+
+	char *semaforo		= malloc(NOMBRE_SEMAFORO);
+	char *io_nombre	=	malloc(NOMBRE_IO);
+
+	int valor = 0;
+
+	for(int i = 0; i < list_size(nucleo->sem_ids); i++){
+		semaforo = list_get(semaforos, i);
+		valor = list_get(semValue, i);
+		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor));
+	}
+
+	for(int i = 0; i < list_size(nucleo->io_ids); i++){
+		io_nombre = list_get(io_id, i);
+		valor = list_get(io_value, i);
+		list_add(lista_io, crearIOGlobal(io_nombre, valor));
+	}
+
+	free(semaforo);
+	free(io_nombre);
+
 }
-
-/*char* serializarPCB (t_pcb* pcb)
-{
-	char* serial = string_new();
-	string_append(&serial,"0");											//Tipo de Proceso
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_pid));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_pc));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_sp));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->paginas_codigo));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_etiquetas));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_codigo.posicion));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
-
-	return serial;
-}*/
-
-
 
 void crearServerNucleo(){
 	 int listener;														//Descriptor de escucha
@@ -309,50 +278,13 @@ void procesarMensaje(int fd, char *buffer){
 }
 
 void crearClienteUMC(){
+
+	//Crear socket de Nucleo para escuchar
+	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
+			salirPor("[NUCLEO] No pudo conectarse al swap");
+
 	enviarHandshakeAUMC();
 	recibirHandshakeDeUMC();
-	/*	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
-		salirPor("[NUCLEO] No pudo conectarse al swap");
-
-	//----------Envio el handshake a UMC
-	t_header * handshake = malloc(sizeof(t_header));
-	handshake->identificador = (uint8_t) 2;
-	handshake->tamanio = (uint32_t) 0;
-	void * buffer_handshake = malloc(5);
-	memcpy(buffer_handshake, &(handshake->identificador), 1);
-	memcpy(buffer_handshake + 1, &(handshake->tamanio), 4);
-	int resultado = -1;
-	resultado = send(socketNucleo, buffer_handshake, 5, 0);
-	free(handshake);
-	free(buffer_handshake);
-	if (resultado == -1) {
-		printf("Error en el send del handshake a UMC\n");
-		exit(EXIT_FAILURE);
-	}
-
-	//---------Recibo el tamanio de pagina
-	void * buffer_entrada = malloc(5);
-	resultado = recv(socketNucleo, buffer_entrada, 5, MSG_WAITALL);
-
-	if (resultado == -1) {
-		printf("Error en el recv del tamanio de pagina desde UMC\n");
-		exit(EXIT_FAILURE);
-	}
-
-	t_header * head_tamanio_pagina = malloc(sizeof(t_header));
-	memcpy(&(head_tamanio_pagina->identificador), buffer_entrada, 1);
-	memcpy(&(head_tamanio_pagina->tamanio), buffer_entrada + 1, 4);
-
-	if (head_tamanio_pagina->identificador != (uint8_t) Tamanio_pagina) {
-		printf("Error en el ID de la cabecera de recibirPagina\n");
-		exit(EXIT_FAILURE);
-	}
-
-	tamanio_pagina = head_tamanio_pagina->tamanio;
-	printf("El tamanio de pagina es: %d", tamanio_pagina);
-
-	free(buffer_entrada);
-	free(head_tamanio_pagina);*/
 }
 
 void planificar_consolas(){
@@ -396,64 +328,19 @@ int CPUestaDisponible(t_clienteCPU *cpu){
 	return cpu->disponible == 0;
 }
 
-t_pcb *enviarAEjecutar(t_pcb *pcb, int fd){
-	int nbytes = 0;
-	 char buffer[MAXIMO_BUFFER];
+void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
-	if ((enviarPorSocket(fd, serializarPCB(pcb))) == -1){			//Enviar al CPU
-		printf("[NUCLEO] Error al enviar el PCB al CPU", fd);
-		return pcb;
-	}
+	char *serial = serializarPCB(pcb);
+	int tamanio  =string_length(serial);
 
-	//Recibir respuesta del CPU
-	waitSemaforo(semCPU);
-	if ((nbytes = recv(fd, buffer, sizeof(buffer), 0)) <= 0){
-		printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", fd);
-		return pcb;
-	}
+	enviar_header(20, tamanio, cpu->fd);
+	enviarPorSocket(cpu->fd,serial);
+	//enviar_header(20,  serial, cpu->fd );
 
-	if(nbytes == 0){
-		//Conexion cerrada
-		printf("[NUCLEO] Conexion con CPU cerrada, socket %d\n", fd);
-		return pcb;
+	//Crear hilo para CPU entrante
+	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
+	pthread_join(pIDCpu, NULL);
 
-	} else {
-		//Convertir
-		t_pcb *PCBActualizado = convertirPCB(buffer);
-
-		switch(PCBActualizado->estado){
-			case Bloqueado:{
-				//Agregar a cola de bloqueados
-				puts("Bloqueado por I/O..");
-				puts("Pasando a bloqueados..");
-				queue_push(cola_bloqueados, PCBActualizado);
-				signalSemaforo(semBloqueados);
-				return PCBActualizado;
-				break;
-				}
-
-			case Terminado:{
-				//Agregar a lista de finalizados
-				puts("Programa ANSISOP finalizado..");
-				waitSemaforo(mutexFinalizados);
-				puts("Agregando a finalizados..");
-				list_add(lista_finalizados, PCBActualizado);
-				signalSemaforo(semFinalizados);
-				signalSemaforo(mutexFinalizados);
-				return PCBActualizado;
-				break;
-				}
-
-			case FinQuantum:{
-				puts("Saliendo de ejecutando..");
-				sacarDeEjecutar(PCBActualizado);				//Sacar de la lista de Ejecutando
-				puts("Pasando a listos..");
-				pasarAListos(PCBActualizado);						//Pasar a la cola de Listos
-				return PCBActualizado;
-				break;
-			}
-		}
-	}
 
 }
 
@@ -489,8 +376,8 @@ void pasarAEjecutar(){
 		//Enviar a Ejecutar
 		waitSemaforo(mutexEjecutando);
 		puts("Ejecutando consola..");
-		pcbActual = enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
-		pcbEjecutando = pcbActual;
+		enviarAEjecutar(pcbEjecutando, cpuDeEjecucion);
+		//pcbEjecutando = pcbActual;
 		signalSemaforo(mutexEjecutando);
 
 /*		//Mientras tenga quantum
@@ -522,6 +409,7 @@ void pasarAEjecutar(){
 void pasarAListos(t_pcb *pcb){
 
 	//Agrega el PCB a la cola de Listos
+	puts("Pasando a listos..");
 	waitSemaforo(mutexListos);
 	queue_push(cola_listos, (void *) pcb);
 	signalSemaforo(mutexListos);
@@ -533,12 +421,11 @@ void pasarAListos(t_pcb *pcb){
 
 void crearServerConsola(){
 	 int listener;														//Descriptor de escucha
-	 int nbytes;
 	 int reuse;
 	 int newfd;
-	 char buffer[MAXIMO_BUFFER];
 	t_pcb *pcb_aux;
 	t_header *header;
+	 t_paquete_programa *programa;
 
 
 	//Crear socket de escucha
@@ -559,54 +446,32 @@ void crearServerConsola(){
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
-		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0)
-			printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", listener);
+		waitSemaforo(mutexConsolas);
+		//Recibir Handshake de Consola
+		if (recibir_handshake(newfd) != CONSOLA)
+			salirPor("Proceso desconocido por puerto de Consola");
 
-		if (nbytes == 0){
-				printf("[NUCLEO] Conexion con socket de consola nro. %d cerrada.\n", listener);
-		} else {
-			//Crear PCB por consola entrante
+	    puts("[NUCLEO] Recepcion hanshake Consola" );
 
-			if ((recibirHandshakeConsola(buffer)) != CONSOLA)
-				salirPor("Proceso desconocido por puerto de Consola");
+	    //Recibir Header de Consola
+	    if ((header = recibir_header(newfd)) == NULL)
+	    	puts("No se pudo recibir header de consola");
 
-		    puts("[NUCLEO] Recepcion hanshake Consola" );
+	    //Obtener Programa
+	    programa = obtener_programa(header, newfd);
 
-		    t_header *header = malloc(sizeof(t_header));
-			header = recibirHeaderConsola(newfd);
+	    //Crear PCB
+	    puts("Creando PCB.. \n");
+		pcb_aux = malloc(sizeof(t_pcb));
+		pcb_aux = crearPCB(programa->codigo_programa, newfd, nucleo->stack_size, cola_listos);
 
-			void *buffer2 = malloc(header->tamanio);
-			t_paquete_programa *programa = malloc(sizeof(t_paquete_programa));
-			programa->codigo_programa = malloc(programa->programa_length);
+		//Agregar PCB a la cola de listos
+		queue_push(cola_listos, pcb_aux);
 
-			if (recv(newfd, buffer2, header->tamanio, 0) < 0)
-				salirPor("No se pudo obtener el codigo del programa");
+		//Signal por consola nueva
+		signalSemaforo(semListos);
 
-			memcpy(&programa->programa_length, buffer2, 4);
-			memcpy(programa->codigo_programa, buffer2 + 4, programa->programa_length);
-			printf("Codigo programa: %s\n", programa->codigo_programa);
-
-
-
-			//enviarAUMC(buffer);
-			//cantidadpaginas = lengh programa / tamanio_pagina + stacksize conf / tamanio_pagina
-			//programa
-			//pid
-			//recibo una estructura donde tengo el tamanio y ahi tengo la respuesta!
-
-
-
-			printf("Creando PCB.. \n");
-			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, newfd, nucleo->stack_size, cola_listos);
-
-			//Agregar PCB a la cola de listos
-			queue_push(cola_listos, pcb_aux);
-
-			//Signal por consola nueva
-			signalSemaforo(semListos);
-
-			}
+		signalSemaforo(mutexConsolas);
 
 	}
 }
@@ -615,8 +480,6 @@ void crearServerCPU(){
 	 int listener;														//Descriptor de escucha
 	 int reuse;
 	 int newfd;
-	 int nbytes;
-	 char buffer[MAXIMO_BUFFER];
 
 	//Crear socket de escucha
 	listener = crearSocket();
@@ -636,9 +499,10 @@ void crearServerCPU(){
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
-		if ((nbytes = recv(newfd, buffer, sizeof(buffer), 0)) < 0){
-			printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", listener);
-			}
+		if (recibir_handshake(newfd) != CPU)
+			puts("Proceso desconocido por puerto de CPU");
+
+	    puts("[NUCLEO] Recepcion hanshake CPU" );
 
 		//Crea una CPU
 		t_clienteCPU *nuevaCPU = malloc(sizeof(t_clienteCPU));
@@ -648,6 +512,14 @@ void crearServerCPU(){
 
 		//Agregar CPU a la lista
 		list_add(lista_cpu, nuevaCPU);
+
+		//Enviar Quantum
+		if (enviar_header(28, nucleo->quantum, newfd) == -1)
+			puts("[NUCLEO] Envio de Quantum fallido");
+
+		//Enviar Quantum Sleep
+		if (enviar_header(28, nucleo->quantum, newfd) == -1)
+			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);
@@ -665,6 +537,7 @@ void destruirSemaforos(){
 }
 
 void sacarDeEjecutar(t_pcb *pcb){
+	puts("Saliendo de ejecutando..");
 	waitSemaforo(mutexEjecutando);
 
 	signalSemaforo(mutexEjecutando);
@@ -673,27 +546,6 @@ void sacarDeEjecutar(t_pcb *pcb){
 int obtenerCPUID(){
 	return ++cpuID;
 }
-
-/*t_pcb *convertirPCB(char *mensaje){
-	t_pcb *pcb;
-
-	char** componentes = string_split(mensaje,SERIALIZADOR);
-	pcb->pcb_pid								= atoi(componentes[0]);
-	pcb->pcb_pc								= atoi(componentes[1]);
-	pcb->pcb_sp								= atoi(componentes[2]);
-	pcb->indice_etiquetas 				= componentes[3];
-	pcb->paginas_codigo 				= atoi(componentes[4]);
-	pcb->indice_codigo.posicion	= atoi(componentes[5]);
-	pcb->indice_codigo.tamanio	= atoi(componentes[6]);
-	pcb->indice_stack.args 			= componentes[7];
-	pcb->indice_stack.retPos 		= componentes[8];
-	pcb->indice_stack.retVar 		= componentes[9];
-	pcb->quantum 							= atoi(componentes[10]);
-	pcb->estado								= atoi(componentes[11]);
-	pcb->consola								= atoi(componentes[12]);
-
-	return pcb;
-}*/
 
 void finalizar(){
 
@@ -722,33 +574,6 @@ void finalizar(){
 	}
 
 	signalSemaforo(mutexFinalizados);
-}
-
-t_header * deserializar_header(void * buffer) {
-	t_header * header = malloc(sizeof(t_header));
-
-	memcpy(&header->identificador, buffer, 1);
-	memcpy(&header->tamanio, buffer + 1, 4);
-
-	return header;
-}
-
-
-uint8_t recibirHandshakeConsola(void *buffer){
-	t_header *handshake = malloc(sizeof(t_header));
-
-	handshake = deserializar_header(buffer);
-
-	return handshake->identificador;
-}
-
-t_header *recibirHeaderConsola(int fd){
-	char buffer[MAXIMO_BUFFER];
-
-	if( recv(fd, buffer, sizeof(buffer), 0) < 0)
-		return NULL;
-
-	return deserializar_header(buffer);
 }
 
 t_paquete_programa *recibirDatosConsola(int fd){
@@ -805,4 +630,185 @@ void recibirHandshakeDeUMC(){
 	free(buffer_entrada);
 	free(head_tamanio_pagina);
 
+}
+
+t_paquete_programa *obtener_programa(t_header *header, int fd){
+	void *buffer2 = malloc(header->tamanio);
+	t_paquete_programa *programa;
+
+	if (recv(fd, buffer2, header->tamanio, 0) < 0)
+		salirPor("No se pudo obtener el codigo del programa");
+
+	programa = deserializar_ansisop(buffer2);
+
+	printf("Codigo programa: %s\n", programa->codigo_programa);
+	return programa;
+}
+
+void accionesDeCPU(t_clienteCPU *cpu){
+
+	t_header *header;
+	t_pcb *pcb;
+	void *buffer;
+	bool PCBRetornado = true;
+
+	while(PCBRetornado){
+		if ((header = recibir_header(cpu->fd)) == NULL)
+			puts("Error");
+
+	  switch(header->identificador){
+	  	  case RetornoPCB:{
+	  		  buffer	= malloc(header->tamanio);
+	  		  pcb		= malloc(sizeof(t_pcb));
+	  		  recv(cpu->fd, buffer, header->tamanio, 0);
+	  		  pcb = convertirPCB(buffer);
+	  		  PCBRetornado = false;
+
+	  		switch(pcb->estado){
+	  			case Bloqueado:{					//Agregar a cola de bloqueados
+	  				agregarPCBaBloqueados(cola_bloqueados, pcb);
+	  				break;}
+
+	  			case Terminado:{				//Agregar a lista de finalizados
+	  				agregarPCBaFinalizados(lista_finalizados, pcb);
+	  				break;}
+
+	  			case FinQuantum:{
+	  				sacarDeEjecutar(pcb);				//Sacar de la lista de Ejecutando
+	  				pasarAListos(pcb);						//Pasar a la cola de Listos
+	  				break;}
+	  		}
+	  			free(buffer);
+	  			free(pcb);
+	  			break;}	//Fin switch interno
+
+	  	  case Wait:{	 // wait
+	  		  break; }
+
+	  	  case Signal: {	 // Signal
+	  		  break; }
+
+	  	  case EntradaSalida:{ 	 //Entrada salida
+	  	  	  break;}
+
+	  	  case ObtenerValorCompartido:{ 	  //obtener valor de una compartida
+	  	  	  break;}
+
+	  	  case AsignarValorCompartido:{		 //asignar valor
+	  	  	  break;}
+
+	  	  case FinalizacionCPU:{		  //finalizacion de cpu
+	  		  break;}// a ver... hay que testear!
+	  }
+
+
+	}
+
+
+	//cpu libre
+	cpu->disponible = 0;
+
+	//matar hilo
+	pthread_detach(&pIDCpu);
+
+/*	if ((enviarPorSocket(fd, serializarPCB(pcb))) == -1){			//Enviar al CPU
+		printf("[NUCLEO] Error al enviar el PCB al CPU", fd);
+		return pcb;
+	}
+
+	//Recibir respuesta del CPU
+	//waitSemaforo(semCPU);
+	if ((nbytes = recv(fd, buffer, sizeof(buffer), 0)) <= 0){
+		printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", fd);
+		return pcb;
+	}
+
+	if(nbytes == 0){
+		//Conexion cerrada
+		printf("[NUCLEO] Conexion con CPU cerrada, socket %d\n", fd);
+		return pcb;
+
+	} else {
+		//Convertir
+		t_pcb *PCBActualizado = convertirPCB(buffer);
+
+		switch(PCBActualizado->estado){
+			case Bloqueado:{
+				//Agregar a cola de bloqueados
+				puts("Bloqueado por I/O..");
+				puts("Pasando a bloqueados..");
+				queue_push(cola_bloqueados, PCBActualizado);
+				signalSemaforo(semBloqueados);
+				return PCBActualizado;
+				break;
+				}
+
+			case Terminado:{
+				//Agregar a lista de finalizados
+				puts("Programa ANSISOP finalizado..");
+				waitSemaforo(mutexFinalizados);
+				puts("Agregando a finalizados..");
+				list_add(lista_finalizados, PCBActualizado);
+				signalSemaforo(semFinalizados);
+				signalSemaforo(mutexFinalizados);
+				return PCBActualizado;
+				break;
+				}
+
+			case FinQuantum:{
+				puts("Saliendo de ejecutando..");
+				sacarDeEjecutar(PCBActualizado);				//Sacar de la lista de Ejecutando
+				puts("Pasando a listos..");
+				pasarAListos(PCBActualizado);						//Pasar a la cola de Listos
+				return PCBActualizado;
+				break;
+			}
+		}
+	}	*/
+}
+
+void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb){
+	puts("Bloqueado por I/O..");
+	puts("Pasando a bloqueados..");
+	queue_push(cola, pcb);
+	signalSemaforo(semBloqueados);
+}
+
+void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb){
+		puts("Programa ANSISOP finalizado..");
+		waitSemaforo(mutexFinalizados);
+		puts("Agregando a finalizados..");
+		list_add(lista, pcb);
+		signalSemaforo(semFinalizados);
+		signalSemaforo(mutexFinalizados);
+}
+
+char *getSemaforo(char *valor){
+	return valor;
+}
+
+int getSemValue(char *valor){
+	return atoi(valor);
+}
+
+t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor){
+	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
+	semNucleo->id		= semaforo;
+	semNucleo->valor	= valor;
+	return semNucleo;
+}
+
+char *getIOId(char *valor){
+	return valor;
+}
+
+int getIOSleep(char *valor){
+	return atoi(valor);
+}
+
+t_ioNucleo *crearIOGlobal(nombre, valor){
+	t_ioNucleo *io = malloc(sizeof(t_ioNucleo));
+	io->id						= nombre;
+	io->valorSleep	= valor;
+	return io;
 }

@@ -57,11 +57,11 @@ int main(int argc, char * argv[]) {
 	cargar_config();
 
 	//Crear socket al nucleo
-	socketConsola = clienteDelServidor("127.0.0.1", 6000);
-//	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
-//		MostrarMensajeDeError(NoSePudoCrearSocket);
-//		return EXIT_FAILURE;
-//	}
+//	socketConsola = clienteDelServidor("127.0.0.1", 6000);
+	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
+		MostrarMensajeDeError(NoSePudoCrearSocket);
+		return EXIT_FAILURE;
+	}
 
 	//--------handshake
 	int result = enviar_handshake(socketConsola, 1);

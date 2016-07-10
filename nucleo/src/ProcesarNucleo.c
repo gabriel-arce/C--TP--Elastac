@@ -21,12 +21,8 @@ int main(void) {
 	//Crear las listas
 	crearListasYColas();
 
-	//Crear socket de Nucleo para escuchar
-	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
-			salirPor("[NUCLEO] No pudo conectarse al swap");
-
 	//Crear cliente para UMC
-	crearClienteUMC();
+	//crearClienteUMC();
 
 	//Crear semaforos
 	crearSemaforos();
