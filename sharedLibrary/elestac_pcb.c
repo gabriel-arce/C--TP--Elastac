@@ -86,8 +86,6 @@ char* serializarPCB (t_pcb* pcb)
 
 	char* serial = string_new();
 
-	string_append(&serial,"0");											//Tipo de Proceso
-	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pid));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->pcb_pc));
@@ -105,6 +103,7 @@ char* serializarPCB (t_pcb* pcb)
 		indiceCodigo = list_get(pcb->indice_codigo, i);
 		string_append(&serial, SERIALIZADOR);
 		string_append(&serial, string_itoa(indiceCodigo->posicion));
+		string_append(&serial, SERIALIZADOR);
 		string_append(&serial, string_itoa(indiceCodigo->tamanio));
 	}
 
@@ -159,25 +158,41 @@ char* serializarPCB (t_pcb* pcb)
 }
 
 t_pcb *convertirPCB(char *mensaje){
-	t_pcb *pcb;
+	t_pcb *pcb = malloc(sizeof(t_pcb));
+	t_sp *sp = malloc(sizeof(t_sp));
+	int i;
+	int indice = 7;
 
 	char** componentes = string_split(mensaje,SERIALIZADOR);
 	pcb->pcb_pid								= atoi(componentes[0]);
 	pcb->pcb_pc								= atoi(componentes[1]);
-	pcb->pcb_sp								= atoi(componentes[2]);
-	//pcb->indice_etiquetas 				= componentes[3];
-	pcb->paginas_codigo 				= atoi(componentes[3]);
-	/*
-	pcb->indice_codigo.posicion	= atoi(componentes[5]);
-	pcb->indice_codigo.tamanio	= atoi(componentes[6]);
-	pcb->indice_stack.args 			= componentes[7];
-	pcb->indice_stack.retPos 		= componentes[8];
-	pcb->indice_stack.retVar 		= componentes[9];
-	*/
-	pcb->estado								= atoi(componentes[11]);
-	pcb->consola								= atoi(componentes[12]);
 
+	sp->offset				= atoi(componentes[2]);
+	sp->pagina				= atoi(componentes[3]);
+
+	pcb->pcb_sp 								= sp;
+	pcb->paginas_codigo 				= atoi(componentes[4]);
+	pcb->indice_codigo					= list_create();
+
+	int indicesCodigo = atoi(componentes[5]);
+
+	for(i = 0; i < indicesCodigo; i++){
+		list_add(pcb->indice_codigo, crearIndiceCodigo(atoi(componentes[6+i]), atoi(componentes[7+i])));
+		indice++;}
+
+	indice++;
+	pcb->indice_etiquetas 				= componentes[indice++];
+	pcb->cantidad_de_etiquetas = atoi(componentes[indice++]);
+	pcb->indice_stack						= list_create();
+
+	int indicesStack = atoi(componentes[indice]);
+
+	pcb->estado								= atoi(componentes[indice++]);
+	pcb->consola								= atoi(componentes[indice++]);
+//	pcb->quantum_actual				= atoi(componentes[indice]);
 	return pcb;
+
+
 }
 
 int crearPCBID(t_queue *cola){

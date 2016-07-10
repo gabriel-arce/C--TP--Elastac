@@ -66,43 +66,6 @@ int dameMaximo (int *tabla, int n)
 	return max;
 }
 
-
-/*t_pcb *crearPCB(char *programa, int fd){
-	t_pcb *pcb = malloc(sizeof(t_pcb));
-
-	const char* PROGRAMA = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
-
-	//Obtener metadata del programa
-	t_metadata_program* metadata = malloc(sizeof(t_metadata_program));
-	metadata = metadata_desde_literal(PROGRAMA);
-
-	pcb->pcb_pid	= crearPCBID();
-	pcb->pcb_pc	= metadata->instruccion_inicio;
-	pcb->pcb_sp	= 0;
-	pcb->indice_etiquetas = metadata->etiquetas;
-	pcb->paginas_codigo = nucleo->stack_size;
-	pcb->indice_codigo.posicion	= metadata->instrucciones_serializado[0].start;
-	pcb->indice_codigo.tamanio	= metadata->instrucciones_serializado[0].offset ;
-	pcb->indice_stack.args = NULL;
-	pcb->indice_stack.retPos = 0;
-	pcb->indice_stack.retVar = 0;
-	pcb->quantum = 0;
-	pcb->estado = Listo;
-	pcb->consola = fd;
-
-	printf("PCB creado..\n");
-	printf("PID: %d\n", pcb->pcb_pid);
-	printf("PC: %d\n", pcb->pcb_pc);
-	printf("SP: %d\n", pcb->pcb_sp);
-	printf("Indice Etiquetas: %s\n", pcb->indice_etiquetas);
-	printf("Paginas de Codigo: %d\n", pcb->paginas_codigo);
-	printf("Indice de Codigo: %d, %d\n", pcb->indice_codigo.posicion, pcb->indice_codigo.tamanio);
-
-	return pcb;
-}*/
-
-
-
 void crearSemaforos(){
 	mutexListos				= crearMutex();
 	mutexCPU					= crearMutex();
@@ -128,31 +91,36 @@ void crearListasYColas(){
 
 	lista_ejecutando	=	list_create();
 	lista_cpu					= list_create();
+
+	lista_semaforos		= list_create();
+	lista_io						= list_create();
+
+	t_list *semaforos	= list_map(nucleo->sem_ids, getSemaforo);
+	t_list *semValue	= list_map(nucleo->sem_init, getSemValue);
+	t_list *io_id				= list_map(nucleo->io_ids, getIOId);
+	t_list *io_value		= list_map(nucleo->io_sleep, getIOSleep);
+
+	char *semaforo		= malloc(NOMBRE_SEMAFORO);
+	char *io_nombre	=	malloc(NOMBRE_IO);
+
+	int valor = 0;
+
+	for(int i = 0; i < list_size(nucleo->sem_ids); i++){
+		semaforo = list_get(semaforos, i);
+		valor = list_get(semValue, i);
+		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor));
+	}
+
+	for(int i = 0; i < list_size(nucleo->io_ids); i++){
+		io_nombre = list_get(io_id, i);
+		valor = list_get(io_value, i);
+		list_add(lista_io, crearIOGlobal(io_nombre, valor));
+	}
+
+	free(semaforo);
+	free(io_nombre);
+
 }
-
-/*char* serializarPCB (t_pcb* pcb)
-{
-	char* serial = string_new();
-	string_append(&serial,"0");											//Tipo de Proceso
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_pid));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_pc));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->pcb_sp));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->paginas_codigo));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_etiquetas));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_codigo.posicion));
-	string_append(&serial, SERIALIZADOR);
-	string_append(&serial, string_itoa(pcb->indice_codigo.tamanio));
-
-	return serial;
-}*/
-
-
 
 void crearServerNucleo(){
 	 int listener;														//Descriptor de escucha
@@ -362,7 +330,12 @@ int CPUestaDisponible(t_clienteCPU *cpu){
 
 void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
-	 enviar_header(20,  serializarPCB(pcb), cpu->fd );
+	char *serial = serializarPCB(pcb);
+	int tamanio  =string_length(serial);
+
+	enviar_header(20, tamanio, cpu->fd);
+	enviarPorSocket(cpu->fd,serial);
+	//enviar_header(20,  serial, cpu->fd );
 
 	//Crear hilo para CPU entrante
 	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
@@ -573,27 +546,6 @@ void sacarDeEjecutar(t_pcb *pcb){
 int obtenerCPUID(){
 	return ++cpuID;
 }
-
-/*t_pcb *convertirPCB(char *mensaje){
-	t_pcb *pcb;
-
-	char** componentes = string_split(mensaje,SERIALIZADOR);
-	pcb->pcb_pid								= atoi(componentes[0]);
-	pcb->pcb_pc								= atoi(componentes[1]);
-	pcb->pcb_sp								= atoi(componentes[2]);
-	pcb->indice_etiquetas 				= componentes[3];
-	pcb->paginas_codigo 				= atoi(componentes[4]);
-	pcb->indice_codigo.posicion	= atoi(componentes[5]);
-	pcb->indice_codigo.tamanio	= atoi(componentes[6]);
-	pcb->indice_stack.args 			= componentes[7];
-	pcb->indice_stack.retPos 		= componentes[8];
-	pcb->indice_stack.retVar 		= componentes[9];
-	pcb->quantum 							= atoi(componentes[10]);
-	pcb->estado								= atoi(componentes[11]);
-	pcb->consola								= atoi(componentes[12]);
-
-	return pcb;
-}*/
 
 void finalizar(){
 
@@ -820,7 +772,7 @@ void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb){
 	puts("Pasando a bloqueados..");
 	queue_push(cola, pcb);
 	signalSemaforo(semBloqueados);
-};
+}
 
 void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb){
 		puts("Programa ANSISOP finalizado..");
@@ -829,4 +781,34 @@ void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb){
 		list_add(lista, pcb);
 		signalSemaforo(semFinalizados);
 		signalSemaforo(mutexFinalizados);
-};
+}
+
+char *getSemaforo(char *valor){
+	return valor;
+}
+
+int getSemValue(char *valor){
+	return atoi(valor);
+}
+
+t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor){
+	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
+	semNucleo->id		= semaforo;
+	semNucleo->valor	= valor;
+	return semNucleo;
+}
+
+char *getIOId(char *valor){
+	return valor;
+}
+
+int getIOSleep(char *valor){
+	return atoi(valor);
+}
+
+t_ioNucleo *crearIOGlobal(nombre, valor){
+	t_ioNucleo *io = malloc(sizeof(t_ioNucleo));
+	io->id						= nombre;
+	io->valorSleep	= valor;
+	return io;
+}

@@ -34,7 +34,8 @@
 #define HANDSHAKE					 "Hola! Soy nucleo!.."
 #define SERIALIZADOR				"##"
 #define Tamanio_pagina 31
-
+#define NOMBRE_SEMAFORO	20
+#define NOMBRE_IO						20
 #define CONSOLA	1
 #define CPU				5
 
@@ -65,6 +66,16 @@ typedef struct {
 } t_nucleo;
 
 typedef struct {
+	char *id;
+	uint32_t valor;
+} t_semNucleo;
+
+typedef struct {
+	char *id;
+	uint32_t valorSleep;
+} t_ioNucleo;
+
+typedef struct {
 	uint8_t fd;
 	uint8_t cpuID;
 	uint8_t disponible;
@@ -83,6 +94,8 @@ t_queue	*cola_bloqueados;
 t_list *lista_ejecutando;
 t_list *lista_cpu;
 t_list *lista_finalizados;
+t_list *lista_semaforos;
+t_list *lista_io;
 
 sem_t *mutexListos;
 sem_t *mutexCPU;
@@ -141,5 +154,11 @@ t_paquete_programa *obtener_programa(t_header *header, int fd);
 void accionesDeCPU(t_clienteCPU *cpu);
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb);
 void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb);
+char *getSemaforo(char *valor);
+int getSemValue(char *valor);
+t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor);
+char *getIOId(char *valor);
+int getIOSleep(char *valor);
+t_ioNucleo *crearIOGlobal(nombre, valor);
 
 #endif /* NUCLEO_H_ */
