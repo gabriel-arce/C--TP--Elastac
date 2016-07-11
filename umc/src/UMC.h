@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
@@ -71,7 +72,7 @@ typedef struct {
 t_umc_config * umc_config;
 int nucleos_conectados;
 int socket_nucleo;
-int socket_cliente, socket_servidor;
+int socket_swap, socket_servidor;
 pthread_t hiloConsola, hilo_server, hilo_cliente;
 int id_cpu;
 t_list * cpu_conectadas;
@@ -91,6 +92,7 @@ int cambio_proceso_activo(int pid, int cpu);
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
 void finalizar_en_swap(int pid);
 void flush_tlb_by_certain_pid(int pid);
+void signal_handler(int n_singal);
 
 //INTERFAZ DE UMC
 void inicializar_programa(t_paquete_inicializar_programa * paquete);

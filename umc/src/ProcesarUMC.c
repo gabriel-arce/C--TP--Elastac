@@ -9,6 +9,9 @@
 
 int main(int argc, char * argv[]) {
 
+	signal(SIGUSR1, signal_handler);
+	signal(SIGUSR2, signal_handler);
+
 	if (chequear_argumentos(argc, 2))
 		return EXIT_FAILURE;
 
@@ -16,7 +19,7 @@ int main(int argc, char * argv[]) {
 	imprimir_config();
 
 	socket_nucleo = -1;
-	socket_cliente = -1;
+	socket_swap = -1;
 	socket_servidor = -1;
 
 	printf("***Proceso UMC***\n");

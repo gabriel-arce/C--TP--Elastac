@@ -212,11 +212,11 @@ void inicializar_semaforos() {
 }
 
 void * conecta_swap() {
-	if ((socket_cliente = clienteDelServidor(umc_config->ip_swap,
+	if ((socket_swap = clienteDelServidor(umc_config->ip_swap,
 			umc_config->puerto_swap)) == -1)
 		return EXIT_FAILURE;
 
-	if (enviar_handshake(socket_cliente, UMC) == -1)
+	if (enviar_handshake(socket_swap, UMC) == -1)
 		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
@@ -398,15 +398,15 @@ int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
 
 	int buffer_size = string_length(paquete->codigo_programa) + 12;
 
-	enviar_header(Inicializar_programa, buffer_size, socket_cliente);
+	enviar_header(Inicializar_programa, buffer_size, socket_swap);
 
 	int r = enviar_inicializar_programa(paquete->pid,
 			paquete->paginas_requeridas, paquete->codigo_programa,
-			socket_cliente);
+			socket_swap);
 	if (r <= 0)
 		return Respuesta__NO;
 
-	int respuesta = recibir_respuesta_inicio(socket_cliente);
+	int respuesta = recibir_respuesta_inicio(socket_swap);
 
 	return respuesta;
 }
@@ -456,7 +456,7 @@ void finalizar_programa(int id_programa) {
 }
 
 void finalizar_en_swap(int pid) {
-	enviar_header(Finalizar_programa, pid, socket_cliente);
+	enviar_header(Finalizar_programa, pid, socket_swap);
 }
 
 void * atiende_cpu(void * args) {
@@ -691,4 +691,19 @@ int cambio_proceso_activo(int pid, int cpu) {
 	target->proceso_activo = pid;
 
 	return EXIT_SUCCESS;
+}
+
+void signal_handler(int n_singal) {
+	switch (n_singal) {
+		case SIGUSR1:
+			new_line();
+			pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
+			pthread_join(hiloConsola, NULL);
+			break;
+		case SIGUSR2:
+			system("clear");
+			break;
+		default:
+			break;
+	}
 }
