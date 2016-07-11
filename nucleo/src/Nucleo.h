@@ -41,13 +41,16 @@
 
 /****** Estructuras ******/
 typedef enum {
-	RetornoPCB = 21,
+	FinalizacionPrograma = 21,
 	Wait,
 	Signal,
 	EntradaSalida,
 	ObtenerValorCompartido,
 	AsignarValorCompartido,
 	FinalizacionCPU,
+	MandarQuantum,
+	MandarQuantumSleep,
+	FinalizacionQuantum,
 } t_accionesPCB;
 
 typedef struct {
@@ -126,12 +129,9 @@ fd_set read_fds;				// conjunto temporal de descriptores de fichero para select(
 void cargarConfiguracion();
 void crearListasYColas();
 void crearSemaforos();
-void crearServerNucleo();
 void crearServerConsola();
 void crearServerCPU();
 void crearClienteUMC();
-void hiloProcesarMensaje(char *datos);
-void procesarMensaje(int fd, char *buffer);
 void planificar_consolas();
 void mainEjecucion();
 void mainBloqueado();
@@ -145,11 +145,9 @@ int obtenerCPUID();
 t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 t_header * deserializar_header(void * buffer);
-t_paquete_programa *recibirDatosConsola(int fd);
 void finalizar();
 void enviarHandshakeAUMC();
 void recibirHandshakeDeUMC();
-//void recibirDatosConsola(buffer);
 t_paquete_programa *obtener_programa(t_header *header, int fd);
 void accionesDeCPU(t_clienteCPU *cpu);
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb);

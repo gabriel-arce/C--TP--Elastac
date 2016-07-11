@@ -122,160 +122,6 @@ void crearListasYColas(){
 
 }
 
-void crearServerNucleo(){
-	 int listener;														//Descriptor de escucha
-	 int i;
-	 int maximo;													// Número de descriptor maximo
-	 int newfd;
-	 int nbytes;
-	 int reuse;
-	 char buffer[MAXIMO_BUFFER];
-	 sigset_t * mask, orig_mask;
-
-	FD_ZERO(&master);
-	FD_ZERO(&read_fds);
-
-	//Crear socket de escucha
-	listener = crearSocket();
-
-	//descriptor para enlace
-	if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1)
-		salirPor("[NUCLEO] No es posible reusar el socket\n");
-
-	//Enlazar
-	bindearSocket(listener, PUERTO_NUCLEO);
-
-	//Escuchar
-	escucharEn(listener);
-
-	//Nos aseguramos de que pselect no sea interrumpido por señales
-	sigemptyset(&mask);
-	sigaddset (&mask, SIGUSR1);
-	sigaddset (&mask, SIGUSR2);
-	sigaddset (&mask, SIGPOLL);
-
-	if (sigprocmask(SIG_BLOCK, &mask, &orig_mask) < 0)
-		salirPor("[NUCLEO] Fallo en sigprcomask");
-
-	// añadir listener al conjunto maestro
-	FD_SET(listener, &master);
-
-	maximo = listener; // por ahora es éste
-
-	while(1){
-
-		read_fds = master; 								// cópialo
-
-		if (pselect(maximo+1, &read_fds, NULL, NULL, NULL, NULL) == -1)
-			salirPor("select");
-
-		// explorar conexiones existentes en busca de datos que leer
-		for(i = 0; i <= maximo; i++){
-
-			if (FD_ISSET(i, &read_fds)){
-				// ¡¡tenemos datos!!
-
-				if (i == listener){
-
-					if ((newfd = aceptarEntrantes(listener)) == -1)						// gestionar nuevas conexiones
-						salirPor("accept");
-
-					else {
-
-						FD_SET(newfd, &master);														// añadir al conjunto maestro
-						if (newfd > maximo)
-							maximo = newfd;																	// actualizar el máximo
-					}
-
-				} else	{
-
-					if ((nbytes = recv(i, buffer, sizeof(buffer), 0)) <= 0){			// gestionar datos de un cliente
-						// error o conexión cerrada por el cliente
-						if (nbytes == 0)																			// conexión cerrada
-							printf("[NUCLEO] socket %d desconectado\n", i);
-						else
-							salirPor("recv");
-
-						close(i); 																						// ¡Hasta luego!
-						FD_CLR(i, &master); 																	// eliminar del conjunto maestro
-
-					} else {
-					// tenemos datos de algún cliente
-						if (FD_ISSET(i, &master))	{
-
-							char *estructura = string_new();
-							string_append(&estructura,string_itoa(buffer[0]));	//por identificador del proceso
-							string_append(&estructura,SERIALIZADOR);
-							string_append(&estructura,buffer);
-
-							pthread_create(&pIDProcesarMensaje, NULL, (void *)hiloProcesarMensaje, (void *)estructura);
-							memset(buffer,'\0',sizeof(buffer));
-
-							//Crear socket al UMC
-							//socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc);
-							//Enviar
-							//enviarPorSocket(socketNucleo, serializarPCB(pcb_aux));
-
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void hiloProcesarMensaje(char *datos){
-	char **estructura	= string_split(datos,"##");
-	char *buffer 			= string_new();
-
-	string_append(&buffer,estructura[1]);
-
-	int fileDescriptor = atoi(estructura[0]);
-	procesarMensaje(fileDescriptor,buffer);
-
-}
-
-void procesarMensaje(int fd, char *buffer){
-
-	t_pcb *pcb_aux;
-
-	switch(fd){
-		case CONSOLA:  {
-			printf("Consola says.. %s\n", buffer);
-
-			//Crear PCB por consola entrante
-			printf("Creando PCB.. \n");
-			pcb_aux = malloc(sizeof(t_pcb));
-			pcb_aux = crearPCB(buffer, fd, nucleo->stack_size, cola_listos);
-
-			//Agregar PCB a la cola de listos
-			queue_push(cola_listos, pcb_aux);
-
-			break;
-			}
-		case CPU: {
-			printf("CPU says.. %s\n", buffer);
-
-			//Crea una CPU
-			t_clienteCPU *nuevaCPU = malloc(sizeof(t_clienteCPU));
-			nuevaCPU->cpuID = 1;
-			nuevaCPU->fd = fd;
-			nuevaCPU->disponible = 0;
-
-			//Agregar CPU a la lista
-			list_add(lista_cpu, nuevaCPU);
-
-			//Signal por CPU nueva
-			signalSemaforo(semCpuDisponible);
-
-			break;
-			}
-	}
-
-	//Planifico
-	pthread_create(&pIDPlanificador, NULL, (void *)planificar_consolas, NULL);
-
-}
 
 void crearClienteUMC(){
 
@@ -576,11 +422,6 @@ void finalizar(){
 	signalSemaforo(mutexFinalizados);
 }
 
-t_paquete_programa *recibirDatosConsola(int fd){
-	t_paquete_programa *programa;
-	return programa;
-};
-
 void enviarHandshakeAUMC(){
 
 	//----------Envio el handshake a UMC
@@ -657,48 +498,35 @@ void accionesDeCPU(t_clienteCPU *cpu){
 			puts("Error");
 
 	  switch(header->identificador){
-	  	  case RetornoPCB:{
+	  	  case FinalizacionPrograma:{
+	  		  break;}
+
+	  	  case Wait:{
+	  		  break; }
+
+	  	  case Signal: {
+	  		  break; }
+
+	  	  case EntradaSalida:{
 	  		  buffer	= malloc(header->tamanio);
 	  		  pcb		= malloc(sizeof(t_pcb));
+
 	  		  recv(cpu->fd, buffer, header->tamanio, 0);
-	  		  pcb = convertirPCB(buffer);
-	  		  PCBRetornado = false;
-
-	  		switch(pcb->estado){
-	  			case Bloqueado:{					//Agregar a cola de bloqueados
-	  				agregarPCBaBloqueados(cola_bloqueados, pcb);
-	  				break;}
-
-	  			case Terminado:{				//Agregar a lista de finalizados
-	  				agregarPCBaFinalizados(lista_finalizados, pcb);
-	  				break;}
-
-	  			case FinQuantum:{
-	  				sacarDeEjecutar(pcb);				//Sacar de la lista de Ejecutando
-	  				pasarAListos(pcb);						//Pasar a la cola de Listos
-	  				break;}
-	  		}
-	  			free(buffer);
-	  			free(pcb);
-	  			break;}	//Fin switch interno
-
-	  	  case Wait:{	 // wait
-	  		  break; }
-
-	  	  case Signal: {	 // Signal
-	  		  break; }
-
-	  	  case EntradaSalida:{ 	 //Entrada salida
+	  		  agregarPCBaBloqueados(cola_bloqueados, pcb);
 	  	  	  break;}
 
-	  	  case ObtenerValorCompartido:{ 	  //obtener valor de una compartida
+	  	  case ObtenerValorCompartido:{
 	  	  	  break;}
 
-	  	  case AsignarValorCompartido:{		 //asignar valor
+	  	  case AsignarValorCompartido:{
 	  	  	  break;}
 
-	  	  case FinalizacionCPU:{		  //finalizacion de cpu
-	  		  break;}// a ver... hay que testear!
+	  	  case FinalizacionCPU:{
+	  		  break;}
+
+	  	  case FinalizacionQuantum:{
+	  		  break;
+	  	  }
 	  }
 
 
@@ -711,60 +539,6 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	//matar hilo
 	pthread_detach(&pIDCpu);
 
-/*	if ((enviarPorSocket(fd, serializarPCB(pcb))) == -1){			//Enviar al CPU
-		printf("[NUCLEO] Error al enviar el PCB al CPU", fd);
-		return pcb;
-	}
-
-	//Recibir respuesta del CPU
-	//waitSemaforo(semCPU);
-	if ((nbytes = recv(fd, buffer, sizeof(buffer), 0)) <= 0){
-		printf("[NUCLEO] No se pudo recibir informacion desde el socket %d\n", fd);
-		return pcb;
-	}
-
-	if(nbytes == 0){
-		//Conexion cerrada
-		printf("[NUCLEO] Conexion con CPU cerrada, socket %d\n", fd);
-		return pcb;
-
-	} else {
-		//Convertir
-		t_pcb *PCBActualizado = convertirPCB(buffer);
-
-		switch(PCBActualizado->estado){
-			case Bloqueado:{
-				//Agregar a cola de bloqueados
-				puts("Bloqueado por I/O..");
-				puts("Pasando a bloqueados..");
-				queue_push(cola_bloqueados, PCBActualizado);
-				signalSemaforo(semBloqueados);
-				return PCBActualizado;
-				break;
-				}
-
-			case Terminado:{
-				//Agregar a lista de finalizados
-				puts("Programa ANSISOP finalizado..");
-				waitSemaforo(mutexFinalizados);
-				puts("Agregando a finalizados..");
-				list_add(lista_finalizados, PCBActualizado);
-				signalSemaforo(semFinalizados);
-				signalSemaforo(mutexFinalizados);
-				return PCBActualizado;
-				break;
-				}
-
-			case FinQuantum:{
-				puts("Saliendo de ejecutando..");
-				sacarDeEjecutar(PCBActualizado);				//Sacar de la lista de Ejecutando
-				puts("Pasando a listos..");
-				pasarAListos(PCBActualizado);						//Pasar a la cola de Listos
-				return PCBActualizado;
-				break;
-			}
-		}
-	}	*/
 }
 
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb){
