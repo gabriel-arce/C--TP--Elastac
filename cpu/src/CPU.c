@@ -142,6 +142,7 @@ void escucharAlNucleo(){
 				void * buffer = malloc(head->tamanio);
 				recv(socketNucleo,buffer, head->tamanio,0);
 				recibirPCB(buffer);
+
 			}
 		}
 	}
@@ -155,7 +156,8 @@ void recibirPCB(void *buffer){
 
 	puts("PCB recibido");
 
-	cambiarEstadoACorriendo();
+	pcbCorriendo = true;
+	pcbTerminado = false;
 
 
 
@@ -171,7 +173,7 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
 		salirPor("no se pudo concretar la solicitud de escritura");
-		cambiarEstadoATerminado();    											//si hay algun error se termina el programa
+			//si hay algun error se termina el programa
 	}
 
 }
@@ -336,7 +338,8 @@ void imprimirTexto(char* texto){
 
 		if(list_size(pcbActual->indice_stack) == 1){
 
-		cambiarEstadoATerminado();
+		pcbTerminado = true;
+		pcbCorriendo = false;
 	}
 		else{
 			//TODO tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
@@ -350,14 +353,15 @@ void imprimirTexto(char* texto){
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	cambiarEstadoABloqueado();
-	//TODO mandar a nucleo la entrada salida
+	//TODO enviar pcb
+	pcbCorriendo = false;
 
 }
 
 void wait(t_nombre_semaforo identificador_semaforo){
 
 	//TODO mandar a nucleo
+	//espera respuesta (si fue a bloqueado retorno pcb)
 }
 
 void signals(t_nombre_semaforo identificador_semaforo){
@@ -374,12 +378,10 @@ void rutina (int n) {
 	switch (n) {
 		case SIGUSR1:
 			printf("Hot plug activado \n");
-			if(pcbCorriendo()){
 				printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
 			}
 			hotPlugActivado = true;
 	}
-}
 
 
 
@@ -450,10 +452,6 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 	return list_get(pcbActual->indice_codigo, pc);
 }
 
-bool pcbCorriendo(){
-
-	return (pcbActual->estado == Corriendo);
-}
 
 void restaurarQuantum(){
 
@@ -463,25 +461,6 @@ void restaurarQuantum(){
 void actualizarQuantum(){
 
 	pcbActual->quantum_actual ++;
-}
-
-void cambiarEstadoACorriendo(){
-
-	pcbActual->estado = Corriendo;
-	puts("PCB corriendo");
-
-}
-
-void cambiarEstadoAFinQuantum(){
-
-	pcbActual->estado = FinQuantum;
-	puts("finalizo el Quantum");
-}
-
-void cambiarEstadoATerminado(){
-
-	pcbActual->estado = Terminado;
-	puts("Se termino el programa actual");
 }
 
 void actualizarPC(){
@@ -644,6 +623,16 @@ void stack_destroy(t_stack * stack){
 	list_destroy(stack->vars);
 	free(stack->retVar);
 
+}
+
+void finalizacionPrograma(){
+	//TODO mandar a nucleo header de finalizacion
+}
+
+void finDeQuantum(){
+	//TODO mandar a nucleo header de fin de quantum
+
+	pcbCorriendo = false;
 }
 
 
