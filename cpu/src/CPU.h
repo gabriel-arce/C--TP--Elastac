@@ -67,6 +67,8 @@ int socketNucleo, socketUMC;
 fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 bool hotPlugActivado;
+bool pcbCorriendo;
+bool pcbTerminado;
 
 //------------------Funciones
 
@@ -85,13 +87,11 @@ int getQuantumPcb();
 int getQuantum();
 void ejecutarProximaInstruccion();
 t_indice_de_codigo * buscarProximaInstruccion();
-bool pcbCorriendo();
 void restaurarQuantum();
 void actualizarQuantum();
 void enviarPCB();
 void cambiarEstadoACorriendo();
 void cambiarEstadoAFinQuantum();
-void cambiarEstadoATerminado();
 void actualizarPC();
 void borrarPCBActual();
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable);
@@ -112,6 +112,8 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion);
 void quantumSleep();
 void recibirQuantums(t_header * header);
 void stack_destroy(t_stack * stack);
+void finDeQuantum();
+void finalizacionPrograma();
 
 //------------------Primitivas
 
