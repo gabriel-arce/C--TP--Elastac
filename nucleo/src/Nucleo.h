@@ -47,7 +47,7 @@ typedef enum {
 	EntradaSalida,
 	ObtenerValorCompartido,
 	AsignarValorCompartido,
-	FinalizacionCPU,
+	MuereCPU,
 	MandarQuantum,
 	MandarQuantumSleep,
 	FinalizacionQuantum,
@@ -71,6 +71,7 @@ typedef struct {
 typedef struct {
 	char *id;
 	uint32_t valor;
+	t_list *bloqueados;
 } t_semNucleo;
 
 typedef struct {
