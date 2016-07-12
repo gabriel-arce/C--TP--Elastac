@@ -117,9 +117,28 @@ void crearListasYColas(){
 		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre, valor));
 	}
 
+	ejecutarWait2("SEM1");
+
 	free(semaforo);
 	free(io_nombre);
 
+}
+
+
+void ejecutarWait2(char *nombreSemaforo){
+	int i;
+	for(i = 0; i < list_size(lista_semaforos); i++){
+		semaforo = list_get(sem_id, i);
+		valor			= list_get(sem_value, i);
+	}
+	int buscarPorNombre(t_semNucleo *semaforo){
+		return semaforo->id == nombreSemaforo;
+	}
+
+	t_semNucleo *semaforo = list_find(lista_semaforos, (void *)buscarPorNombre);			//obtener el semaforo
+	semaforo->valor--;
+
+	list_replace(lista_semaforos, (void *)buscarPorNombre, crearSemaforoGlobal(semaforo->id, semaforo->valor));		//actualizarlo
 }
 
 
@@ -210,36 +229,13 @@ void pasarAEjecutar(){
 
 		//Se obtiene el PCB para la transicion
 		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
-		pcbEjecutando->estado = Corriendo;
 
 		//2da version
 		//Enviar a Ejecutar
 		waitSemaforo(mutexEjecutando);
 		puts("Ejecutando consola..");
 		enviarAEjecutar(pcbEjecutando, cpuDeEjecucion);
-		//pcbEjecutando = pcbActual;
 		signalSemaforo(mutexEjecutando);
-
-/*		//Mientras tenga quantum
-		while(pcbEjecutando->quantum != nucleo->quantum){
-			//Enviar a Ejecutar
-			waitSemaforo(mutexEjecutando);
-			puts("Ejecutando consola..");
-			pcbActual = enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
-			pcbEjecutando = pcbActual;
-			signalSemaforo(mutexEjecutando);
-		}
-
-		//if(pcbEjecutando->quantum == nucleo->quantum){
-		if(pcbEjecutando->estado == FinQuantum){
-			pcbEjecutando->quantum = 0;						//Resetear quantum del pcb
-			puts("Saliendo de ejecutando..");
-			sacarDeEjecutar(pcbEjecutando);				//Sacar de la lista de Ejecutando
-			puts("Pasando a listos..");
-			pasarAListos(pcbEjecutando);						//Pasar a la cola de Listos
-		}*/
-
-
 	}
 
 	signalSemaforo(mutexListos);
@@ -358,7 +354,7 @@ void crearServerCPU(){
 			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Enviar Quantum Sleep
-		if (enviar_header(28, nucleo->quantum, newfd) == -1)
+		if (enviar_header(28, nucleo->quantum_sleep, newfd) == -1)
 			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Crear hilo para CPU entrante
