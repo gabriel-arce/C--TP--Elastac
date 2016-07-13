@@ -257,20 +257,20 @@ int deserializar_imprimir_valor(void * buffer) {
 }
 
 //----------------------------------------------------->
- void * serializar_identificador_semaforo(char* id){
- 	return serializar_ansisop(id);
- }
+void * serializar_identificador_semaforo(char* id) {
+	return serializar_ansisop(id);
+}
 
- char * deserializar_identificador_semaforo(void * buffer){
- 	t_paquete_programa * paquete = deserializar_ansisop(buffer);
+char * deserializar_identificador_semaforo(void * buffer) {
+	t_paquete_programa * paquete = deserializar_ansisop(buffer);
 
- 		char * texto = string_new();
- 		string_append(&texto, paquete->codigo_programa);
- 		free(paquete->codigo_programa);
- 		free(paquete);
+	char * texto = string_new();
+	string_append(&texto, paquete->codigo_programa);
+	free(paquete->codigo_programa);
+	free(paquete);
 
- 		return texto;
- }
+	return texto;
+}
 //----------------------------------------------------->
 int enviar_handshake(int socket, int id) {
 	void * buffer = serializar_header((uint8_t) id, (uint32_t) 0);
@@ -429,7 +429,7 @@ int recibir_respuesta_inicio(int socket) {
 
 	return respuesta;
 }
-
+//----------------------------------------------------->
 int enviar_inicializar_programa(int pid, int paginas, char * codigo, int socket) {
 	void * buffer = serializar_iniciar_prog(pid, paginas, codigo);
 	int tamanio_buffer = 12 + strlen(codigo);
@@ -443,7 +443,8 @@ int enviar_inicializar_programa(int pid, int paginas, char * codigo, int socket)
 	return r;
 }
 
-t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibir, int socket) {
+t_paquete_inicializar_programa * recibir_inicializar_programa(
+		int bytes_a_recibir, int socket) {
 	int recibido = -1;
 	void * buffer = malloc(bytes_a_recibir);
 
@@ -459,99 +460,100 @@ t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibi
 
 	return paquete;
 }
-
 //----------------------------------------------------->
- int enviar_texto(char * texto, int socket) {
-	 int result = enviar_header(12, sizeof(texto) + 4, socket);
+int enviar_texto(char * texto, int socket) {
+	int result = enviar_header(12, sizeof(texto) + 4, socket);
 
-  	if (result == -1)
-  		return result;
+	if (result == -1)
+		return result;
 
-  	void * buffer_out = serializar_imprimir_texto(texto);
-  	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	void * buffer_out = serializar_imprimir_texto(texto);
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
 
-  	if (result == -1)
-  		return result;
+	if (result == -1)
+		return result;
 
-  	free(buffer_out);
-  	return EXIT_SUCCESS;
-  }
+	free(buffer_out);
+	return EXIT_SUCCESS;
+}
 
- char* recibir_texto(int buffer_size, int socket){
+char* recibir_texto(int buffer_size, int socket) {
 
-  	void * buffer = malloc(buffer_size);
-  		int r = recv(socket, buffer, buffer_size, 0);
+	void * buffer = malloc(buffer_size);
+	int r = recv(socket, buffer, buffer_size, 0);
 
-  		if (r <= 0)
-  			return 0;
+	if (r <= 0)
+		return 0;
 
-  		char * respuesta = deserializar_imprimir_texto(buffer);
+	char * respuesta = deserializar_imprimir_texto(buffer);
 
-  		return respuesta;
-  }
+	return respuesta;
+}
 
- //------------------------------------------------------>
-   int enviar_valor_de_variable(uint32_t valor, int socket) {
-   	int result = enviar_header(11, sizeof(uint32_t), socket);
+//------------------------------------------------------>
+int enviar_valor_de_variable(uint32_t valor, int socket) {
+	int result = enviar_header(11, sizeof(uint32_t), socket);
 
-   	if (result == -1)
-   		return result;
+	if (result == -1)
+		return result;
 
-  	void * buffer_out = serializar_imprimir_valor(valor);
-  	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	void * buffer_out = serializar_imprimir_valor(valor);
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
 
-   	if (result == -1)
-   		return result;
+	if (result == -1)
+		return result;
 
-   	free(buffer_out);
-   	return EXIT_SUCCESS;
-   }
+	free(buffer_out);
+	return EXIT_SUCCESS;
+}
 
-   int recibir_valor_de_variable(int socket){
+int recibir_valor_de_variable(int socket) {
 
-    		void * buffer = malloc(5);
-    			int r = recv(socket, buffer, 5, 0);
+	void * buffer = malloc(5);
+	int r = recv(socket, buffer, 5, 0);
 
-    			if (r <= 0)
-    				return 0;
+	if (r <= 0)
+		return 0;
 
-    			int respuesta = deserializar_imprimir_valor(buffer);
+	int respuesta = deserializar_imprimir_valor(buffer);
 
-    			return respuesta;
-     }
-
-   //---------------------------------------------------->
-   int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket){
-
-     	int result = enviar_header(22, sizeof(identificador_semaforo) + 4, socket);
-
-     	if (result == -1)
-     		return result;
-
-     	void * buffer_out = serializar_identificador_semaforo(identificador_semaforo);
-     	result = send(socket, buffer_out, sizeof(buffer_out), 0);
-         	if (result == -1)
-     		return result;
-
-     	free(buffer_out);
-     	return EXIT_SUCCESS;
-    }
+	return respuesta;
+}
 
 //---------------------------------------------------->
+int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket) {
 
-   int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket){
+	int result = enviar_header(22, sizeof(identificador_semaforo) + 4, socket);
 
-     	int result = enviar_header(23, sizeof(identificador_semaforo) + 4, socket);
+	if (result == -1)
+		return result;
 
-     	if (result == -1)
-     		return result;
+	void * buffer_out = serializar_identificador_semaforo(
+			identificador_semaforo);
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	if (result == -1)
+		return result;
 
-     	void * buffer_out = serializar_identificador_semaforo(identificador_semaforo);
-     	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	free(buffer_out);
+	return EXIT_SUCCESS;
+}
 
-     	if (result == -1)
-     		return result;
+//---------------------------------------------------->
+int enviar_signal_identificador_semaforo(char* identificador_semaforo,
+		int socket) {
 
-     	free(buffer_out);
-     	return EXIT_SUCCESS;
-    }
+	int result = enviar_header(23, sizeof(identificador_semaforo) + 4, socket);
+
+	if (result == -1)
+		return result;
+
+	void * buffer_out = serializar_identificador_semaforo(
+			identificador_semaforo);
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+
+	if (result == -1)
+		return result;
+
+	free(buffer_out);
+	return EXIT_SUCCESS;
+}

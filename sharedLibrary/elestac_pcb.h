@@ -12,6 +12,9 @@
 #include <stdint.h>
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #define SERIALIZADOR				"#"
 
@@ -44,7 +47,6 @@ typedef struct {
 	uint32_t offset;
 } t_sp;
 
-
 typedef struct {
 	uint32_t pcb_pid;												//Identificador unico
 	uint32_t pcb_pc;													//Program counter
@@ -60,10 +62,19 @@ typedef struct {
 
 t_pcb *crearPCB(char *programa, int fd,  uint8_t stack_size, t_queue *cola_pcb);
 void destruirPCB(t_pcb *pcb);
-char* serializarPCB(t_pcb* pcb);
-t_pcb *convertirPCB(char *mensaje);
+char* serializarPCB(t_pcb* pcb);  //discontinuo
+t_pcb *convertirPCB(char *mensaje);   //discontinuo
 int crearPCBID(t_queue *cola_pcb);
 void salirPor(const char *msg);
 t_indice_de_codigo *crearIndiceCodigo(int start, int offset);
+
+//serializacion del PCB
+void imprimir_pcb(t_pcb * pcb);
+int calcular_size_pcb(t_pcb * pcb);
+void * serializar_pcb(t_pcb * pcb);
+t_pcb * deserializar_pcb(void * buffer);
+void enviar_pcb(t_pcb * pcb, int socket);
+t_pcb * recibir_pcb(int socket, int bytes_a_recibir);
+
 
 #endif /* ELESTAC_PCB_H_ */
