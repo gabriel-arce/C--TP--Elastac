@@ -38,11 +38,11 @@ int main(int argc, char * argv[]) {
 	//inicializo semaforos
 	inicializar_semaforos();
 
-	//pthread_create(&hilo_cliente, NULL, conecta_swap, NULL);
+	pthread_create(&hilo_cliente, NULL, conecta_swap, NULL);
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
 
-	//pthread_join(hilo_cliente, NULL);
-	//pthread_detach(hilo_cliente, NULL);
+	pthread_join(hilo_cliente, NULL);
+	pthread_detach(hilo_cliente);
 	pthread_join(hilo_server, NULL);
 	pthread_detach(hilo_server);
 

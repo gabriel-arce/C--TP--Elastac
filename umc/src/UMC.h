@@ -89,8 +89,6 @@ void new_line();
 bool tlb_habilitada();
 void enviar_pagina_size(int sock_fd);
 int cambio_proceso_activo(int pid, int cpu);
-int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
-void finalizar_en_swap(int pid);
 void flush_tlb_by_certain_pid(int pid);
 void signal_handler(int n_singal);
 
@@ -121,5 +119,11 @@ void * lanzar_consola();
 void * escucha_conexiones();
 void * conecta_swap();
 void inicializar_semaforos();
+
+//FUNCIONES CON SWAP
+int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
+void finalizar_en_swap(int pid);
+void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid);
+void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid);
 
 #endif /* UMC_H_ */
