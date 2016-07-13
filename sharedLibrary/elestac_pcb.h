@@ -15,10 +15,6 @@
 
 #define SERIALIZADOR				"#"
 
-typedef enum {
-	Listo, Corriendo, Terminado, Bloqueado, Nuevo, FinQuantum,
-} t_estado;
-
 typedef struct {
 	uint32_t posicion;			//Posicion de comienzo
 	uint32_t tamanio;			//Tamanio de instruccion
@@ -58,7 +54,6 @@ typedef struct {
 	char* indice_etiquetas;									//Indice de etiquetas (se busca con metadata_buscar_etiqueta)
 	uint32_t cantidad_de_etiquetas;
 	t_list * indice_stack;											//Indice del Stack	  (t_stack)
-	t_estado estado;												//Codigo interno para ver los estados del pcb
 	uint32_t consola;												//Consola
 	uint32_t quantum_actual;								//Numero de instrucciones ejecutadas en la rafaga actual
 } t_pcb;

@@ -27,19 +27,24 @@ int main(void){
 		escucharAlNucleo();								//Escuchar al nucleo a la espera de nuevos PCBs
 		cambiar_proceso_activo(pcbActual->pcb_pid);		//envio a umc nuevo PID
 
-		while(pcbCorriendo()){
+		while(1){
 
 			ejecutarProximaInstruccion();
 			quantumSleep();
-			if(!pcbCorriendo()) {break;}
+
+			}
+
+			if(!pcbCorriendo){
+				if(pcbTerminado) {
+				finalizacionPrograma();
+				}
+				break;
+			}
 
 			actualizarQuantum();
 
 			if(getQuantumPcb() == getQuantum()){
-
 				restaurarQuantum();
-				cambiarEstadoAFinQuantum();
-			}
 		}
 
 		enviarPCB();
