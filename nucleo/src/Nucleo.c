@@ -117,28 +117,9 @@ void crearListasYColas(){
 		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre, valor));
 	}
 
-	ejecutarWait2("SEM1");
-
 	free(semaforo);
 	free(io_nombre);
 
-}
-
-
-void ejecutarWait2(char *nombreSemaforo){
-	int i;
-	for(i = 0; i < list_size(lista_semaforos); i++){
-		semaforo = list_get(sem_id, i);
-		valor			= list_get(sem_value, i);
-	}
-	int buscarPorNombre(t_semNucleo *semaforo){
-		return semaforo->id == nombreSemaforo;
-	}
-
-	t_semNucleo *semaforo = list_find(lista_semaforos, (void *)buscarPorNombre);			//obtener el semaforo
-	semaforo->valor--;
-
-	list_replace(lista_semaforos, (void *)buscarPorNombre, crearSemaforoGlobal(semaforo->id, semaforo->valor));		//actualizarlo
 }
 
 
@@ -494,33 +475,30 @@ void accionesDeCPU(t_clienteCPU *cpu){
 
 	   switch(header->identificador){
 	  	   case FinalizacionPrograma:{
-	  		   void *buffer_aux	= malloc(sizeof(t_pcb));
-	  		   recv(cpu->fd, buffer_aux, header->tamanio, 0);
-	  		   agregarPCBaFinalizados(lista_finalizados,  convertirPCB(buffer_aux));
-	  		   cpu->disponible = 1;
+	  		   pcb = recibir_pcb(cpu, header->tamanio);
+	  		   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
 	  		   break;}
 
 	  	   case Wait:{
-	  		   ejecutarWait(header->tamanio);
-	  		   cpu->disponible = 1; // solo si se bloquea el semaforo
+	  		   ejecutarWait(header->tamanio, cpu);
 	  		   break; }
 
 	  	   case Signal: {
+	  		   ejecutarSignal(header->tamanio);
 	  		   break; }
 
 	  	   case EntradaSalida:{
-	  		   void *buffer_aux	= malloc(sizeof(t_pcb));
-	  		   recv(cpu->fd, buffer_aux, header->tamanio, 0);
-	  		   agregarPCBaBloqueados(cola_bloqueados, convertirPCB(buffer_aux));
-	  		   cpu->disponible = 1;
+	  		   pcb = recibir_pcb(cpu, header->tamanio);
+	  		   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
 	  		   break;}
 
 	  	   case ObtenerValorCompartido:{
-	  		   // Enviar a cpu el valor de una variable
+	  		   ejecutarObtenerValorCompartido(cpu->fd);
 	  		   break;}
 
 	  	   case AsignarValorCompartido:{
 	  		   //asignar a la variable lo que me manda cpu
+	  		   ejecutarAsignarValorCompartido(cpu->fd);
 	  		   break;}
 
 	  	   case MuereCPU:{
@@ -539,18 +517,24 @@ void accionesDeCPU(t_clienteCPU *cpu){
 
 }
 
-void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb){
+void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 	puts("Bloqueado por I/O..");
 	puts("Pasando a bloqueados..");
 	queue_push(cola, pcb);
+
+	cpu->disponible = 1;
+
 	signalSemaforo(semBloqueados);
 }
 
-void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb){
+void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu){
 		puts("Programa ANSISOP finalizado..");
 		waitSemaforo(mutexFinalizados);
 		puts("Agregando a finalizados..");
 		list_add(lista, pcb);
+
+		cpu->disponible = 1;
+
 		signalSemaforo(semFinalizados);
 		signalSemaforo(mutexFinalizados);
 }
@@ -579,15 +563,58 @@ int getIOSleep(char *valor){
 	return atoi(valor);
 }
 
-void ejecutarWait(char *nombreSemaforo){
-	int buscarPorNombre(t_semNucleo *semaforo){
-		return semaforo->id == nombreSemaforo;
+void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu){
+	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
+	if ((semaforo->valor--) < 0)
+		cpu->disponible = 0;
+	else
+		cpu->disponible = 1;
+}
+
+t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
+	int i;
+	t_semNucleo *semaforo;
+
+	for(i = 0; i < list_size(lista_semaforos); i++){
+		semaforo = list_get(lista_semaforos, i);
+		if(strcmp(semaforo->id, nombreSemaforo) == 0){
+			printf("Valor actual: %d\n", semaforo->valor);
+			semaforo->valor--;
+			printf("Valor actual: %d\n", semaforo->valor);
+			break;
+		}
 	}
 
-	t_semNucleo *semaforo = list_find(lista_semaforos, (void *)buscarPorNombre);			//obtener el semaforo
-	semaforo->valor--;
+	return semaforo;
+}
 
-	list_replace(lista_semaforos, (void *)buscarPorNombre, crearSemaforoGlobal(semaforo->id, semaforo->valor));		//actualizarlo
+void ejecutarSignal(char *nombreSemaforo){
+	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
+	semaforo->valor++;
+}
+
+t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio){
+    void *buffer_aux	= malloc(sizeof(t_pcb));
+
+    recv(cpu->fd, buffer_aux, tamanio, 0);
+    return convertirPCB(buffer_aux);
+}
+
+void ejecutarObtenerValorCompartido(int fd){
+	t_header *header = malloc(sizeof(t_header));
+	t_semNucleo *semaforo;
+
+	//Recibir la variable
+	if ((header = recibir_header(fd)) == NULL)
+		puts("Error al recibir variable");
+
+	semaforo = obtenerSemaforoPorID(header->identificador);
+
+   // Enviar a cpu el valor de una variable
+
 }
 
 
+void ejecutarAsignarValorCompartido(int fd){
+
+}
