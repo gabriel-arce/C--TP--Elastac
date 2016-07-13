@@ -47,7 +47,7 @@ typedef enum {
 	EntradaSalida,
 	ObtenerValorCompartido,
 	AsignarValorCompartido,
-	FinalizacionCPU,
+	MuereCPU,
 	MandarQuantum,
 	MandarQuantumSleep,
 	FinalizacionQuantum,
@@ -71,6 +71,7 @@ typedef struct {
 typedef struct {
 	char *id;
 	uint32_t valor;
+	t_list *bloqueados;
 } t_semNucleo;
 
 typedef struct {
@@ -150,13 +151,19 @@ void enviarHandshakeAUMC();
 void recibirHandshakeDeUMC();
 t_paquete_programa *obtener_programa(t_header *header, int fd);
 void accionesDeCPU(t_clienteCPU *cpu);
-void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb);
-void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb);
+void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu);
+void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu);
 char *getSemaforo(char *valor);
 int getSemValue(char *valor);
 t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor);
 char *getIOId(char *valor);
 int getIOSleep(char *valor);
 t_ioNucleo *crearIOGlobal(nombre, valor);
+t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo);
+void ejecutarSignal(char *nombreSemaforo);
+void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu);
+t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio);
+void ejecutarObtenerValorCompartido(int fd);
+void ejecutarAsignarValorCompartido(int fd);
 
 #endif /* NUCLEO_H_ */

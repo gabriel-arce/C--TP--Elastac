@@ -95,8 +95,8 @@ void crearListasYColas(){
 	lista_semaforos		= list_create();
 	lista_io						= list_create();
 
-	t_list *semaforos	= list_map(nucleo->sem_ids, getSemaforo);
-	t_list *semValue	= list_map(nucleo->sem_init, getSemValue);
+	t_list *sem_id			= list_map(nucleo->sem_ids, getSemaforo);
+	t_list *sem_value	= list_map(nucleo->sem_init, getSemValue);
 	t_list *io_id				= list_map(nucleo->io_ids, getIOId);
 	t_list *io_value		= list_map(nucleo->io_sleep, getIOSleep);
 
@@ -106,15 +106,15 @@ void crearListasYColas(){
 	int valor = 0;
 
 	for(int i = 0; i < list_size(nucleo->sem_ids); i++){
-		semaforo = list_get(semaforos, i);
-		valor = list_get(semValue, i);
+		semaforo = list_get(sem_id, i);
+		valor			= list_get(sem_value, i);
 		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor));
 	}
 
 	for(int i = 0; i < list_size(nucleo->io_ids); i++){
-		io_nombre = list_get(io_id, i);
-		valor = list_get(io_value, i);
-		list_add(lista_io, crearIOGlobal(io_nombre, valor));
+		io_nombre	= list_get(io_id, i);
+		valor				= list_get(io_value, i);
+		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre, valor));
 	}
 
 	free(semaforo);
@@ -181,12 +181,6 @@ void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
 	enviar_header(20, tamanio, cpu->fd);
 	enviarPorSocket(cpu->fd,serial);
-	//enviar_header(20,  serial, cpu->fd );
-
-	//Crear hilo para CPU entrante
-	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
-	pthread_join(pIDCpu, NULL);
-
 
 }
 
@@ -216,36 +210,13 @@ void pasarAEjecutar(){
 
 		//Se obtiene el PCB para la transicion
 		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
-		pcbEjecutando->estado = Corriendo;
 
 		//2da version
 		//Enviar a Ejecutar
 		waitSemaforo(mutexEjecutando);
 		puts("Ejecutando consola..");
 		enviarAEjecutar(pcbEjecutando, cpuDeEjecucion);
-		//pcbEjecutando = pcbActual;
 		signalSemaforo(mutexEjecutando);
-
-/*		//Mientras tenga quantum
-		while(pcbEjecutando->quantum != nucleo->quantum){
-			//Enviar a Ejecutar
-			waitSemaforo(mutexEjecutando);
-			puts("Ejecutando consola..");
-			pcbActual = enviarAEjecutar(pcbEjecutando, cpuDeEjecucion->fd);
-			pcbEjecutando = pcbActual;
-			signalSemaforo(mutexEjecutando);
-		}
-
-		//if(pcbEjecutando->quantum == nucleo->quantum){
-		if(pcbEjecutando->estado == FinQuantum){
-			pcbEjecutando->quantum = 0;						//Resetear quantum del pcb
-			puts("Saliendo de ejecutando..");
-			sacarDeEjecutar(pcbEjecutando);				//Sacar de la lista de Ejecutando
-			puts("Pasando a listos..");
-			pasarAListos(pcbEjecutando);						//Pasar a la cola de Listos
-		}*/
-
-
 	}
 
 	signalSemaforo(mutexListos);
@@ -364,8 +335,12 @@ void crearServerCPU(){
 			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Enviar Quantum Sleep
-		if (enviar_header(28, nucleo->quantum, newfd) == -1)
+		if (enviar_header(28, nucleo->quantum_sleep, newfd) == -1)
 			puts("[NUCLEO] Envio de Quantum fallido");
+
+		//Crear hilo para CPU entrante
+		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
+		pthread_join(pIDCpu, NULL);
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);
@@ -489,70 +464,77 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
-	t_pcb *pcb;
-	void *buffer;
+	t_pcb *pcb		= malloc(sizeof(t_pcb));
+	void *buffer	= malloc(header->tamanio);
 	bool PCBRetornado = true;
 
 	while(PCBRetornado){
-		if ((header = recibir_header(cpu->fd)) == NULL)
+		if ((header = recibir_header(cpu->fd)) == NULL){
 			puts("Error");
+			continue;}
 
-	  switch(header->identificador){
-	  	  case FinalizacionPrograma:{
-	  		  break;}
+	   switch(header->identificador){
+	  	   case FinalizacionPrograma:{
+	  		   pcb = recibir_pcb(cpu, header->tamanio);
+	  		   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
+	  		   break;}
 
-	  	  case Wait:{
-	  		  break; }
+	  	   case Wait:{
+	  		   ejecutarWait(header->tamanio, cpu);
+	  		   break; }
 
-	  	  case Signal: {
-	  		  break; }
+	  	   case Signal: {
+	  		   ejecutarSignal(header->tamanio);
+	  		   break; }
 
-	  	  case EntradaSalida:{
-	  		  buffer	= malloc(header->tamanio);
-	  		  pcb		= malloc(sizeof(t_pcb));
+	  	   case EntradaSalida:{
+	  		   pcb = recibir_pcb(cpu, header->tamanio);
+	  		   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
+	  		   break;}
 
-	  		  recv(cpu->fd, buffer, header->tamanio, 0);
-	  		  agregarPCBaBloqueados(cola_bloqueados, pcb);
-	  	  	  break;}
+	  	   case ObtenerValorCompartido:{
+	  		   ejecutarObtenerValorCompartido(cpu->fd);
+	  		   break;}
 
-	  	  case ObtenerValorCompartido:{
-	  	  	  break;}
+	  	   case AsignarValorCompartido:{
+	  		   //asignar a la variable lo que me manda cpu
+	  		   ejecutarAsignarValorCompartido(cpu->fd);
+	  		   break;}
 
-	  	  case AsignarValorCompartido:{
-	  	  	  break;}
+	  	   case MuereCPU:{
+	  		   // terminar hilo de cpu y sacar de la lista de cpu..
+	  			pthread_detach(&pIDCpu);
+	  		   break;}
 
-	  	  case FinalizacionCPU:{
-	  		  break;}
+	  	   case FinalizacionQuantum:{
+	  		   cpu->disponible = 1;
+	  		   break;}
 
-	  	  case FinalizacionQuantum:{
-	  		  break;
-	  	  }
-	  }
-
-
-	}
+	   } //Fin switch
 
 
-	//cpu libre
-	cpu->disponible = 0;
-
-	//matar hilo
-	pthread_detach(&pIDCpu);
+	}//Fin while
 
 }
 
-void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb){
+void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 	puts("Bloqueado por I/O..");
 	puts("Pasando a bloqueados..");
 	queue_push(cola, pcb);
+
+	cpu->disponible = 1;
+
 	signalSemaforo(semBloqueados);
 }
 
-void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb){
+void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu){
 		puts("Programa ANSISOP finalizado..");
 		waitSemaforo(mutexFinalizados);
 		puts("Agregando a finalizados..");
 		list_add(lista, pcb);
+
+		cpu->disponible = 1;
+
 		signalSemaforo(semFinalizados);
 		signalSemaforo(mutexFinalizados);
 }
@@ -567,8 +549,9 @@ int getSemValue(char *valor){
 
 t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor){
 	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
-	semNucleo->id		= semaforo;
-	semNucleo->valor	= valor;
+	semNucleo->id						= semaforo;
+	semNucleo->valor					= valor;
+	semNucleo->bloqueados	= list_create();
 	return semNucleo;
 }
 
@@ -580,9 +563,58 @@ int getIOSleep(char *valor){
 	return atoi(valor);
 }
 
-t_ioNucleo *crearIOGlobal(nombre, valor){
-	t_ioNucleo *io = malloc(sizeof(t_ioNucleo));
-	io->id						= nombre;
-	io->valorSleep	= valor;
-	return io;
+void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu){
+	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
+	if ((semaforo->valor--) < 0)
+		cpu->disponible = 0;
+	else
+		cpu->disponible = 1;
+}
+
+t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
+	int i;
+	t_semNucleo *semaforo;
+
+	for(i = 0; i < list_size(lista_semaforos); i++){
+		semaforo = list_get(lista_semaforos, i);
+		if(strcmp(semaforo->id, nombreSemaforo) == 0){
+			printf("Valor actual: %d\n", semaforo->valor);
+			semaforo->valor--;
+			printf("Valor actual: %d\n", semaforo->valor);
+			break;
+		}
+	}
+
+	return semaforo;
+}
+
+void ejecutarSignal(char *nombreSemaforo){
+	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
+	semaforo->valor++;
+}
+
+t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio){
+    void *buffer_aux	= malloc(sizeof(t_pcb));
+
+    recv(cpu->fd, buffer_aux, tamanio, 0);
+    return convertirPCB(buffer_aux);
+}
+
+void ejecutarObtenerValorCompartido(int fd){
+	t_header *header = malloc(sizeof(t_header));
+	t_semNucleo *semaforo;
+
+	//Recibir la variable
+	if ((header = recibir_header(fd)) == NULL)
+		puts("Error al recibir variable");
+
+	semaforo = obtenerSemaforoPorID(header->identificador);
+
+   // Enviar a cpu el valor de una variable
+
+}
+
+
+void ejecutarAsignarValorCompartido(int fd){
+
 }

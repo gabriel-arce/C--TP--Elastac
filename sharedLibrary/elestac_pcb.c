@@ -54,7 +54,9 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
 	pcb->pcb_sp = sp;
 	pcb->cantidad_de_etiquetas	= meta->cantidad_de_etiquetas;
+
 //	pcb->estado = Listo;
+
 	pcb->consola	= fd;
 	pcb->quantum_actual	= 0;
 
@@ -153,7 +155,7 @@ char* serializarPCB (t_pcb* pcb)
 	}
 
 //	string_append(&serial, string_itoa(pcb->estado));
-	string_append(&serial, SERIALIZADOR);
+
 	string_append(&serial, string_itoa(pcb->consola));
 	string_append(&serial, SERIALIZADOR);
 	string_append(&serial, string_itoa(pcb->quantum_actual));
@@ -191,7 +193,9 @@ t_pcb *convertirPCB(char *mensaje){
 
 	int indicesStack = atoi(componentes[indice]);
 
+
 //	pcb->estado								= atoi(componentes[indice++]);
+
 	pcb->consola								= atoi(componentes[indice++]);
 //	pcb->quantum_actual				= atoi(componentes[indice]);
 	return pcb;
