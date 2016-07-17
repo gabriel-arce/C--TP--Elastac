@@ -188,6 +188,8 @@ void entradaSalida(){
 	//Obtener el elemento por encima de la cola
 	t_pcb *pcbBloqueado = (t_pcb *)queue_peek(cola_bloqueados);
 
+	//Buscar el dispositivo
+
 	usleep(nucleo->io_sleep);
 
 	//Sacar de la cola de bloqueados
@@ -475,8 +477,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 
 	   switch(header->identificador){
 	  	   case FinalizacionPrograma:{
-	  		   pcb = recibir_pcb(cpu, header->tamanio);
-	  		   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
+	  		   ejecutarFinalizacionPrograma(cpu, header);
 	  		   break;}
 
 	  	   case Wait:{
@@ -488,8 +489,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break; }
 
 	  	   case EntradaSalida:{
-	  		   pcb = recibir_pcb(cpu, header->tamanio);
-	  		   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
+	  		   ejecutarEntradaSalida(cpu, header);
 	  		   break;}
 
 	  	   case ObtenerValorCompartido:{
@@ -497,13 +497,11 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case AsignarValorCompartido:{
-	  		   //asignar a la variable lo que me manda cpu
 	  		   ejecutarAsignarValorCompartido(cpu->fd);
 	  		   break;}
 
 	  	   case MuereCPU:{
-	  		   // terminar hilo de cpu y sacar de la lista de cpu..
-	  			pthread_detach(&pIDCpu);
+	  		   ejecutarMuerteCPU();
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
@@ -520,6 +518,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 	puts("Bloqueado por I/O..");
 	puts("Pasando a bloqueados..");
+
 	queue_push(cola, pcb);
 
 	cpu->disponible = 1;
@@ -593,13 +592,6 @@ void ejecutarSignal(char *nombreSemaforo){
 	semaforo->valor++;
 }
 
-t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio){
-    void *buffer_aux	= malloc(sizeof(t_pcb));
-
-    recv(cpu->fd, buffer_aux, tamanio, 0);
-    return convertirPCB(buffer_aux);
-}
-
 void ejecutarObtenerValorCompartido(int fd){
 	t_header *header = malloc(sizeof(t_header));
 	t_semNucleo *semaforo;
@@ -616,5 +608,22 @@ void ejecutarObtenerValorCompartido(int fd){
 
 
 void ejecutarAsignarValorCompartido(int fd){
+	//asignar a la variable lo que me manda cpu
+}
 
+void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
+	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
+
+	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
+}
+
+void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header *header){
+	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
+
+	   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
+}
+
+void ejecutarMuerteCPU(){
+	   // terminar hilo de cpu y sacar de la lista de cpu..
+		pthread_detach(&pIDCpu);
 }

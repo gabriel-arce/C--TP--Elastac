@@ -27,17 +27,12 @@
 
 //#define CONFIG_NUCLEO	"nucleo.conf"
 #define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
-#define MAXIMO_BUFFER	2000
-#define PUERTO_NUCLEO	7200
-#define MAX_CLIENTES 10
-#define ETIQUETA_NUCLEO	"[NUCLEO]"
-#define HANDSHAKE					 "Hola! Soy nucleo!.."
-#define SERIALIZADOR				"##"
-#define Tamanio_pagina 31
+#define Tamanio_pagina				31
 #define NOMBRE_SEMAFORO	20
 #define NOMBRE_IO						20
 #define CONSOLA	1
 #define CPU				5
+
 
 /****** Estructuras ******/
 typedef enum {
@@ -162,8 +157,10 @@ t_ioNucleo *crearIOGlobal(nombre, valor);
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo);
 void ejecutarSignal(char *nombreSemaforo);
 void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu);
-t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio);
 void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
+void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
+void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header *header);
+void ejecutarMuerteCPU();
 
 #endif /* NUCLEO_H_ */
