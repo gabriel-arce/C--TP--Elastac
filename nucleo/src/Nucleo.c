@@ -182,6 +182,12 @@ void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 	enviar_header(20, tamanio, cpu->fd);
 	enviarPorSocket(cpu->fd,serial);
 
+	//Crear hilo para CPU entrante
+	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
+	pthread_join(pIDCpu, NULL);
+
+
+
 }
 
 void entradaSalida(){
@@ -337,12 +343,12 @@ void crearServerCPU(){
 			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Enviar Quantum Sleep
-		if (enviar_header(28, nucleo->quantum_sleep, newfd) == -1)
+		if (enviar_header(29, nucleo->quantum_sleep, newfd) == -1)
 			puts("[NUCLEO] Envio de Quantum fallido");
 
-		//Crear hilo para CPU entrante
+/*		//Crear hilo para CPU entrante
 		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
-		pthread_join(pIDCpu, NULL);
+		pthread_join(pIDCpu, NULL);*/
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);
@@ -466,8 +472,7 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
-	t_pcb *pcb		= malloc(sizeof(t_pcb));
-	void *buffer	= malloc(header->tamanio);
+	t_pcb *pcb					= malloc(sizeof(t_pcb));
 	bool PCBRetornado = true;
 
 	while(PCBRetornado){
@@ -489,7 +494,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break; }
 
 	  	   case EntradaSalida:{
-	  		   ejecutarEntradaSalida(cpu, header);
+	  		   ejecutarEntradaSalida(cpu);
 	  		   break;}
 
 	  	   case ObtenerValorCompartido:{
@@ -617,10 +622,27 @@ void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
 }
 
-void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header *header){
+void ejecutarEntradaSalida(t_clienteCPU *cpu){
+	void *buffer = malloc(NOMBRE_SEMAFORO);
+	t_semNucleo *semaforo;
+	int i;
+
+	if ((recv(cpu->fd, buffer, NOMBRE_SEMAFORO, 0)) == -1)
+		puts("Error al recibir el nombre del smeaforo");
+
+	for(i = 0; i < list_size(lista_semaforos); i++){
+		semaforo = list_get(lista_semaforos, i);
+		if (semaforo->id == buffer){
+			semaforo->valor++;
+			break;
+		}
+	};
+/*
 	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
 
 	   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
+*/
+
 }
 
 void ejecutarMuerteCPU(){

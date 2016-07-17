@@ -160,7 +160,7 @@ void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu);
 void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
-void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header *header);
+void ejecutarEntradaSalida(t_clienteCPU *cpu);
 void ejecutarMuerteCPU();
 
 #endif /* NUCLEO_H_ */

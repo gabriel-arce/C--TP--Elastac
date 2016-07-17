@@ -22,7 +22,7 @@ int main(void) {
 	crearListasYColas();
 
 	//Crear cliente para UMC
-	crearClienteUMC();
+	//crearClienteUMC();
 
 	//Crear semaforos
 	crearSemaforos();
