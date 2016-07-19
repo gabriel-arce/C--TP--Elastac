@@ -112,9 +112,9 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
  	}
 
 void almacenarPCB(uint32_t tamanioBuffer){
- 	void * buffer = malloc(tamanioBuffer);
- 	recv(socketNucleo,buffer, tamanioBuffer,0);
- 	recibirPCB(buffer);
+ 	pcbActual = recibir_pcb(socketNucleo, tamanioBuffer);
+	puts("PCB recibido");
+	pcbCorriendo = true;
   }
 
 
@@ -145,18 +145,6 @@ void escucharAlNucleo(){
 	escucharPorSocket(socketNucleo);
 	}
 
-
-void recibirPCB(void *buffer){
-
-	pcbActual = malloc(sizeof(t_pcb));
-
-	pcbActual = convertirPCB(buffer);
-
-	puts("PCB recibido");
-
-	pcbCorriendo = true;
-
-}
 
 void enviarPCB(){
 
@@ -422,6 +410,8 @@ void rutina (int n) {
 
 		case SIGINT:
 			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
+			pcbCorriendo = false;
+			hotPlugActivado = true;
 			break;
 	}
 }
