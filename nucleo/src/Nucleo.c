@@ -146,6 +146,10 @@ void planificar_consolas(){
 
 void mainEjecucion(){
 	while(1){
+
+		//Atrapar senial por cambio de quantum
+		signal(SIGINT, interrupcionConsola);
+
 		waitSemaforo(semListos);							//Si hay consolas
 		waitSemaforo(semCpuDisponible);		//Si hay al menos una CPU, que planifique
 			puts("Pasando a ejecutar consola..");
@@ -457,7 +461,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case MuereCPU:{
-	  		   ejecutarMuerteCPU();
+	  		   ejecutarMuerteCPU(cpu);
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
@@ -615,11 +619,31 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu){
 
 }
 
-void ejecutarMuerteCPU(){
+void ejecutarMuerteCPU(t_clienteCPU *cpu){
 	   // terminar hilo de cpu y sacar de la lista de cpu..
+	int i;
+	t_clienteCPU *cpuAux = malloc(sizeof(t_clienteCPU));
+
+	for(i = 0; i < list_size(lista_cpu); i++){
+		cpuAux = (t_clienteCPU *) list_get(lista_cpu, i);
+		if(cpuAux->cpuID == cpu->cpuID){
+			list_remove_and_destroy_element(lista_cpu, i, destruirCPU);
+			break;
+		}
+	};
+
 	pthread_detach(&pIDCpu);
 }
 
 void  ejecutarSemaforoBloqueado(){
 
+}
+
+void  interrupcionConsola(int interrupcion){
+	signal(interrupcion, SIG_IGN);
+	puts("Ingrese un nuevo quantum: ");
+}
+
+void destruirCPU(t_clienteCPU *cpu){
+	free(cpu);
 }

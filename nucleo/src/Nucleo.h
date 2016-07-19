@@ -183,6 +183,8 @@ void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
 void ejecutarEntradaSalida(t_clienteCPU *cpu);
-void ejecutarMuerteCPU();
+void ejecutarMuerteCPU(t_clienteCPU *cpu);
+void  interrupcionConsola(int interrupcion);
+void destruirCPU(t_clienteCPU *cpu);
 
 #endif /* NUCLEO_H_ */

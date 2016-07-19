@@ -11,7 +11,7 @@
 int main(int argc, char * argv[]) {
 
 	//Chequear argumentos
-	if (chequear_argumentos(argc, 2))
+	if ((chequear_argumentos(argc, 2)) == -1)
 		return EXIT_FAILURE;
 
 	//Cargar configuracion
