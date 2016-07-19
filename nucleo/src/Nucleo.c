@@ -105,13 +105,14 @@ void crearListasYColas(){
 
 	int valor = 0;
 
-	for(int i = 0; i < list_size(nucleo->sem_ids); i++){
+	int i;
+	for(i = 0; i < list_size(nucleo->sem_ids); i++){
 		semaforo = list_get(sem_id, i);
 		valor			= list_get(sem_value, i);
 		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor));
 	}
 
-	for(int i = 0; i < list_size(nucleo->io_ids); i++){
+	for(i = 0; i < list_size(nucleo->io_ids); i++){
 		io_nombre	= list_get(io_id, i);
 		valor				= list_get(io_value, i);
 		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre, valor));
@@ -122,15 +123,16 @@ void crearListasYColas(){
 
 }
 
-
 void crearClienteUMC(){
+	if((socketUMC = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
+			salirPor("[NUCLEO] No pudo conectarse a UMC");
 
-	//Crear socket de Nucleo para escuchar
-	if((socketNucleo = clienteDelServidor(nucleo->ip_umc, nucleo->puerto_umc)) == -1)
-			salirPor("[NUCLEO] No pudo conectarse al swap");
+	enviar_handshake(socketUMC, NUCLEO);
 
-	enviarHandshakeAUMC();
-	recibirHandshakeDeUMC();
+	t_header * head = recibir_header(socketUMC);
+
+	if (head->identificador == Tamanio_pagina)
+		tamanio_pagina = head->tamanio;
 }
 
 void planificar_consolas(){
@@ -244,7 +246,7 @@ void pasarAListos(t_pcb *pcb){
 
 }
 
-void crearServerConsola(){
+void crearServerConsola(){ //ver bien esto!!!!
 	 int listener;														//Descriptor de escucha
 	 int reuse;
 	 int newfd;
@@ -405,57 +407,6 @@ void finalizar(){
 	signalSemaforo(mutexFinalizados);
 }
 
-void enviarHandshakeAUMC(){
-
-	//----------Envio el handshake a UMC
-	t_header * handshake = malloc(sizeof(t_header));
-	int resultado = 0;
-
-	handshake->identificador = (uint8_t) 2;
-	handshake->tamanio = (uint32_t) 0;
-
-	void * buffer_handshake = malloc(5);
-	memcpy(buffer_handshake, &(handshake->identificador), 1);
-	memcpy(buffer_handshake + 1, &(handshake->tamanio), 4);
-
-	if ((resultado = enviarPorSocket(socketNucleo, buffer_handshake)) == -1)
-		salirPor("Error en el send del handshake a UMC\n");
-
-
-//	resultado = send(socketNucleo, buffer_handshake, 5, 0);
-	free(handshake);
-	free(buffer_handshake);
-
-}
-
-void recibirHandshakeDeUMC(){
-
-	//---------Recibo el tamanio de pagina
-	void * buffer_entrada = malloc(5);
-	int resultado = 0;
-
-	resultado = recv(socketNucleo, buffer_entrada, 5, MSG_WAITALL);
-
-	if (resultado == -1) {
-		printf("Error en el recv del tamanio de pagina desde UMC\n");
-		exit(EXIT_FAILURE);
-	}
-
-	t_header * head_tamanio_pagina = malloc(sizeof(t_header));
-	memcpy(&(head_tamanio_pagina->identificador), buffer_entrada, 1);
-	memcpy(&(head_tamanio_pagina->tamanio), buffer_entrada + 1, 4);
-
-	if (head_tamanio_pagina->identificador != (uint8_t) Tamanio_pagina)
-		salirPor("Error en el ID de la cabecera de recibirPagina\n");
-
-	tamanio_pagina = head_tamanio_pagina->tamanio;
-	printf("El tamanio de pagina es: %d", tamanio_pagina);
-
-	free(buffer_entrada);
-	free(head_tamanio_pagina);
-
-}
-
 t_paquete_programa *obtener_programa(t_header *header, int fd){
 	void *buffer2 = malloc(header->tamanio);
 	t_paquete_programa *programa;
@@ -596,6 +547,13 @@ void ejecutarSignal(char *nombreSemaforo){
 	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
 	semaforo->valor++;
 }
+
+//t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio){
+//    void *buffer_aux	= malloc(sizeof(t_pcb));
+//
+//    recv(cpu->fd, buffer_aux, tamanio, 0);
+//    return convertirPCB(buffer_aux);
+//}
 
 void ejecutarObtenerValorCompartido(int fd){
 	t_header *header = malloc(sizeof(t_header));

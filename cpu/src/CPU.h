@@ -66,7 +66,7 @@ int quantum;
 int quantum_sleep;
 int tamanio_paginas;
 t_CPU_config * cpu;
-int socketNucleo, socketUMC;
+int socketUMC, socketUMC;
 fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 bool hotPlugActivado;

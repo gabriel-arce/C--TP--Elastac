@@ -74,16 +74,21 @@ int nucleos_conectados;
 int socket_nucleo;
 int socket_swap, socket_servidor;
 pthread_t hiloConsola, hilo_server, hilo_cliente;
+pthread_t hilo_atiende_nucleo;
+pthread_t hilo_atiende_cpu;
 int id_cpu;
 t_list * cpu_conectadas;
 pthread_mutex_t mutex_servidor;
 pthread_mutex_t mutex_lista_cpu;
 pthread_mutex_t mutex_nucleo;
 pthread_mutex_t mutex_memoria;
+pthread_mutex_t mutex_swap;
 int memoria_size;
 void * memoria_principal;
 t_log * logger;
 bool tlb_on;
+int contador_hilos;
+FILE * f_memory_report;
 
 void new_line();
 bool tlb_habilitada();
@@ -93,7 +98,7 @@ void flush_tlb_by_certain_pid(int pid);
 void signal_handler(int n_singal);
 
 //INTERFAZ DE UMC
-void inicializar_programa(t_paquete_inicializar_programa * paquete);
+int inicializar_programa(int bytes_to_recv);
 int leer_bytes(int socket_cpu, int bytes);
 int almacenar_bytes(int socket_cpu, int bytes);
 void finalizar_programa(int id_programa);
@@ -101,29 +106,35 @@ void finalizar_programa(int id_programa);
 //MANEJO DE ARCHIVOS Y LOGS
 void cargar_config();
 void imprimir_config();
-void crear_archivo_reporte();
 void crear_archivo_log();
-void * atiende_nucleo();
-void * atiende_cpu();
 
 //FUNCIONES DE LA CONSOLA
 int no_es_comando();
+void mostrar_procesos();
 void modificar_retardo(int ret);
-void reporte_estructuras();
-void reporte_contenido();
+void reporte_estructuras(int pid);
+void reporte_contenido(int pid);
 void flush_tlb();
 void flush_memory(int pid);
+void dump_memory(const void* data, size_t size);
+int dump_memory_from_pid(int pid);
 
 //FUNCIONES CON HILOS
 void * lanzar_consola();
 void * escucha_conexiones();
-void * conecta_swap();
+void conecta_swap();
+void atiende_swap(void * args);
 void inicializar_semaforos();
+void * atiende_nucleo(void * args);
+void * atiende_cpu(void * args);
 
 //FUNCIONES CON SWAP
+void respuesta_inicio_swap(int respuesta_inicio);
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
 void finalizar_en_swap(int pid);
 void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid);
 void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid);
+
+void simulacion_con_swap();
 
 #endif /* UMC_H_ */

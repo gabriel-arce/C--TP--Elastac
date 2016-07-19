@@ -15,8 +15,8 @@ void inicializar_memoria() {
 //	memset(memoria_principal, 0, memoria_size);
 	memoria_principal = (void *) calloc(umc_config->cant_frames, umc_config->frames_size);
 
-	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
-			memoria_size);
+//	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
+//			memoria_size);
 
 	frames_memoria = list_create();
 	int indice_frame = 0;

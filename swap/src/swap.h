@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <string.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
@@ -59,6 +60,7 @@ void imprimir_config();
 void iniciar_servidor_UMC();
 void escuchar_solicitudes_UMC();
 void inicializar_semaforos();
+void enviar_a_umc_respuesta_inicio(t_paquete_inicializar_programa * paquete_inicio_prog, int respuesta_inicio);
 
 //*****OPERACIONES CON UMC*****
 int inicializar_programa(int buffer_init_size);

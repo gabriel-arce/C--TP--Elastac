@@ -74,7 +74,6 @@ void escuchar_solicitudes_UMC() {
 
 	bool keep_iterating = true;
 	t_header * header = NULL;
-	int resultado_operacion;
 
 	while (keep_iterating) {
 		pthread_mutex_lock(&mutex_umc_recv);
@@ -82,29 +81,27 @@ void escuchar_solicitudes_UMC() {
 		header = recibir_header(socket_UMC);
 
 		if (!header) {
+			keep_iterating = false;
 			pthread_mutex_unlock(&mutex_umc_recv);
 			continue;
 		}
 
 		switch (header->identificador) {
 			case Inicializar_programa:
-				resultado_operacion = inicializar_programa(header->tamanio);
+				inicializar_programa(header->tamanio);
 			break;
 			case Finalizar_programa:
-				resultado_operacion = finalizar_programa(header->tamanio);
+				finalizar_programa(header->tamanio);
 			break;
 			case Solicitar_pagina:
-				resultado_operacion = leer_pagina(header->tamanio);
+				leer_pagina(header->tamanio);
 			break;
 			case Almacenar_pagina:
-				resultado_operacion = almacenar_pagina(header->tamanio);
+				almacenar_pagina(header->tamanio);
 			break;
 		default:
 			break;
 		}
-
-		if (resultado_operacion == -1)
-			keep_iterating = false;
 
 		free(header);
 
@@ -124,25 +121,46 @@ int inicializar_programa(int buffer_init_size) {
 	puts("INICIALIZAR_PROGRAMA");
 
 	t_paquete_inicializar_programa * paquete_inicio_prog = recibir_inicializar_programa(buffer_init_size, socket_UMC);
+	//LAS POSIBLES RESPUESTAS SON:	 0 -> NO | 1 -> SI
+	int respuesta_inicio = 0;
 
 	if (paquete_inicio_prog == NULL) {
 		enviar_respuesta_inicio(socket_UMC, Respuesta_inicio_NO);
 		return EXIT_ERROR;
 	}
 
-	printf("pid: %d\n", paquete_inicio_prog->pid);
-	printf("paginas: %d\n", paquete_inicio_prog->paginas_requeridas);
-	printf("length: %d\n", paquete_inicio_prog->programa_length);
-	printf("codigo: %s\n", paquete_inicio_prog->codigo_programa);
+//	printf("pid: %d\n", paquete_inicio_prog->pid);
+//	printf("paginas: %d\n", paquete_inicio_prog->paginas_requeridas);
+//	printf("length: %d\n", paquete_inicio_prog->programa_length);
+//	printf("codigo: \n%s\n", paquete_inicio_prog->codigo_programa);
 
 	//calculo si paquete_inicio_prog->paginas_requeridas <= paginas_libres_del_espacio_swap
 
 	//TRUE -> se reservan las paginas requeridas y se almacena paquete_inicio_prog->codigo_programa **
 	//** siempre seran en las primeras paginas reservadas, y luego en la siguiente reservada el stack (eso se almacena despues)
 
-	//FALSE -> se rechaza el programa:  enviar_respuesta_inicio(socket_UMC, Respuesta_inicio_NO);
+	//FALSE -> se rechaza el programa
+
+	//ENTONCES EN LO POSIBLE QUE SEA ASI: respuesta_inicio = *nombre_de_la_funcion_que_hace_la_magia*
+	//o sea esa funcion tienen que devolver 0 o 1
+
+	enviar_a_umc_respuesta_inicio(paquete_inicio_prog, respuesta_inicio);
 
 	return EXIT_SUCCESS;
+}
+
+void enviar_a_umc_respuesta_inicio(t_paquete_inicializar_programa * paquete_inicio_prog, int respuesta_inicio) {
+	int r = enviar_respuesta_inicio(socket_UMC, respuesta_inicio);
+
+	if (r)
+		puts("Respuesta enviada");
+
+	enviar_header(Inicializar_programa, 12 + paquete_inicio_prog->programa_length, socket_UMC);
+
+	enviar_inicializar_programa(paquete_inicio_prog->pid, paquete_inicio_prog->paginas_requeridas, paquete_inicio_prog->codigo_programa, socket_UMC);
+
+	free(paquete_inicio_prog->codigo_programa);
+	free(paquete_inicio_prog);
 }
 
 int finalizar_programa(int pid) {
@@ -157,22 +175,40 @@ int finalizar_programa(int pid) {
 }
 
 int leer_pagina(int buffer_read_size) {
+	t_paquete_solicitar_pagina * paquete_lect_pag = NULL;
+	void * buffer = malloc(buffer_read_size);
+	int tamanio_paquete = buffer_read_size - 4;
+	void * buffer_paquete = malloc(tamanio_paquete);
+	int pid = -1;
 
-	puts("LEER_PAGINA");
+	if (recv(socket_UMC, buffer, buffer_read_size, 0) <= 0) {
+		printf("\nError en el recv para lectura de datos\n");
+		send(socket_UMC, (void *) "", 0, 0);
+		return EXIT_ERROR;
+	}
 
-	t_paquete_solicitar_pagina * paquete_lect_pag = recibir_solicitud_lectura(buffer_read_size, socket_UMC);
+	memcpy(&(pid), buffer, 4);
+	memcpy(buffer_paquete, buffer + 4, tamanio_paquete);
+
+	paquete_lect_pag = deserializar_leer_pagina(buffer_paquete);
 
 	if (paquete_lect_pag == NULL) {
 		send(socket_UMC, (void *) "", 0, 0);
 		return EXIT_ERROR;
 	}
 
+	printf("pid: %d\n", pid);
 	printf("pagina: %d\n", paquete_lect_pag->nro_pagina);
 	printf("offset: %d\n", paquete_lect_pag->offset);
 	printf("bytes: %d\n", paquete_lect_pag->bytes);
 
+	//char * datos = string_duplicate("soy los datos que se pidieron");
+
 	//busco los datos y los copio en "void * datos_leidos"
 	//luego le envio a umc "datos_leidos" (sin header ni nada)
+
+	free(buffer);
+	free(paquete_lect_pag);
 
 	return EXIT_SUCCESS;
 }

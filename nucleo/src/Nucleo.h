@@ -25,13 +25,29 @@
 
 /****** Constantes ******/
 
+#define CONFIG_NUCLEO	"nucleo.conf"
+//#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+#define MAXIMO_BUFFER	2000
+#define PUERTO_NUCLEO	7200
+#define MAX_CLIENTES 10
+#define ETIQUETA_NUCLEO	"[NUCLEO]"
+#define HANDSHAKE					 "Hola! Soy nucleo!.."
+#define SERIALIZADOR				"##"
+
 //#define CONFIG_NUCLEO	"nucleo.conf"
 #define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
 #define Tamanio_pagina				19
 #define NOMBRE_SEMAFORO	20
 #define NOMBRE_IO						20
+
+//Interfaces
 #define CONSOLA	1
-#define CPU				5
+#define NUCLEO 2
+#define CPU	5
+#define Tamanio_pagina 19
+#define Inicializar_programa 14
+#define Respuesta_inicio 17
+#define Fin_programa 13
 
 
 /****** Estructuras ******/
@@ -83,7 +99,7 @@ typedef struct {
 /****** Variables Globales ******/
 t_nucleo *nucleo;
 t_config  *config;
-int socketNucleo;
+int socketUMC;
 int tamanio_pagina;
 
 t_queue *cola_listos;
@@ -142,8 +158,6 @@ t_clienteCPU *obtenerCPUDisponible();
 int CPUestaDisponible(t_clienteCPU *cpu);
 t_header * deserializar_header(void * buffer);
 void finalizar();
-void enviarHandshakeAUMC();
-void recibirHandshakeDeUMC();
 t_paquete_programa *obtener_programa(t_header *header, int fd);
 void accionesDeCPU(t_clienteCPU *cpu);
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu);
@@ -157,6 +171,7 @@ t_ioNucleo *crearIOGlobal(nombre, valor);
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo);
 void ejecutarSignal(char *nombreSemaforo);
 void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu);
+//t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio);
 void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
