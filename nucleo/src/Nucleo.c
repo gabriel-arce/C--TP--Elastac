@@ -520,10 +520,22 @@ int getIOSleep(char *valor){
 
 void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu){
 	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
-	if ((semaforo->valor--) < 0)
+	t_header *header;
+	t_pcb *pcb;
+
+	if ((semaforo->valor--) < 0){
 		cpu->disponible = No;
+		enviar_header(31, 0, cpu->fd);
+
+		//recibir el pcb y enviar a bloqueados
+		header = recibir_header(cpu->fd);
+		pcb = recibir_pcb(cpu->fd, header->tamanio);
+
+		//enviar el pcb a bloqueados
+		queue_push(cola_bloqueados, pcb);}
 	else
-		cpu->disponible = Si;
+		{cpu->disponible = Si;
+		enviar_header(32, 0, cpu->fd);}
 }
 
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
@@ -605,5 +617,9 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu){
 
 void ejecutarMuerteCPU(){
 	   // terminar hilo de cpu y sacar de la lista de cpu..
-		pthread_detach(&pIDCpu);
+	pthread_detach(&pIDCpu);
+}
+
+void  ejecutarSemaforoBloqueado(){
+
 }

@@ -62,6 +62,8 @@ typedef enum {
 	MandarQuantum,
 	MandarQuantumSleep,
 	FinalizacionQuantum,
+	SemaforoBloqueado,
+	SemaforoNoBloqueado,
 } t_accionesPCB;
 
 typedef enum {
