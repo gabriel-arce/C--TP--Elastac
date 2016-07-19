@@ -8,21 +8,20 @@
 #include "Nucleo.h"
 
 
-int main(void) {
+int main(int argc, char * argv[]) {
 
-/*	// Obtener el directorio actual - TEST
-	char *directorio = getcwd(NULL, 0);
-	printf("El directorio actual es: %s\n", directorio);
-	free(directorio);*/
+	//Chequear argumentos
+	if (chequear_argumentos(argc, 2))
+		return EXIT_FAILURE;
 
 	//Cargar configuracion
-	cargarConfiguracion();
+	cargar_archivo_config(argv, (void *) cargarConfiguracion);
 
 	//Crear las listas
 	crearListasYColas();
 
 	//Crear cliente para UMC
-	//crearClienteUMC();
+	crearClienteUMC();
 
 	//Crear semaforos
 	crearSemaforos();

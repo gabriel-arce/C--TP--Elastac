@@ -27,7 +27,7 @@
 
 //#define CONFIG_NUCLEO	"nucleo.conf"
 #define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
-#define Tamanio_pagina				31
+#define Tamanio_pagina				19
 #define NOMBRE_SEMAFORO	20
 #define NOMBRE_IO						20
 #define CONSOLA	1
