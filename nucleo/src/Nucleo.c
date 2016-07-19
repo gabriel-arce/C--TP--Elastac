@@ -173,7 +173,7 @@ t_clienteCPU *obtenerCPUDisponible(){
 }
 
 int CPUestaDisponible(t_clienteCPU *cpu){
-	return cpu->disponible == 0;
+	return cpu->disponible == Si;
 }
 
 void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
@@ -335,7 +335,7 @@ void crearServerCPU(){
 		t_clienteCPU *nuevaCPU = malloc(sizeof(t_clienteCPU));
 		nuevaCPU->cpuID				= obtenerCPUID();
 		nuevaCPU->fd 					= newfd;
-		nuevaCPU->disponible	= 0;
+		nuevaCPU->disponible	= Si;
 
 		//Agregar CPU a la lista
 		list_add(lista_cpu, nuevaCPU);
@@ -461,7 +461,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
-	  		   cpu->disponible = 1;
+	  		   cpu->disponible = Si;
 	  		   break;}
 
 	   } //Fin switch
@@ -477,7 +477,7 @@ void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 
 	queue_push(cola, pcb);
 
-	cpu->disponible = 1;
+	cpu->disponible = Si;
 
 	signalSemaforo(semBloqueados);
 }
@@ -488,7 +488,7 @@ void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu){
 		puts("Agregando a finalizados..");
 		list_add(lista, pcb);
 
-		cpu->disponible = 1;
+		cpu->disponible = Si;
 
 		signalSemaforo(semFinalizados);
 		signalSemaforo(mutexFinalizados);
@@ -521,9 +521,9 @@ int getIOSleep(char *valor){
 void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu){
 	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
 	if ((semaforo->valor--) < 0)
-		cpu->disponible = 0;
+		cpu->disponible = No;
 	else
-		cpu->disponible = 1;
+		cpu->disponible = Si;
 }
 
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){

@@ -64,6 +64,11 @@ typedef enum {
 	FinalizacionQuantum,
 } t_accionesPCB;
 
+typedef enum {
+	No,
+	Si,
+} t_respuesta;
+
 typedef struct {
 	int puerto_programas;
 	int puerto_cpu;
