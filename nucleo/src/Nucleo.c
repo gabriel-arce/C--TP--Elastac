@@ -288,7 +288,7 @@ void crearServerConsola(){
 	    //Crear PCB
 	    puts("Creando PCB.. \n");
 		pcb_aux = malloc(sizeof(t_pcb));
-		pcb_aux = crearPCB(programa->codigo_programa, newfd, nucleo->stack_size, cola_listos);
+		pcb_aux = crearPCB(programa->codigo_programa, programa->programa_length, newfd, cola_listos, tamanio_pagina);
 
 		//Agregar PCB a la cola de listos
 		queue_push(cola_listos, pcb_aux);

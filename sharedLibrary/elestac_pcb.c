@@ -6,7 +6,7 @@
  */
 
 #include "elestac_pcb.h"
-t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
+t_pcb *crearPCB(char *programa, uint32_t programa_length, int fd, t_queue *cola_pcb, int tamanioPaginas){
 
     /*       char * prog1 = "begin \n variables a, b, c \n a = b + 12 \n print b \n textPrint foo\n end\"";
  	 char * prog2 = "begin \n print b \n end";
@@ -39,9 +39,17 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
 	pcb->pcb_pid 					= crearPCBID(cola_pcb);
 	pcb->pcb_pc					= meta->instruccion_inicio;
-	pcb->paginas_codigo	= stack_size;
+
+	div_t output = div(programa_length,tamanioPaginas);    //me fijo cuantas paginas ocupa el codigo y redondeo para arriba
+	pcb->paginas_codigo	= output.quot;
+	if(output.rem > 0){
+		pcb->paginas_codigo += 1;
+	}
+
+
 	sp->offset	= 0;
 	sp->pagina	= 0;
+	pcb->pcb_sp = sp;
 
 	pcb->indice_codigo = list_create();
 
@@ -49,13 +57,8 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 	for(i = 0; i <= meta->instrucciones_size; i++)
 		list_add(pcb->indice_codigo, crearIndiceCodigo(meta->instrucciones_serializado[i].start, meta->instrucciones_serializado[i].offset));
 
-/*	sp->pagina 	= meta->instrucciones_serializado[pcb->pcb_pc].start;
-	sp->offset	= meta->instrucciones_serializado[pcb->pcb_pc].offset;*/
 
-	pcb->pcb_sp = sp;
 	pcb->cantidad_de_etiquetas	= meta->cantidad_de_etiquetas;
-
-//	pcb->estado = Listo;
 
 	pcb->consola	= fd;
 	pcb->quantum_actual	= 0;
@@ -63,9 +66,11 @@ t_pcb *crearPCB(char *programa, int fd, uint8_t stack_size, t_queue *cola_pcb){
 
 	pcb->indice_etiquetas = meta->etiquetas;
 
-	list_create(pcb->indice_stack);
-	if ((pcb->indice_stack = malloc(sizeof(t_list))) == NULL)
+	pcb->indice_stack = list_create(pcb->indice_stack);
+
+	/*if ((pcb->indice_stack = malloc(sizeof(t_list))) == NULL)
 		puts("No se pudo alocar para indice de stack");
+	*/
 
 	return pcb;
 
