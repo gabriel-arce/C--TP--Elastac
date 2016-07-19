@@ -166,27 +166,32 @@ void enviarPCB(){
 
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
+	t_header * header;
 	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
 		salirPor("no se pudo concretar la solicitud de escritura");
-		imprimirTexto("Hubo un error al intentar escribir una variable, finalizando el programa");
-		//TODO ver lo de stack overflow
-		//si hay algun error se termina el programa
 	}
+	header = recibir_header(socketUMC);
 
+	if(header->tamanio == 0){
+
+		imprimirTexto("Stack Overflow, abortando el programa");
+		finalizacionPrograma();
+	}
 }
 
 t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){
 
 	t_valor_variable valor;
+	t_header * header;
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 		salirPor("No se concreto la solicitud de lectura");
 	}
 
-	//TODO ver si hace falta un while o un void*
-	 	if(recv(socketUMC, &valor, sizeof(t_valor_variable), 0) <= 0){
-	 		salirPor("no se pudo recibir valor de la variable");
-	 	}
+	header = recibir_header(socketUMC);
+	if(header->tamanio == 0){salirPor("no se pudo leer la variable");}
+
+	valor = recibir_valor_de_variable(socketUMC);
 
 	return valor;
 }
@@ -349,7 +354,6 @@ void imprimirTexto(char* texto){
 
 		if(list_size(pcbActual->indice_stack) == 1){
 
-		pcbCorriendo = false;
 		finalizacionPrograma();
 	}
 		else{
@@ -656,6 +660,7 @@ void stack_destroy(t_stack * stack){
 }
 
 void finalizacionPrograma(){
+	pcbCorriendo = false;
 	enviar_header(FINALIZACION_PROGRAMA,0,socketNucleo);
 }
 
