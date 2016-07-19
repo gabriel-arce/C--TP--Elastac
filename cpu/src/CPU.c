@@ -416,10 +416,15 @@ void rutina (int n) {
 	switch (n) {
 		case SIGUSR1:
 			printf("Hot plug activado \n");
-				printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
-			}
+			printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
 			hotPlugActivado = true;
+			break;
+
+		case SIGINT:
+			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
+			break;
 	}
+}
 
 
 
