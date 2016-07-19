@@ -49,6 +49,7 @@
 #define FINALIZACION_QUANTUM 30
 #define SEMAFORO_BLOQUEADO 31
 #define SEMAFORO_NO_BLOQUEADO 32
+#define ABORTAR_PROGRAMA 33
 
 //------------------Estructuras
 

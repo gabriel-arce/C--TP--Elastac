@@ -11,7 +11,7 @@
 int main(void){
 
 	signal(SIGUSR1,rutina);		//HotPlug
-
+	signal(SIGINT, rutina);
 
 	cargarConfiguracion();		//Cargar configuracion
 

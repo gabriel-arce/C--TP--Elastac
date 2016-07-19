@@ -489,8 +489,8 @@ char* recibir_texto(int buffer_size, int socket) {
 }
 
 //------------------------------------------------------>
-int enviar_valor_de_variable(uint32_t valor, int socket) {
-	int result = enviar_header(11, sizeof(uint32_t), socket);
+int enviar_valor_de_variable(t_valor_variable valor, int socket) {
+	int result = enviar_header(11, sizeof(t_valor_variable), socket);
 
 	if (result == -1)
 		return result;
@@ -505,7 +505,7 @@ int enviar_valor_de_variable(uint32_t valor, int socket) {
 	return EXIT_SUCCESS;
 }
 
-int recibir_valor_de_variable(int socket) {
+t_valor_variable recibir_valor_de_variable(int socket) {
 
 	void * buffer = malloc(5);
 	int r = recv(socket, buffer, 5, 0);
@@ -513,7 +513,7 @@ int recibir_valor_de_variable(int socket) {
 	if (r <= 0)
 		return 0;
 
-	int respuesta = deserializar_imprimir_valor(buffer);
+	t_valor_variable respuesta = deserializar_imprimir_valor(buffer);
 
 	return respuesta;
 }

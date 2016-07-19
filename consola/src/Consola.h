@@ -19,6 +19,7 @@
 #include <elestac_config.h>
 #include <elestac_comunicaciones.h>
 #include <pthread.h>
+#include <signal.h>
 
 //#define CONFIG_PATH "consola.conf"
 #define CONFIG_PATH "../consola/src/consola.conf"
@@ -26,6 +27,7 @@
 #define Imprimir_valor 11
 #define Imprimir_texto 12
 #define Fin_ansisop 13
+#define ABORTAR_PROGRAMA 33
 
 typedef struct {
 	int puerto_nucleo;
@@ -44,8 +46,12 @@ typedef enum{
 t_consola_config *consola;
 pthread_mutex_t mutex_nucleo;
 
+int socketConsola;
+
+
 void cargar_config();
 void MostrarAyuda();
 void MostrarError( Error );
+void rutina(int n);
 
 #endif /* CONSOLA_H_ */

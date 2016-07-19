@@ -10,6 +10,8 @@
 
 int main(int argc, char * argv[]) {
 
+	signal(SIGINT, rutina); //aborta el programa
+
 	printf("Proceso Consola..\n");
 	printf("\n");
 
@@ -19,7 +21,7 @@ int main(int argc, char * argv[]) {
 	long fp_size;
 	char * prog_buffer = NULL;
 
-	int socketConsola = 0;		//Descriptor de consola
+	socketConsola = 0;		//Descriptor de consola
 
 	//Cargar configuracion
 	if (!chequear_argumentos(argc, 3))

@@ -22,6 +22,8 @@
 #include <fcntl.h> 		//fcntl
 #include <commons/string.h>
 #include <commons/log.h>
+#include <parser/metadata_program.h>
+#include <parser/parser.h>
 
 typedef struct {
 	uint8_t identificador;
@@ -111,8 +113,8 @@ t_paquete_inicializar_programa * recibir_inicializar_programa(int bytes_a_recibi
 int enviar_texto(char * texto, int socket);
 char* recibir_texto(int buffer_size, int socket);
 
-int enviar_valor_de_variable(uint32_t valor, int socket);
-int recibir_valor_de_variable(int socket);
+int enviar_valor_de_variable(t_valor_variable valor, int socket);
+t_valor_variable recibir_valor_de_variable(int socket);
 
 int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket);
 
