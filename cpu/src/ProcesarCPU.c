@@ -10,7 +10,7 @@
 
 int main(void){
 
-	signal(SIGUSR1,rutina);
+	signal(SIGUSR1,rutina);		//HotPlug
 
 
 	cargarConfiguracion();		//Cargar configuracion
@@ -27,24 +27,17 @@ int main(void){
 		escucharAlNucleo();								//Escuchar al nucleo a la espera de nuevos PCBs
 		cambiar_proceso_activo(pcbActual->pcb_pid);		//envio a umc nuevo PID
 
-		while(1){
+		while( (getQuantumPcb() <= getQuantum())  &&  (pcbCorriendo)){
 
-			ejecutarProximaInstruccion();
 			quantumSleep();
-
-			}
-
-			if(!pcbCorriendo){
-				if(pcbTerminado) {
-				finalizacionPrograma();
-				}
-				break;
-			}
-
+			ejecutarProximaInstruccion();
 			actualizarQuantum();
 
-			if(getQuantumPcb() == getQuantum()){
-				restaurarQuantum();
+		}
+
+		if(getQuantumPcb() == getQuantum()){
+
+			restaurarQuantum();
 		}
 
 		enviarPCB();

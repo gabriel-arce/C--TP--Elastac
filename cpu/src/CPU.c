@@ -150,20 +150,17 @@ void recibirPCB(void *buffer){
 
 	pcbActual = malloc(sizeof(t_pcb));
 
-	pcbActual = convertirPCB(buffer);					//Deserializar pcb (TODO)
+	pcbActual = convertirPCB(buffer);
 
 	puts("PCB recibido");
 
 	pcbCorriendo = true;
-	pcbTerminado = false;
-
-
 
 }
 
 void enviarPCB(){
 
-	//TODO enviar a nucleo
+	enviar_pcb(pcbActual, socketNucleo);
 
 }
 
@@ -178,7 +175,7 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 }
 
-t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){    //TODO ver si esta bien
+t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){
 
 	t_valor_variable valor;
 
@@ -352,8 +349,8 @@ void imprimirTexto(char* texto){
 
 		if(list_size(pcbActual->indice_stack) == 1){
 
-		pcbTerminado = true;
 		pcbCorriendo = false;
+		finalizacionPrograma();
 	}
 		else{
 			//TODO tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
@@ -367,7 +364,7 @@ void imprimirTexto(char* texto){
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
-	//TODO enviar pcb
+	//TODO serializar y mandar
 	pcbCorriendo = false;
 
 }
@@ -376,6 +373,29 @@ void wait(t_nombre_semaforo identificador_semaforo){
 
 	enviar_wait_identificador_semaforo(identificador_semaforo, socketUMC);
 	//espera respuesta (si fue a bloqueado retorno pcb)
+	t_header * header_in;
+
+	enviar_wait_identificador_semaforo(identificador_semaforo, socketNucleo);
+
+	header_in = recibir_header(socketNucleo);
+
+	if(header_in == NULL){
+		salirPor("no se recibio respuesta del estado del semaforo");
+	}
+
+	else{
+
+	switch(header_in->identificador){
+
+	case SEMAFORO_NO_BLOQUEADO:
+		break;
+
+	case SEMAFORO_BLOQUEADO:
+		pcbCorriendo = false;
+		break;
+		}
+	}
+
 }
 
 void signals(t_nombre_semaforo identificador_semaforo){
@@ -636,13 +656,13 @@ void stack_destroy(t_stack * stack){
 }
 
 void finalizacionPrograma(){
-	//TODO mandar a nucleo header de finalizacion
+	enviar_header(FINALIZACION_PROGRAMA,0,socketNucleo);
 }
 
 void finDeQuantum(){
-	//TODO mandar a nucleo header de fin de quantum
-
 	pcbCorriendo = false;
+
+	enviar_header(FINALIZACION_QUANTUM,0,socketNucleo);
 }
 
 

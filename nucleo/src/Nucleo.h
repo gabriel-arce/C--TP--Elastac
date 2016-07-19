@@ -33,6 +33,10 @@
 #define ETIQUETA_NUCLEO	"[NUCLEO]"
 #define HANDSHAKE					 "Hola! Soy nucleo!.."
 #define SERIALIZADOR				"##"
+
+//#define CONFIG_NUCLEO	"nucleo.conf"
+#define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
+#define Tamanio_pagina				31
 #define NOMBRE_SEMAFORO	20
 #define NOMBRE_IO						20
 
@@ -44,6 +48,7 @@
 #define Inicializar_programa 14
 #define Respuesta_inicio 17
 #define Fin_programa 13
+
 
 /****** Estructuras ******/
 typedef enum {
@@ -169,5 +174,8 @@ void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu);
 //t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio);
 void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
+void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
+void ejecutarEntradaSalida(t_clienteCPU *cpu);
+void ejecutarMuerteCPU();
 
 #endif /* NUCLEO_H_ */

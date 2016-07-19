@@ -184,11 +184,19 @@ void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 	enviar_header(20, tamanio, cpu->fd);
 	enviarPorSocket(cpu->fd,serial);
 
+	//Crear hilo para CPU entrante
+	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
+	pthread_join(pIDCpu, NULL);
+
+
+
 }
 
 void entradaSalida(){
 	//Obtener el elemento por encima de la cola
 	t_pcb *pcbBloqueado = (t_pcb *)queue_peek(cola_bloqueados);
+
+	//Buscar el dispositivo
 
 	usleep(nucleo->io_sleep);
 
@@ -282,7 +290,7 @@ void crearServerConsola(){ //ver bien esto!!!!
 	    //Crear PCB
 	    puts("Creando PCB.. \n");
 		pcb_aux = malloc(sizeof(t_pcb));
-		pcb_aux = crearPCB(programa->codigo_programa, newfd, nucleo->stack_size, cola_listos);
+		pcb_aux = crearPCB(programa->codigo_programa, programa->programa_length, newfd, cola_listos, tamanio_pagina);
 
 		//Agregar PCB a la cola de listos
 		queue_push(cola_listos, pcb_aux);
@@ -337,12 +345,12 @@ void crearServerCPU(){
 			puts("[NUCLEO] Envio de Quantum fallido");
 
 		//Enviar Quantum Sleep
-		if (enviar_header(28, nucleo->quantum_sleep, newfd) == -1)
+		if (enviar_header(29, nucleo->quantum_sleep, newfd) == -1)
 			puts("[NUCLEO] Envio de Quantum fallido");
 
-		//Crear hilo para CPU entrante
+/*		//Crear hilo para CPU entrante
 		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
-		pthread_join(pIDCpu, NULL);
+		pthread_join(pIDCpu, NULL);*/
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);
@@ -415,8 +423,7 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
-	t_pcb *pcb		= malloc(sizeof(t_pcb));
-	void *buffer	= malloc(header->tamanio);
+	t_pcb *pcb					= malloc(sizeof(t_pcb));
 	bool PCBRetornado = true;
 
 	while(PCBRetornado){
@@ -426,8 +433,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 
 	   switch(header->identificador){
 	  	   case FinalizacionPrograma:{
-	  		   pcb = recibir_pcb(cpu, header->tamanio);
-	  		   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
+	  		   ejecutarFinalizacionPrograma(cpu, header);
 	  		   break;}
 
 	  	   case Wait:{
@@ -439,8 +445,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break; }
 
 	  	   case EntradaSalida:{
-	  		   pcb = recibir_pcb(cpu, header->tamanio);
-	  		   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
+	  		   ejecutarEntradaSalida(cpu);
 	  		   break;}
 
 	  	   case ObtenerValorCompartido:{
@@ -448,13 +453,11 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case AsignarValorCompartido:{
-	  		   //asignar a la variable lo que me manda cpu
 	  		   ejecutarAsignarValorCompartido(cpu->fd);
 	  		   break;}
 
 	  	   case MuereCPU:{
-	  		   // terminar hilo de cpu y sacar de la lista de cpu..
-	  			pthread_detach(&pIDCpu);
+	  		   ejecutarMuerteCPU();
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
@@ -471,6 +474,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 	puts("Bloqueado por I/O..");
 	puts("Pasando a bloqueados..");
+
 	queue_push(cola, pcb);
 
 	cpu->disponible = 1;
@@ -567,5 +571,39 @@ void ejecutarObtenerValorCompartido(int fd){
 
 
 void ejecutarAsignarValorCompartido(int fd){
+	//asignar a la variable lo que me manda cpu
+}
 
+void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
+	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
+
+	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
+}
+
+void ejecutarEntradaSalida(t_clienteCPU *cpu){
+	void *buffer = malloc(NOMBRE_SEMAFORO);
+	t_semNucleo *semaforo;
+	int i;
+
+	if ((recv(cpu->fd, buffer, NOMBRE_SEMAFORO, 0)) == -1)
+		puts("Error al recibir el nombre del smeaforo");
+
+	for(i = 0; i < list_size(lista_semaforos); i++){
+		semaforo = list_get(lista_semaforos, i);
+		if (semaforo->id == buffer){
+			semaforo->valor++;
+			break;
+		}
+	};
+/*
+	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
+
+	   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
+*/
+
+}
+
+void ejecutarMuerteCPU(){
+	   // terminar hilo de cpu y sacar de la lista de cpu..
+		pthread_detach(&pIDCpu);
 }

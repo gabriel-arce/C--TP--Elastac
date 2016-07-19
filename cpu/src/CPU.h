@@ -47,6 +47,8 @@
 #define QUANTUM 28
 #define QUANTUM_SLEEP 29
 #define FINALIZACION_QUANTUM 30
+#define SEMAFORO_BLOQUEADO 31
+#define SEMAFORO_NO_BLOQUEADO 32
 
 //------------------Estructuras
 
@@ -69,7 +71,6 @@ fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 bool hotPlugActivado;
 bool pcbCorriendo;
-bool pcbTerminado;
 
 //------------------Funciones
 
