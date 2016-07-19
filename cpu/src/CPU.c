@@ -65,19 +65,19 @@ void cargarConfiguracion(){
 }
 
 void conectarConNucleo(){
-	if((socketNucleo = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
+	if((socketUMC = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
 		salirPor("[CPU} No se pudo conectar al Nucleo");
 
 //envio de handshake
 	int result = -1;
-	result = enviar_handshake(socketNucleo, 5);
+	result = enviar_handshake(socketUMC, 5);
 	if (result == -1) {
 		exit(EXIT_FAILURE);
 	}
 
 		//escucho a la espera del quantum y el quantum_sleep
-	 	escucharPorSocket(socketNucleo);
-	 	escucharPorSocket(socketNucleo);
+	 	escucharPorSocket(socketUMC);
+	 	escucharPorSocket(socketUMC);
 
 }
 
@@ -113,7 +113,7 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
 
 void almacenarPCB(uint32_t tamanioBuffer){
  	void * buffer = malloc(tamanioBuffer);
- 	recv(socketNucleo,buffer, tamanioBuffer,0);
+ 	recv(socketUMC,buffer, tamanioBuffer,0);
  	recibirPCB(buffer);
   }
 
@@ -142,7 +142,7 @@ void cambiar_proceso_activo(int pid) {
 
 // escucho a la espera de algun PCB
 void escucharAlNucleo(){
-	escucharPorSocket(socketNucleo);
+	escucharPorSocket(socketUMC);
 	}
 
 
@@ -211,14 +211,14 @@ char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
 void mandarTextoANucleo(char* texto){
 
-	if(enviar_texto(texto, socketNucleo) == -1){
+	if(enviar_texto(texto, socketUMC) == -1){
 	 		salirPor("no se pudo enviar texto a nucleo");
 	 	}
 }
 
 void desconectarCPU(){
 
-	enviar_header(FINALIZACION_DE_CPU,0,socketNucleo);
+	enviar_header(FINALIZACION_DE_CPU,0,socketUMC);
 
 	free(cpu->ip_UMC);
 	free(cpu->ip_nucleo);
@@ -341,7 +341,7 @@ void retornar(t_valor_variable retorno){
 
 void imprimir(t_valor_variable valor_mostrar){
 
-	if(enviar_valor_de_variable(valor_mostrar,socketNucleo) == -1){
+	if(enviar_valor_de_variable(valor_mostrar,socketUMC) == -1){
 	 			salirPor("No se concreto la impresion por pantalla");
 	 		}
 }
@@ -374,13 +374,13 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 void wait(t_nombre_semaforo identificador_semaforo){
 
-	enviar_wait_identificador_semaforo(identificador_semaforo, socketNucleo);
+	enviar_wait_identificador_semaforo(identificador_semaforo, socketUMC);
 	//espera respuesta (si fue a bloqueado retorno pcb)
 }
 
 void signals(t_nombre_semaforo identificador_semaforo){
 
-	enviar_signal_identificador_semaforo(identificador_semaforo, socketNucleo);
+	enviar_signal_identificador_semaforo(identificador_semaforo, socketUMC);
 }
 
 

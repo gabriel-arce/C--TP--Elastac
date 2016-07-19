@@ -23,11 +23,6 @@
 #include <commons/string.h>
 #include <commons/log.h>
 
-enum interfaces {
-	Solicitar_pagina = 35,
-	Almacenar_pagina = 36,
-} t_interfaz;
-
 typedef struct {
 	uint8_t identificador;
 	uint32_t tamanio;

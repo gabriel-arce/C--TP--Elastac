@@ -65,7 +65,7 @@ t_mem_frame * buscar_frame(int frame);
 t_mem_frame * buscar_frame_por_pagina(int pagina, int pid);
 
 //---LRU
-int run_lru();
+void run_LRU(t_tlb * reemplazo);
 
 //---CLOCK
 int clock_algorithm(int page_to_replace, t_proceso * proceso);

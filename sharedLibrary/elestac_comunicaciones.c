@@ -313,8 +313,8 @@ int enviar_header(int id, int tamanio, int socket) {
 
 	int result = send(socket, buffer, 5, 0);
 
-	if (result == -1) {
-		printf("Error en el envio del header %d\n", id);
+	if (result <= 0) {
+		//printf("Error en el envio del header %d\n", id);
 	}
 
 	free(buffer);
@@ -326,12 +326,10 @@ t_header * recibir_header(int socket) {
 
 	int result = recv(socket, buffer, 5, 0);
 
-	if (result == -1) {
-		puts("Error en el recv del header");
+	if (result <= 0) {
+		//puts("Error en el recv del header");
 		return NULL;
 	}
-	if (result <= 0)
-		return NULL;
 
 	t_header * header = deserializar_header(buffer);
 
@@ -468,7 +466,7 @@ int enviar_texto(char * texto, int socket) {
 		return result;
 
 	void * buffer_out = serializar_imprimir_texto(texto);
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out, sizeof(texto), 0);
 
 	if (result == -1)
 		return result;

@@ -59,5 +59,5 @@ int chequear_argumentos(int argc, int shouldc) {
 		return -1;
 	}
 
-	return 0;
+	return 1;
 }

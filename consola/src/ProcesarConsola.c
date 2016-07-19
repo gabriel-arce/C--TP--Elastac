@@ -21,17 +21,13 @@ int main(int argc, char * argv[]) {
 
 	int socketConsola = 0;		//Descriptor de consola
 
-	if (argc == 1) {
-		printf("Debe ingresar el nombre del programa AnSISOP\n");
-		return -1;
-	}
+	//Cargar configuracion
+	if (!chequear_argumentos(argc, 3))
+		return EXIT_FAILURE;
 
-	if (argc != 2) {
-		MostrarMensajeDeError(CantidadArgumentosIncorrecta);
-		return -2;
-	}
+	cargar_archivo_config(argv, (void *) cargar_config);
 
-	fp_in = fopen(argv[1], "rb");
+	fp_in = fopen(argv[2], "rb");
 
 	if (fp_in == NULL) {
 		MostrarMensajeDeError(NoSePudoAbrirIn);
@@ -52,9 +48,6 @@ int main(int argc, char * argv[]) {
 
 //	printf("%s\n", prog_buffer);
 //	printf("Length del programa: %d\n", string_length(prog_buffer));
-
-	//Cargar configuracion
-	cargar_config();
 
 	//Crear socket al nucleo
 //	socketConsola = clienteDelServidor("127.0.0.1", 6000);
