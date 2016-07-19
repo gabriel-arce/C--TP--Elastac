@@ -160,7 +160,7 @@ void recibirPCB(void *buffer){
 
 void enviarPCB(){
 
-	//TODO enviar a nucleo
+	enviar_pcb(pcbActual, socketNucleo);
 
 }
 
@@ -175,7 +175,7 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 }
 
-t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){    //TODO ver si esta bien
+t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){
 
 	t_valor_variable valor;
 
