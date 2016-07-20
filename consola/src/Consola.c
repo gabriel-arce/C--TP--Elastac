@@ -11,8 +11,8 @@
 #include "Consola.h"
 #include <elestac_config.h>
 
-void cargar_config() {
-	t_config *config	= config_create(CONFIG_PATH);
+void cargar_config(char ** config_path) {
+	t_config *config	= config_create(config_path[1]);
 	consola					= malloc(sizeof(t_consola_config));
 
 	consola->ip_nucleo						= malloc(sizeof(char) * 15);

@@ -13,9 +13,9 @@
 
 int cpuID = 0;						//Numero de CPU
 
-void cargarConfiguracion(){
+void cargarConfiguracion(char ** config_path){
 
-	config = config_create(CONFIG_NUCLEO);
+	config = config_create(config_path[1]);
 	nucleo = malloc(sizeof(t_nucleo));
 
 	printf("Inicializando Nucleo..\n");

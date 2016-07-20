@@ -49,7 +49,7 @@ pthread_mutex_t mutex_nucleo;
 int socketConsola;
 
 
-void cargar_config();
+void cargar_config(char ** config_path);
 void MostrarAyuda();
 void MostrarError( Error );
 void rutina(int n);
