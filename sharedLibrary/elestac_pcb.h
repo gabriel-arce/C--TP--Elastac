@@ -60,11 +60,8 @@ typedef struct {
 	uint32_t quantum_actual;								//Numero de instrucciones ejecutadas en la rafaga actual
 } t_pcb;
 
-t_pcb *crearPCB(char *programa, uint32_t programa_length, int fd, t_queue *cola_pcb, int tamanioPaginas);
+t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas);
 void destruirPCB(t_pcb *pcb);
-char* serializarPCB(t_pcb* pcb);  //discontinuo
-t_pcb *convertirPCB(char *mensaje);   //discontinuo
-int crearPCBID(t_queue *cola_pcb);
 void salirPor(const char *msg);
 t_indice_de_codigo *crearIndiceCodigo(int start, int offset);
 

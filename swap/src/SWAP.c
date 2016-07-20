@@ -144,7 +144,8 @@ int inicializar_programa(int buffer_init_size) {
 	//ENTONCES EN LO POSIBLE QUE SEA ASI: respuesta_inicio = *nombre_de_la_funcion_que_hace_la_magia*
 	//o sea esa funcion tienen que devolver 0 o 1
 
-	enviar_a_umc_respuesta_inicio(paquete_inicio_prog, respuesta_inicio);
+//	enviar_a_umc_respuesta_inicio(paquete_inicio_prog, respuesta_inicio);
+	enviar_a_umc_respuesta_inicio(paquete_inicio_prog, Respuesta_inicio_SI);
 
 	return EXIT_SUCCESS;
 }

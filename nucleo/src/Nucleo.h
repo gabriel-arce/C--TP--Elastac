@@ -185,7 +185,7 @@ void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
 void ejecutarEntradaSalida(t_clienteCPU *cpu);
-void inicializar_programa(int fd);
+void inicializar_programa(void * fd);
 int calcular_cantidad_paginas(int codigo_length);
 int generar_pid();
 void ejecutarMuerteCPU(t_clienteCPU *cpu);
