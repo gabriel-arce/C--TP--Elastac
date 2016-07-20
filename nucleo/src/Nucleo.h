@@ -101,6 +101,7 @@ t_nucleo *nucleo;
 t_config  *config;
 int socketUMC;
 int tamanio_pagina;
+int pid_global;
 
 t_queue *cola_listos;
 t_queue	*cola_bloqueados;
@@ -122,6 +123,7 @@ sem_t *semBloqueados;
 sem_t *semCPU;
 sem_t *semFinalizados;
 sem_t *mutexConsolas;
+pthread_mutex_t mutex_pid;
 
 
 pthread_t pIDServerNucleo;
@@ -177,5 +179,8 @@ void ejecutarAsignarValorCompartido(int fd);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
 void ejecutarEntradaSalida(t_clienteCPU *cpu);
 void ejecutarMuerteCPU();
+void inicializar_programa(int fd);
+int calcular_cantidad_paginas(int codigo_length);
+int generar_pid();
 
 #endif /* NUCLEO_H_ */

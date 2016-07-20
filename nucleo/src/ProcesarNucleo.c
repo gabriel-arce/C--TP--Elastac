@@ -14,7 +14,7 @@ int main(void) {
 	char *directorio = getcwd(NULL, 0);
 	printf("El directorio actual es: %s\n", directorio);
 	free(directorio);*/
-
+	pid_global = 0;
 	//Cargar configuracion
 	cargarConfiguracion();
 

@@ -11,7 +11,7 @@ int main(int argc, char ** argv) {
 	printf("***Proceso SWAP***\n");
 	printf("\n");
 
-	if (!chequear_argumentos(argc, 2))
+	if ((chequear_argumentos(argc, 2)) == -1)
 		return EXIT_FAILURE;
 
 	cargar_archivo_config(argv, (void *) cargar_config);

@@ -74,6 +74,7 @@ void crearSemaforos(){
 	semListos						= crearSemaforo(0);
 	semCpuDisponible	= crearSemaforo(0);
 	semBloqueados			= crearSemaforo(0);
+	pthread_mutex_init(&mutex_pid, 0);
 }
 
 /*void destruirPCB(t_pcb *pcb){
@@ -246,17 +247,18 @@ void pasarAListos(t_pcb *pcb){
 
 }
 
-void crearServerConsola(){ //ver bien esto!!!!
-	 int listener;														//Descriptor de escucha
-	 int reuse;
-	 int newfd;
+void crearServerConsola(){
+	 int listener = -1;														//Descriptor de escucha
+	 int reuse = 1;
+	 int newfd = -1;
 	t_pcb *pcb_aux;
 	t_header *header;
 	 t_paquete_programa *programa;
 
-
 	//Crear socket de escucha
 	listener = crearSocket();
+	if (listener == -1)
+		exit(EXIT_FAILURE);
 
 	//descriptor para enlace
 	if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(int)) == -1)
@@ -270,37 +272,103 @@ void crearServerConsola(){ //ver bien esto!!!!
 
 	while(1){
 
+		waitSemaforo(mutexConsolas);
+
 		if ((newfd = aceptarEntrantes(listener)) == -1)
 			salirPor("accept");
 
-		waitSemaforo(mutexConsolas);
+		setsockopt(newfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+
 		//Recibir Handshake de Consola
 		if (recibir_handshake(newfd) != CONSOLA)
 			salirPor("Proceso desconocido por puerto de Consola");
 
 	    puts("[NUCLEO] Recepcion hanshake Consola" );
 
-	    //Recibir Header de Consola
-	    if ((header = recibir_header(newfd)) == NULL)
-	    	puts("No se pudo recibir header de consola");
-
-	    //Obtener Programa
-	    programa = obtener_programa(header, newfd);
-
-	    //Crear PCB
-	    puts("Creando PCB.. \n");
-		pcb_aux = malloc(sizeof(t_pcb));
-		pcb_aux = crearPCB(programa->codigo_programa, programa->programa_length, newfd, cola_listos, tamanio_pagina);
-
-		//Agregar PCB a la cola de listos
-		queue_push(cola_listos, pcb_aux);
-
-		//Signal por consola nueva
-		signalSemaforo(semListos);
-
+	    pthread_t initProgramThread;
+	    pthread_create(&initProgramThread, NULL, (void *) inicializar_programa, newfd);
+//
+//	    //Recibir Header de Consola
+//	    if ((header = recibir_header(newfd)) == NULL)
+//	    	puts("No se pudo recibir header de consola");
+//
+//	    //Obtener Programa
+//	    programa = obtener_programa(header, newfd);
+//
+//	    //Crear PCB
+//	    puts("Creando PCB.. \n");
+//		pcb_aux = malloc(sizeof(t_pcb));
+//		pcb_aux = crearPCB(programa->codigo_programa, programa->programa_length, newfd, cola_listos, tamanio_pagina);
+//
+//		//Agregar PCB a la cola de listos
+//		queue_push(cola_listos, pcb_aux);
+//
+//		//Signal por consola nueva
+//		signalSemaforo(semListos);
+//
 		signalSemaforo(mutexConsolas);
 
 	}
+}
+
+void inicializar_programa(int fd) {
+	int socket_consola = fd;
+	int paginas_necesarias = 0;
+
+	//recibo el header de iniciar_ansisop
+	t_header * header = recibir_header(socket_consola);
+
+	//recibo el programa
+	void * buffer = malloc(header->tamanio);
+	recv(socket_consola, buffer, header->tamanio, 0);
+	t_paquete_programa * paquete_programa = deserializar_ansisop(buffer);
+
+	//mando a iniciar a UMC
+	paginas_necesarias = calcular_cantidad_paginas(paquete_programa->programa_length);
+	int pid =generar_pid();
+	enviar_header(Inicializar_programa, 12 + paquete_programa->programa_length, socketUMC);
+	enviar_inicializar_programa(pid, paginas_necesarias, paquete_programa->codigo_programa, socketUMC);
+
+	//espero la respuesta
+	int respuesta = recibir_respuesta_inicio(socketUMC);
+
+	if (respuesta){
+		//si es SI  --> creo el pcb
+		//			--> mando el pcb a LISTOS
+	} else {
+		//si es NO -> finalizo la consola
+		enviar_header(Fin_programa, pid, socket_consola);
+	}
+
+	//se muere el hilo
+}
+
+int calcular_cantidad_paginas(int codigo_length) {
+	int paginas_codigo = 0;
+	int paginas_stack = 0;
+	int paginas_totales = 0;
+
+	paginas_codigo = codigo_length / tamanio_pagina;
+	if ((codigo_length % tamanio_pagina) > 0)
+		paginas_codigo++;
+
+	paginas_stack = nucleo->stack_size / tamanio_pagina;
+	if ((nucleo->stack_size % tamanio_pagina) > 0)
+		paginas_stack++;
+
+	paginas_totales = paginas_codigo + paginas_stack;
+
+	return paginas_totales;
+}
+
+int generar_pid() {
+	int pid;
+	pthread_mutex_lock(&mutex_pid);
+		pid_global++;
+		pid = pid_global;
+	pthread_mutex_unlock(&mutex_pid);
+
+	return pid;
 }
 
 void crearServerCPU(){
