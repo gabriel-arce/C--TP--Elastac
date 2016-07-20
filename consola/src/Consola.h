@@ -45,9 +45,7 @@ typedef enum{
 
 t_consola_config *consola;
 pthread_mutex_t mutex_nucleo;
-
 int socketConsola;
-
 
 void cargar_config(char ** config_path);
 void MostrarAyuda();

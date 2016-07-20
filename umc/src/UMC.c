@@ -96,66 +96,36 @@ void inicializar_semaforos() {
 	pthread_mutex_init(&mutex_swap, 0);
 }
 
-void conecta_swap() {
-	socket_swap = clienteDelServidor(umc_config->ip_swap,
-				umc_config->puerto_swap);
-
-	enviar_handshake(socket_swap, UMC);
-
-	pthread_create(&hilo_cliente, NULL, (void *) atiende_swap, (void *) socket_swap);
-}
-
-void atiende_swap(void * args) {
-
-	int socket = (int) args;
-
-	bool keep_running = true;
-
-	while (keep_running) {
-		t_header * header = NULL;
-
-		pthread_mutex_lock(&mutex_swap);
-
-		header = recibir_header(socket);
-
-		if (!header) {
-			puts("ERROR");
-			keep_running = false;
-			pthread_mutex_unlock(&mutex_swap);
-			continue;
-		}
-
-		switch (header->identificador) {
-		case Respuesta_inicio_programa:
-			respuesta_inicio_swap(header->tamanio);
-			break;
-		default:
-			break;
-		}
-
-		free(header);
-
-		pthread_mutex_unlock(&mutex_swap);
-	}
-}
-
-void respuesta_inicio_swap(int respuesta_inicio) {
-
-	t_header * header = recibir_header(socket_swap);
-	t_paquete_inicializar_programa * paquete = recibir_inicializar_programa(header->tamanio, socket_swap);
-
-	if (respuesta_inicio == Respuesta__SI)
-		inicializar_proceso(paquete->pid, paquete->paginas_requeridas);
-
-	enviar_respuesta_inicio(socket_nucleo, respuesta_inicio);
-
-	free(paquete->codigo_programa);
-	free(paquete);
-}
-
 void enviar_pagina_size(int sock_fd) {
 	if (enviar_header(Tamanio_pagina, umc_config->frames_size, sock_fd))
-		printf("Se ha enviado el tamanio de pagina \n");
+		printf("\nSe ha enviado el tamanio de pagina \n");
+}
+
+void flush_tlb_by_certain_pid(int pid) {
+	void flush_entry_by_pid(t_tlb * tlb_entry) {
+		if (tlb_entry->pid == pid) {
+			tlb_entry->pagina = -1;
+			tlb_entry->frame = -1;
+			tlb_entry->pid = -1;
+		}
+	}
+	list_iterate(tabla_tlb, (void *) flush_entry_by_pid);
+}
+
+
+void signal_handler(int n_singal) {
+	switch (n_singal) {
+	case SIGUSR1:
+		new_line();
+		pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
+		pthread_join(hiloConsola, NULL);
+		break;
+	case SIGUSR2:
+		system("clear");
+		break;
+	default:
+		break;
+	}
 }
 
 void * escucha_conexiones() {
@@ -249,6 +219,137 @@ void * escucha_conexiones() {
 	return EXIT_SUCCESS;
 }
 
+//******************************  SWAP  **************************************************
+
+void conecta_swap() {
+	socket_swap = clienteDelServidor(umc_config->ip_swap,
+				umc_config->puerto_swap);
+
+	enviar_handshake(socket_swap, UMC);
+
+	pthread_create(&hilo_cliente, NULL, (void *) atiende_swap, (void *) socket_swap);
+}
+
+void atiende_swap(void * args) {
+
+	int socket = (int) args;
+
+	bool keep_running = true;
+
+	while (keep_running) {
+		t_header * header = NULL;
+
+		pthread_mutex_lock(&mutex_swap);
+
+		header = recibir_header(socket);
+
+		if (!header) {
+			puts("ERROR");
+			keep_running = false;
+			pthread_mutex_unlock(&mutex_swap);
+			continue;
+		}
+
+		switch (header->identificador) {
+		case Respuesta_inicio_programa:
+			respuesta_inicio_swap(header->tamanio);
+			break;
+		default:
+			break;
+		}
+
+		free(header);
+
+		pthread_mutex_unlock(&mutex_swap);
+	}
+}
+
+int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
+
+	int buffer_size = string_length(paquete->codigo_programa) + 12;
+
+	enviar_header(Inicializar_programa, buffer_size, socket_swap);
+
+	int r = enviar_inicializar_programa(paquete->pid,
+			paquete->paginas_requeridas, paquete->codigo_programa, socket_swap);
+
+	return r;
+}
+
+void respuesta_inicio_swap(int respuesta_inicio) {
+
+	t_header * header = recibir_header(socket_swap);
+	t_paquete_inicializar_programa * paquete = recibir_inicializar_programa(header->tamanio, socket_swap);
+
+	if (respuesta_inicio == Respuesta__SI)
+		inicializar_proceso(paquete->pid, paquete->paginas_requeridas);
+
+	enviar_respuesta_inicio(socket_nucleo, respuesta_inicio);
+
+	free(paquete->codigo_programa);
+	free(paquete);
+}
+
+void finalizar_en_swap(int pid) {
+	enviar_header(Finalizar_programa, pid, socket_swap);
+}
+
+void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid) {
+
+	int r = enviar_header(Solicitar_pagina, 16, socket_swap);
+
+	if (r < 0)
+		return NULL;
+
+	void * buffer_solicitud = malloc(16);
+
+	memcpy(buffer_solicitud, &(pid), 4);
+	void * buff_aux = serializar_leer_pagina(paquete->nro_pagina,
+			paquete->offset, paquete->bytes);
+	memcpy(buffer_solicitud + 4, buff_aux, 12);
+
+	send(socket_swap, buffer_solicitud, 16, 0);
+
+	free(buffer_solicitud);
+	free(buff_aux);
+
+	t_header * head = recibir_header(socket_swap);
+
+	if (!head)
+		puts("aca se rommpe");
+
+	printf("id: %d", head->identificador);
+	printf("t: %d", head->tamanio);
+
+	void * datos_solicitados = malloc(paquete->bytes);
+//	r = recv(socket_swap, datos_solicitados, paquete->bytes, 0);
+//
+//	if (r < 0)
+//		return NULL;
+//
+//	printf("datos: %s", (char *) datos_solicitados);
+
+	return datos_solicitados;
+}
+
+void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid) {
+	void * buffer_solicitud = NULL;
+
+	memcpy(buffer_solicitud, &(pid), 4);
+	void * buff_aux = serializar_almacenar_pagina(paquete->nro_pagina,
+			paquete->offset, paquete->bytes, paquete->buffer);
+	int second_size = 12 + paquete->bytes;
+	memcpy(buffer_solicitud + 4, buff_aux, second_size);
+
+	int last_size = 4 + second_size;
+	enviar_header(Almacenar_pagina, last_size, socket_swap);
+	send(socket_swap, buffer_solicitud, last_size, 0);
+}
+
+//********************************************************************************************
+
+//******************************  NUCLEO  **************************************************
+
 void * atiende_nucleo(void * args) {
 
 	int recibido = 1;
@@ -260,7 +361,7 @@ void * atiende_nucleo(void * args) {
 		t_header * head_in = recibir_header(socket_nucleo);
 
 		if (head_in == NULL) {
-			puts("ACA ROMPE?");
+			printf("\nSE DESCONECTO NUCLEO 		(...kill me please)\n");
 			recibido = -1;
 			pthread_mutex_unlock(&mutex_nucleo);
 			continue;
@@ -310,6 +411,7 @@ int inicializar_programa(int bytes_to_recv) {
 	new_line();
 
 	if (inicializar_en_swap(paquete_init) <= 0) {
+		printf("\n<<<<<<<ACA explota>>>>>>>\n");
 		//escribo en el log el error
 		enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
 		free(paquete_init->codigo_programa);
@@ -320,18 +422,6 @@ int inicializar_programa(int bytes_to_recv) {
 	free(paquete_init->codigo_programa);
 	free(paquete_init);
 	return EXIT_SUCCESS;
-}
-
-int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
-
-	int buffer_size = string_length(paquete->codigo_programa) + 12;
-
-	enviar_header(Inicializar_programa, buffer_size, socket_swap);
-
-	int r = enviar_inicializar_programa(paquete->pid,
-			paquete->paginas_requeridas, paquete->codigo_programa, socket_swap);
-
-	return r;
 }
 
 void finalizar_programa(int id_programa) {
@@ -378,9 +468,10 @@ void finalizar_programa(int id_programa) {
 
 }
 
-void finalizar_en_swap(int pid) {
-	enviar_header(Finalizar_programa, pid, socket_swap);
-}
+
+//********************************************************************************************
+
+//***********************************  CPU   *************************************************
 
 void * atiende_cpu(void * args) {
 
@@ -397,7 +488,6 @@ void * atiende_cpu(void * args) {
 		t_header * head_in = recibir_header(socket_cpu);
 
 		if (head_in == NULL) {
-			//handleo el error del header
 			recibido = -1;
 			pthread_mutex_unlock(&mutex_cpu);
 			continue;
@@ -568,80 +658,4 @@ int cambio_proceso_activo(int pid, int cpu) {
 	return EXIT_SUCCESS;
 }
 
-void flush_tlb_by_certain_pid(int pid) {
-	void flush_entry_by_pid(t_tlb * tlb_entry) {
-		if (tlb_entry->pid == pid) {
-			tlb_entry->pagina = -1;
-			tlb_entry->frame = -1;
-			tlb_entry->pid = -1;
-		}
-	}
-	list_iterate(tabla_tlb, (void *) flush_entry_by_pid);
-}
-
-void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid) {
-
-	int r = enviar_header(Solicitar_pagina, 16, socket_swap);
-
-	if (r < 0)
-		return NULL;
-
-	void * buffer_solicitud = malloc(16);
-
-	memcpy(buffer_solicitud, &(pid), 4);
-	void * buff_aux = serializar_leer_pagina(paquete->nro_pagina,
-			paquete->offset, paquete->bytes);
-	memcpy(buffer_solicitud + 4, buff_aux, 12);
-
-	send(socket_swap, buffer_solicitud, 16, 0);
-
-	free(buffer_solicitud);
-	free(buff_aux);
-
-	t_header * head = recibir_header(socket_swap);
-
-	if (!head)
-		puts("aca se rommpe");
-
-	printf("id: %d", head->identificador);
-	printf("t: %d", head->tamanio);
-
-	void * datos_solicitados = malloc(paquete->bytes);
-//	r = recv(socket_swap, datos_solicitados, paquete->bytes, 0);
-//
-//	if (r < 0)
-//		return NULL;
-//
-//	printf("datos: %s", (char *) datos_solicitados);
-
-	return datos_solicitados;
-}
-
-void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid) {
-	void * buffer_solicitud = NULL;
-
-	memcpy(buffer_solicitud, &(pid), 4);
-	void * buff_aux = serializar_almacenar_pagina(paquete->nro_pagina,
-			paquete->offset, paquete->bytes, paquete->buffer);
-	int second_size = 12 + paquete->bytes;
-	memcpy(buffer_solicitud + 4, buff_aux, second_size);
-
-	int last_size = 4 + second_size;
-	enviar_header(Almacenar_pagina, last_size, socket_swap);
-	send(socket_swap, buffer_solicitud, last_size, 0);
-}
-
-void signal_handler(int n_singal) {
-	switch (n_singal) {
-	case SIGUSR1:
-		new_line();
-		pthread_create(&hiloConsola, NULL, lanzar_consola, NULL);
-		pthread_join(hiloConsola, NULL);
-		break;
-	case SIGUSR2:
-		system("clear");
-		break;
-	default:
-		break;
-	}
-}
+//********************************************************************************************

@@ -48,11 +48,6 @@ int main(int argc, char * argv[]) {
 	}
 	prog_buffer[fp_size + 1] = '\0';
 
-//	printf("%s\n", prog_buffer);
-//	printf("Length del programa: %d\n", string_length(prog_buffer));
-
-	//Crear socket al nucleo
-//	socketConsola = clienteDelServidor("127.0.0.1", 6000);
 	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
 		MostrarMensajeDeError(NoSePudoCrearSocket);
 		return EXIT_FAILURE;
@@ -73,13 +68,6 @@ int main(int argc, char * argv[]) {
 	if (result == -1) {
 		return -1;
 	}
-//	void * buffer_head = serializar_header((uint8_t) Iniciar_ansisop, (uint32_t) tamanio_paquete);
-//	result = send(socketConsola, buffer_head, 5, 0);
-//	free(buffer_head);
-//	if (result == -1) {
-//		printf("Error en el send de la cabecera\n");
-//		return EXIT_FAILURE;
-//	}
 
 	//-----------luego envio el codigo del programa
 	void * buffer_pack = serializar_ansisop(prog_buffer);
@@ -90,7 +78,7 @@ int main(int argc, char * argv[]) {
 		return EXIT_FAILURE;
 	}
 	puts("Se ha enviado el codigo del programa AnSISOP");
-//	//-------------FIN ENVIO PROGRAMA
+	//-------------FIN ENVIO PROGRAMA
 
 	//-----------Quedo en espera para recibir cosas
 	int recibido = 1;
@@ -99,23 +87,12 @@ int main(int argc, char * argv[]) {
 
 		pthread_mutex_lock(&mutex_nucleo);
 
-		void * buffer_in = malloc(5);
+		t_header * cabecera = recibir_header(socketConsola);
 
-		recibido = recv(socketConsola, buffer_in, 5, MSG_WAITALL);
-
-		if (recibido == -1) {
-			free(buffer_in);
-			printf("Error en el recv");
-			break;
-		}
-
-		if (recibido == 0) {
-			free(buffer_in);
+		if (cabecera == NULL) {
 			pthread_mutex_unlock(&mutex_nucleo);
 			continue;
 		}
-
-		t_header * cabecera = deserializar_header(buffer_in);
 
 		switch (cabecera->identificador) {
 		case Imprimir_valor:

@@ -149,7 +149,7 @@ void mainEjecucion(){
 	while(1){
 
 		//Atrapar senial por cambio de quantum
-		signal(SIGINT, interrupcionConsola);
+		//signal(SIGINT, interrupcionConsola);
 
 		waitSemaforo(semListos);							//Si hay consolas
 		waitSemaforo(semCpuDisponible);		//Si hay al menos una CPU, que planifique
@@ -183,16 +183,16 @@ int CPUestaDisponible(t_clienteCPU *cpu){
 
 void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
-	char *serial = serializarPCB(pcb);
-	int tamanio  =string_length(serial);
-
-	enviar_header(20, tamanio, cpu->fd);
-	enviarPorSocket(cpu->fd,serial);
-
-	//Crear hilo para CPU entrante
-	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
-	pthread_join(pIDCpu, NULL);
-
+//	char *serial = serializarPCB(pcb);
+//	int tamanio  =string_length(serial);
+//
+//	enviar_header(20, tamanio, cpu->fd);
+//	enviarPorSocket(cpu->fd,serial);
+//
+//	//Crear hilo para CPU entrante
+//	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
+//	pthread_join(pIDCpu, NULL);
+//
 
 
 }
@@ -241,8 +241,8 @@ void pasarAEjecutar(){
 void pasarAListos(t_pcb *pcb){
 
 	//Agrega el PCB a la cola de Listos
-	puts("Pasando a listos..");
 	waitSemaforo(mutexListos);
+	printf("\nPasando a listos el pcb con pid: %d\n", pcb->pcb_pid);
 	queue_push(cola_listos, (void *) pcb);
 	signalSemaforo(mutexListos);
 
@@ -255,9 +255,6 @@ void crearServerConsola(){
 	 int listener = -1;														//Descriptor de escucha
 	 int reuse = 1;
 	 int newfd = -1;
-	t_pcb *pcb_aux;
-	t_header *header;
-	 t_paquete_programa *programa;
 
 	//Crear socket de escucha
 	listener = crearSocket();
@@ -290,33 +287,15 @@ void crearServerConsola(){
 	    puts("[NUCLEO] Recepcion hanshake Consola" );
 
 	    pthread_t initProgramThread;
-	    pthread_create(&initProgramThread, NULL, (void *) inicializar_programa, newfd);
-//
-//	    //Recibir Header de Consola
-//	    if ((header = recibir_header(newfd)) == NULL)
-//	    	puts("No se pudo recibir header de consola");
-//
-//	    //Obtener Programa
-//	    programa = obtener_programa(header, newfd);
-//
-//	    //Crear PCB
-//	    puts("Creando PCB.. \n");
-//		pcb_aux = malloc(sizeof(t_pcb));
-//		pcb_aux = crearPCB(programa->codigo_programa, programa->programa_length, newfd, cola_listos, tamanio_pagina);
-//
-//		//Agregar PCB a la cola de listos
-//		queue_push(cola_listos, pcb_aux);
-//
-//		//Signal por consola nueva
-//		signalSemaforo(semListos);
-//
+	    pthread_create(&initProgramThread, NULL, (void *) inicializar_programa, (void *) newfd);
+	    //JOIN??
 		signalSemaforo(mutexConsolas);
 
 	}
 }
 
-void inicializar_programa(int fd) {
-	int socket_consola = fd;
+void inicializar_programa(void * fd) {
+	int socket_consola = (int) fd;
 	int paginas_necesarias = 0;
 
 	//recibo el header de iniciar_ansisop
@@ -339,12 +318,17 @@ void inicializar_programa(int fd) {
 	if (respuesta){
 		//si es SI  --> creo el pcb
 		//			--> mando el pcb a LISTOS
+		t_pcb * new_pcb = crearPCB(paquete_programa->codigo_programa, pid, socket_consola, tamanio_pagina);
+//		imprimir_pcb(new_pcb);
+//		printf("\n\n");
+		pasarAListos(new_pcb);
 	} else {
 		//si es NO -> finalizo la consola
-		enviar_header(Fin_programa, pid, socket_consola);
+		enviar_header(Fin_programa, 0, socket_consola);
 	}
 
-	//se muere el hilo
+	//se muere el hilo?
+	//por ahi lo necesito vivo por si se muere consola para que me avise que se re pudrio
 }
 
 int calcular_cantidad_paginas(int codigo_length) {
