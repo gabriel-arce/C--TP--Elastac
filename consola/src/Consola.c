@@ -64,3 +64,10 @@ void MostrarMensajeDeError(Error e){
 
 }
 
+void rutina (int n) {
+	switch (n) {
+		case SIGINT:
+			enviar_header(ABORTAR_PROGRAMA, 0,socketConsola);
+	}
+}
+

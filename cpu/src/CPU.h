@@ -49,6 +49,7 @@
 #define FINALIZACION_QUANTUM 30
 #define SEMAFORO_BLOQUEADO 31
 #define SEMAFORO_NO_BLOQUEADO 32
+#define ABORTAR_PROGRAMA 33
 
 //------------------Estructuras
 
@@ -66,7 +67,7 @@ int quantum;
 int quantum_sleep;
 int tamanio_paginas;
 t_CPU_config * cpu;
-int socketUMC, socketUMC;
+int socketNucleo, socketUMC;
 fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 bool hotPlugActivado;

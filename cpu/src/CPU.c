@@ -65,19 +65,19 @@ void cargarConfiguracion(){
 }
 
 void conectarConNucleo(){
-	if((socketUMC = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
+	if((socketNucleo = clienteDelServidor(cpu->ip_nucleo, cpu->puerto_nucleo)) == -1)
 		salirPor("[CPU} No se pudo conectar al Nucleo");
 
 //envio de handshake
 	int result = -1;
-	result = enviar_handshake(socketUMC, 5);
+	result = enviar_handshake(socketNucleo, 5);
 	if (result == -1) {
 		exit(EXIT_FAILURE);
 	}
 
 		//escucho a la espera del quantum y el quantum_sleep
-	 	escucharPorSocket(socketUMC);
-	 	escucharPorSocket(socketUMC);
+	 	escucharPorSocket(socketNucleo);
+	 	escucharPorSocket(socketNucleo);
 
 }
 
@@ -112,9 +112,9 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
  	}
 
 void almacenarPCB(uint32_t tamanioBuffer){
- 	void * buffer = malloc(tamanioBuffer);
- 	recv(socketUMC,buffer, tamanioBuffer,0);
- 	recibirPCB(buffer);
+ 	pcbActual = recibir_pcb(socketNucleo, tamanioBuffer);
+	puts("PCB recibido");
+	pcbCorriendo = true;
   }
 
 
@@ -142,21 +142,9 @@ void cambiar_proceso_activo(int pid) {
 
 // escucho a la espera de algun PCB
 void escucharAlNucleo(){
-	escucharPorSocket(socketUMC);
+	escucharPorSocket(socketNucleo);
 	}
 
-
-void recibirPCB(void *buffer){
-
-	pcbActual = malloc(sizeof(t_pcb));
-
-	pcbActual = convertirPCB(buffer);
-
-	puts("PCB recibido");
-
-	pcbCorriendo = true;
-
-}
 
 void enviarPCB(){
 
@@ -166,27 +154,32 @@ void enviarPCB(){
 
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
+	t_header * header;
 	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
 		salirPor("no se pudo concretar la solicitud de escritura");
-		imprimirTexto("Hubo un error al intentar escribir una variable, finalizando el programa");
-		//TODO ver lo de stack overflow
-		//si hay algun error se termina el programa
 	}
+	header = recibir_header(socketUMC);
 
+	if(header->tamanio == 0){
+
+		imprimirTexto("Stack Overflow, abortando el programa");
+		finalizacionPrograma();
+	}
 }
 
 t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){
 
 	t_valor_variable valor;
+	t_header * header;
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 		salirPor("No se concreto la solicitud de lectura");
 	}
 
-	//TODO ver si hace falta un while o un void*
-	 	if(recv(socketUMC, &valor, sizeof(t_valor_variable), 0) <= 0){
-	 		salirPor("no se pudo recibir valor de la variable");
-	 	}
+	header = recibir_header(socketUMC);
+	if(header->tamanio == 0){salirPor("no se pudo leer la variable");}
+
+	valor = recibir_valor_de_variable(socketUMC);
 
 	return valor;
 }
@@ -208,14 +201,14 @@ char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
 void mandarTextoANucleo(char* texto){
 
-	if(enviar_texto(texto, socketUMC) == -1){
+	if(enviar_texto(texto, socketNucleo) == -1){
 	 		salirPor("no se pudo enviar texto a nucleo");
 	 	}
 }
 
 void desconectarCPU(){
 
-	enviar_header(FINALIZACION_DE_CPU,0,socketUMC);
+	enviar_header(FINALIZACION_DE_CPU,0,socketNucleo);
 
 	free(cpu->ip_UMC);
 	free(cpu->ip_nucleo);
@@ -338,7 +331,7 @@ void retornar(t_valor_variable retorno){
 
 void imprimir(t_valor_variable valor_mostrar){
 
-	if(enviar_valor_de_variable(valor_mostrar,socketUMC) == -1){
+	if(enviar_valor_de_variable(valor_mostrar,socketNucleo) == -1){
 	 			salirPor("No se concreto la impresion por pantalla");
 	 		}
 }
@@ -349,7 +342,6 @@ void imprimirTexto(char* texto){
 
 		if(list_size(pcbActual->indice_stack) == 1){
 
-		pcbCorriendo = false;
 		finalizacionPrograma();
 	}
 		else{
@@ -400,7 +392,7 @@ void wait(t_nombre_semaforo identificador_semaforo){
 
 void signals(t_nombre_semaforo identificador_semaforo){
 
-	enviar_signal_identificador_semaforo(identificador_semaforo, socketUMC);
+	enviar_signal_identificador_semaforo(identificador_semaforo, socketNucleo);
 }
 
 
@@ -412,10 +404,17 @@ void rutina (int n) {
 	switch (n) {
 		case SIGUSR1:
 			printf("Hot plug activado \n");
-				printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
-			}
+			printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
 			hotPlugActivado = true;
+			break;
+
+		case SIGINT:
+			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
+			pcbCorriendo = false;
+			hotPlugActivado = true;
+			break;
 	}
+}
 
 
 
@@ -656,6 +655,7 @@ void stack_destroy(t_stack * stack){
 }
 
 void finalizacionPrograma(){
+	pcbCorriendo = false;
 	enviar_header(FINALIZACION_PROGRAMA,0,socketNucleo);
 }
 

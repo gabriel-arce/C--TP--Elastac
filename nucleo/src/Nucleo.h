@@ -36,7 +36,7 @@
 
 //#define CONFIG_NUCLEO	"nucleo.conf"
 #define CONFIG_NUCLEO	"../nucleo/src/nucleo.conf"
-#define Tamanio_pagina				31
+#define Tamanio_pagina				19
 #define NOMBRE_SEMAFORO	20
 #define NOMBRE_IO						20
 
@@ -62,7 +62,14 @@ typedef enum {
 	MandarQuantum,
 	MandarQuantumSleep,
 	FinalizacionQuantum,
+	SemaforoBloqueado,
+	SemaforoNoBloqueado,
 } t_accionesPCB;
+
+typedef enum {
+	No,
+	Si,
+} t_respuesta;
 
 typedef struct {
 	int puerto_programas;
@@ -178,9 +185,11 @@ void ejecutarObtenerValorCompartido(int fd);
 void ejecutarAsignarValorCompartido(int fd);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
 void ejecutarEntradaSalida(t_clienteCPU *cpu);
-void ejecutarMuerteCPU();
 void inicializar_programa(int fd);
 int calcular_cantidad_paginas(int codigo_length);
 int generar_pid();
+void ejecutarMuerteCPU(t_clienteCPU *cpu);
+void  interrupcionConsola(int interrupcion);
+void destruirCPU(t_clienteCPU *cpu);
 
 #endif /* NUCLEO_H_ */

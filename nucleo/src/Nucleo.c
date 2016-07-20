@@ -147,6 +147,10 @@ void planificar_consolas(){
 
 void mainEjecucion(){
 	while(1){
+
+		//Atrapar senial por cambio de quantum
+		signal(SIGINT, interrupcionConsola);
+
 		waitSemaforo(semListos);							//Si hay consolas
 		waitSemaforo(semCpuDisponible);		//Si hay al menos una CPU, que planifique
 			puts("Pasando a ejecutar consola..");
@@ -174,7 +178,7 @@ t_clienteCPU *obtenerCPUDisponible(){
 }
 
 int CPUestaDisponible(t_clienteCPU *cpu){
-	return cpu->disponible == 0;
+	return cpu->disponible == Si;
 }
 
 void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
@@ -403,7 +407,7 @@ void crearServerCPU(){
 		t_clienteCPU *nuevaCPU = malloc(sizeof(t_clienteCPU));
 		nuevaCPU->cpuID				= obtenerCPUID();
 		nuevaCPU->fd 					= newfd;
-		nuevaCPU->disponible	= 0;
+		nuevaCPU->disponible	= Si;
 
 		//Agregar CPU a la lista
 		list_add(lista_cpu, nuevaCPU);
@@ -525,11 +529,11 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case MuereCPU:{
-	  		   ejecutarMuerteCPU();
+	  		   ejecutarMuerteCPU(cpu);
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
-	  		   cpu->disponible = 1;
+	  		   cpu->disponible = Si;
 	  		   break;}
 
 	   } //Fin switch
@@ -545,7 +549,7 @@ void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 
 	queue_push(cola, pcb);
 
-	cpu->disponible = 1;
+	cpu->disponible = Si;
 
 	signalSemaforo(semBloqueados);
 }
@@ -556,7 +560,7 @@ void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu){
 		puts("Agregando a finalizados..");
 		list_add(lista, pcb);
 
-		cpu->disponible = 1;
+		cpu->disponible = Si;
 
 		signalSemaforo(semFinalizados);
 		signalSemaforo(mutexFinalizados);
@@ -588,10 +592,22 @@ int getIOSleep(char *valor){
 
 void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu){
 	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
-	if ((semaforo->valor--) < 0)
-		cpu->disponible = 0;
+	t_header *header;
+	t_pcb *pcb;
+
+	if ((semaforo->valor--) < 0){
+		cpu->disponible = No;
+		enviar_header(31, 0, cpu->fd);
+
+		//recibir el pcb y enviar a bloqueados
+		header = recibir_header(cpu->fd);
+		pcb = recibir_pcb(cpu->fd, header->tamanio);
+
+		//enviar el pcb a bloqueados
+		queue_push(cola_bloqueados, pcb);}
 	else
-		cpu->disponible = 1;
+		{cpu->disponible = Si;
+		enviar_header(32, 0, cpu->fd);}
 }
 
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
@@ -671,7 +687,31 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu){
 
 }
 
-void ejecutarMuerteCPU(){
+void ejecutarMuerteCPU(t_clienteCPU *cpu){
 	   // terminar hilo de cpu y sacar de la lista de cpu..
-		pthread_detach(&pIDCpu);
+	int i;
+	t_clienteCPU *cpuAux = malloc(sizeof(t_clienteCPU));
+
+	for(i = 0; i < list_size(lista_cpu); i++){
+		cpuAux = (t_clienteCPU *) list_get(lista_cpu, i);
+		if(cpuAux->cpuID == cpu->cpuID){
+			list_remove_and_destroy_element(lista_cpu, i, destruirCPU);
+			break;
+		}
+	};
+
+	pthread_detach(&pIDCpu);
+}
+
+void  ejecutarSemaforoBloqueado(){
+
+}
+
+void  interrupcionConsola(int interrupcion){
+	signal(interrupcion, SIG_IGN);
+	puts("Ingrese un nuevo quantum: ");
+}
+
+void destruirCPU(t_clienteCPU *cpu){
+	free(cpu);
 }
