@@ -135,5 +135,6 @@ void imprimirTexto(char* texto);
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo);
 void wait(t_nombre_semaforo identificador_semaforo);
 void signals(t_nombre_semaforo identificador_semaforo);
+void finalizar();
 
 #endif /* CPU_H_ */

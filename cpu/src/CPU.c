@@ -23,7 +23,7 @@ AnSISOP_funciones functions = {
 		.AnSISOP_imprimir				 = imprimir,
 		.AnSISOP_imprimirTexto			 = imprimirTexto,
 		.AnSISOP_entradaSalida           = entradaSalida,
-
+		.AnSISOP_finalizar				 = finalizar,
 };
 
 AnSISOP_kernel kernel_functions = {
@@ -311,12 +311,12 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){				
 	t_posicion posicionDeRetorno;
 
 	posicionDeRetorno = convertirPunteroAPosicion(donde_retornar);
-	direccionDeRetorno = pcbActual->pcb_pc + 1;
+	direccionDeRetorno = pcbActual->pcb_pc;     //Creo que el PC ya esta actualizado (confirmarlo)
 
 	desactivarStackActivo();
 	crearStack();
 	asignarPosicionYDireccionDeRetorno(posicionDeRetorno, direccionDeRetorno);
-	irAlLabel(etiqueta);		//TODO hay que ver si el parser lo hace solo
+	irAlLabel(etiqueta);
 
 
 }
@@ -338,18 +338,6 @@ void imprimir(t_valor_variable valor_mostrar){
 
 void imprimirTexto(char* texto){
 
-	if(string_equals_ignore_case(texto, "end")){
-
-		if(list_size(pcbActual->indice_stack) == 1){
-
-		finalizacionPrograma();
-	}
-		else{
-			//TODO tendria que retornar a la funcion anterior pero tengo que hacer una prueba para ver como funciona el parser
-			//(Creo que no hay que hacer nada en este caso)
-		}
-	}
-
 	mandarTextoANucleo(texto);
 
 }
@@ -363,12 +351,11 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 void wait(t_nombre_semaforo identificador_semaforo){
 
-	enviar_wait_identificador_semaforo(identificador_semaforo, socketUMC);
-	//espera respuesta (si fue a bloqueado retorno pcb)
 	t_header * header_in;
 
 	enviar_wait_identificador_semaforo(identificador_semaforo, socketNucleo);
 
+	//espera respuesta (si fue a bloqueado retorno pcb)
 	header_in = recibir_header(socketNucleo);
 
 	if(header_in == NULL){
@@ -394,6 +381,12 @@ void signals(t_nombre_semaforo identificador_semaforo){
 
 	enviar_signal_identificador_semaforo(identificador_semaforo, socketNucleo);
 }
+
+void finalizar(){
+	mandarTextoANucleo("end");
+	finalizacionPrograma();
+	}
+
 
 
 //=================================================================================================================================================================
@@ -501,7 +494,7 @@ void actualizarPC(){
 	pcbActual->pcb_pc ++;
 }
 
-char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){				//TODO testear algoritmo
+char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 
 	char* instruccion = string_new();
 	uint32_t pagina;

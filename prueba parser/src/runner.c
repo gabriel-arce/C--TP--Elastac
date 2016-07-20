@@ -16,10 +16,10 @@ static const char* DEFINICION_VARIABLES = "variables a, b, c";
 static const char* FINALIZACION = "end";
 static const char* ASIGNACION = "a = b + 12";
 static const char* IMPRIMIR = "print b";
-static const char* IMPRIMIR_TEXTO = "textPrint foo\n";
+static const char* IMPRIMIR_TEXTO = "textPrint foo";
 static const char* CODIGO_COMPLETO = "#!/usr/bin/ansisop \n begin \n variables a, b, c \n  a = b + 12 \n print b \n textPrint foo\n end";
 static const char* SALTO = "jnz b inicio_for";
-static const char* FUNCTION = "function doble";
+static const char* FUNCTION = "g <- doble";
 static const char* RETORNAR = "return a";
 
 
@@ -81,7 +81,7 @@ if (file) {
 
 void correrFinalizar() {
 	printf("Ejecutando '%s'\n", FINALIZACION);
-	analizadorLinea(strdup(IMPRIMIR_TEXTO), &functions, &kernel_functions);
+	analizadorLinea(strdup(FINALIZACION), &functions, &kernel_functions);
 	printf("================\n");
 }
 
@@ -111,14 +111,13 @@ int main(int argc, char **argv) {
 	correrFinalizar();
 	correrSalto();
 	correrRetornar();
-	//correrFunction();			//TODO rompe al ejecutar
+	correrFunction();			//TODO rompe al ejecutar
 	printf(" El numero de instrucciones del codigo completo es '%d'\n",metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_size);
 	t_intructions * instrucciones = metadata_desde_literal(CODIGO_COMPLETO)->instrucciones_serializado;
 	printf("primera instruccion inicio:%d\n", instrucciones[0].start);
 	printf("primera instruccion offset:%d\n", instrucciones->offset);
 	printf("segunda instruccion inicio:%d\n", (instrucciones+1)->start);
 	printf("SP de primera instruccion:%d\n", metadata_desde_literal(CODIGO_COMPLETO)->instruccion_inicio);
-
 	return 0;
 }
 
