@@ -631,6 +631,8 @@ void eliminarStackActivo(){
 	posicionUltimoStack = list_size(pcbActual->indice_stack);
 	ultimoStack = list_get(pcbActual->indice_stack, posicionUltimoStack);
 
+	actualizarStackPointer(ultimoStack);
+
 	stack_destroy(ultimoStack);
 	list_remove(pcbActual->indice_stack, posicionUltimoStack);
 	free(ultimoStack);
@@ -718,4 +720,13 @@ void finDeQuantum(){
 	enviar_header(FINALIZACION_QUANTUM,0,socketNucleo);
 }
 
+void actualizarStackPointer(t_stack * stackAEliminar){
+
+	t_posicion * posicionDeUltimaVariable;
+
+	posicionDeUltimaVariable = list_get(stackAEliminar->vars, 0);
+
+	pcbActual->pcb_sp->pagina = posicionDeUltimaVariable->pagina;
+	pcbActual->pcb_sp->offset = posicionDeUltimaVariable->offset;
+}
 

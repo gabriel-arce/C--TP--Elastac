@@ -118,6 +118,7 @@ void almacenarPCB(uint32_t tamanioBuffer);
 void stack_destroy(t_stack * stack);
 void finDeQuantum();
 void finalizacionPrograma();
+void actualizarStackPointer(t_stack * stackAEliminar);
 
 //------------------Primitivas
 

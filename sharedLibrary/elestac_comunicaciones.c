@@ -552,6 +552,19 @@ int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket)
 	return EXIT_SUCCESS;
 }
 
+char* recibir_wait_identificador_semaforo(int buffer_size, int socket) {
+
+	void * buffer = malloc(buffer_size);
+	int r = recv(socket, buffer, buffer_size, 0);
+
+	if (r <= 0)
+		return 0;
+
+	char * respuesta = deserializar_imprimir_texto(buffer);
+
+	return respuesta;
+}
+
 //---------------------------------------------------->
 int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket) {
 
@@ -569,6 +582,19 @@ int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socke
 
 	free(buffer_out);
 	return EXIT_SUCCESS;
+}
+
+char* recibir_signal_identificador_semaforo(int buffer_size, int socket) {
+
+	void * buffer = malloc(buffer_size);
+	int r = recv(socket, buffer, buffer_size, 0);
+
+	if (r <= 0)
+		return 0;
+
+	char * respuesta = deserializar_imprimir_texto(buffer);
+
+	return respuesta;
 }
 
 

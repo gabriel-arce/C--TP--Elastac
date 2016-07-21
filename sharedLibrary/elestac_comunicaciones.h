@@ -120,10 +120,10 @@ int enviar_valor_de_variable(t_valor_variable valor, int socket);
 t_valor_variable recibir_valor_de_variable(int socket);
 
 int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket);
-
+char* recibir_wait_identificador_semaforo(int buffer_size, int socket);
 
 int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket);
-
+char* recibir_signal_identificador_semaforo(int buffer_size, int socket);
 
 int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket);
 
