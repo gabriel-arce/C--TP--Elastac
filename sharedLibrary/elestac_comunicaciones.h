@@ -91,6 +91,9 @@ int deserializar_imprimir_valor(void * buffer);
 void * serializar_identificador_semaforo(char* id);
 char * deserializar_identificador_semaforo(void * buffer);
 
+void * serializar_nombre_compartida(t_nombre_compartida variable);
+char * deserializar_nombre_compartida(void * buffer);
+
 int enviar_handshake(int socket, int id);
 int recibir_handshake(int socket);
 
@@ -120,6 +123,9 @@ int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socke
 
 
 int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket);
+
+
+int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket);
 
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

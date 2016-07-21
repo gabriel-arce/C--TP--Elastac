@@ -272,6 +272,22 @@ char * deserializar_identificador_semaforo(void * buffer) {
 	return texto;
 }
 //----------------------------------------------------->
+void * serializar_nombre_compartida(t_nombre_compartida variable){
+
+	return serializar_ansisop(variable);
+}
+
+char * deserializar_nombre_compartida(void * buffer) {
+	t_paquete_programa * paquete = deserializar_ansisop(buffer);
+
+	char * texto = string_new();
+	string_append(&texto, paquete->codigo_programa);
+	free(paquete->codigo_programa);
+	free(paquete);
+
+	return texto;
+}
+//----------------------------------------------------->
 int enviar_handshake(int socket, int id) {
 	void * buffer = serializar_header((uint8_t) id, (uint32_t) 0);
 
@@ -526,8 +542,8 @@ int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket)
 	if (result == -1)
 		return result;
 
-	void * buffer_out = serializar_identificador_semaforo(
-			identificador_semaforo);
+	void * buffer_out = serializar_identificador_semaforo(identificador_semaforo);
+
 	result = send(socket, buffer_out, sizeof(buffer_out), 0);
 	if (result == -1)
 		return result;
@@ -537,16 +553,15 @@ int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket)
 }
 
 //---------------------------------------------------->
-int enviar_signal_identificador_semaforo(char* identificador_semaforo,
-		int socket) {
+int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket) {
 
 	int result = enviar_header(23, sizeof(identificador_semaforo) + 4, socket);
 
 	if (result == -1)
 		return result;
 
-	void * buffer_out = serializar_identificador_semaforo(
-			identificador_semaforo);
+	void * buffer_out = serializar_identificador_semaforo(identificador_semaforo);
+
 	result = send(socket, buffer_out, sizeof(buffer_out), 0);
 
 	if (result == -1)
@@ -555,3 +570,28 @@ int enviar_signal_identificador_semaforo(char* identificador_semaforo,
 	free(buffer_out);
 	return EXIT_SUCCESS;
 }
+
+
+//---------------------------------------------------->
+int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket){
+
+	int result = enviar_header(25, sizeof(t_nombre_compartida) + 4, socket);
+
+	if (result == -1)
+			return result;
+
+	void * buffer_out = serializar_nombre_compartida(variable);
+
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+
+	if (result == -1)
+			return result;
+
+		free(buffer_out);
+		return EXIT_SUCCESS;
+
+}
+
+
+//---------------------------------------------------->
+

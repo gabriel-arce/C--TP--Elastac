@@ -94,18 +94,22 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
  	switch(header->identificador){
  	case QUANTUM:
  	 		quantum = header->tamanio;
+ 	 		printf("quantum: %d \n",header->tamanio);
  	 		break;
 
  	case QUANTUM_SLEEP:
  	 		quantum_sleep = header->tamanio;
+ 	 		printf("quantum sleep: %d \n",header->tamanio);
  	 		break;
 
  	case TAMANIO_PAGINA:
  	 		tamanio_paginas = header->tamanio;
+ 	 		printf("tamanio de paginas: %d \n",header->tamanio);
  	 		break;
 
  	case EJECUTAR_PCB:
  	 		almacenarPCB(header->tamanio);
+ 	 		puts("PCB recibido");
  	 		break;
  	 	}
  	free(header);
@@ -113,7 +117,6 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
 
 void almacenarPCB(uint32_t tamanioBuffer){
  	pcbActual = recibir_pcb(socketNucleo, tamanioBuffer);
-	puts("PCB recibido");
 	pcbCorriendo = true;
   }
 
@@ -135,18 +138,26 @@ void conectarConUMC(){
 void cambiar_proceso_activo(int pid) {
 	int result = enviar_header(CAMBIO_DE_PROCESO_ACTIVO, pid, socketUMC);
 
-	if (result == -1)
+	if (result == -1){
 		salirPor("No se pudo realizar el cambio de proceso activo");
+	}
+	else{
+		printf("cambio de proceso activo, PID: %d \n", pcbActual->pcb_pid);
+	}
+
 }
 
 
 // escucho a la espera de algun PCB
 void escucharAlNucleo(){
+
 	escucharPorSocket(socketNucleo);
 	}
 
 
 void enviarPCB(){
+
+	puts("enviando PCB a nucleo");
 
 	enviar_pcb(pcbActual, socketNucleo);
 
@@ -155,9 +166,11 @@ void enviarPCB(){
 void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_variable valorVariable){
 
 	t_header * header;
+
 	if(enviar_solicitud_escritura(pagina, offset, size, &valorVariable, socketUMC) == -1){
 		salirPor("no se pudo concretar la solicitud de escritura");
 	}
+
 	header = recibir_header(socketUMC);
 
 	if(header->tamanio == 0){
@@ -208,6 +221,8 @@ void mandarTextoANucleo(char* texto){
 
 void desconectarCPU(){
 
+	puts("Desconectando CPU");
+
 	enviar_header(FINALIZACION_DE_CPU,0,socketNucleo);
 
 	free(cpu->ip_UMC);
@@ -221,6 +236,7 @@ void desconectarCPU(){
 //----------------------------------------------------------------Primitivas
 
 t_puntero definirVariable(t_nombre_variable identificador_variable) {
+
 
 	t_variable_stack * variableStack = malloc(sizeof(variableStack));
 	t_stack * stackActivo;
@@ -246,6 +262,7 @@ t_puntero definirVariable(t_nombre_variable identificador_variable) {
 		variableStack->posicion->pagina = ((pcbActual->pcb_sp->pagina) + 1);    //pongo la variable en la pagina siguiente
 		variableStack->posicion->offset = 0;
 		variableStack->posicion->size = 4;
+
 		pcbActual->pcb_sp->pagina += 1;									//pagina siguiente en el stack pointer
 		pcbActual->pcb_sp->offset = 4;
 	}
@@ -254,13 +271,16 @@ t_puntero definirVariable(t_nombre_variable identificador_variable) {
 	stackActivo = buscarStackActivo();
 	list_add(stackActivo->vars, &variableStack);						//Agrego variableStack a stackActivo
 
-	escribirBytes(variableStack->posicion->pagina, variableStack->posicion->offset, variableStack->posicion->size, 0);		//En realidad no se tendrian que inicializar las variables
+	printf("Escribir variable en UMC:  %s \n", identificador_variable);
+
+	escribirBytes(variableStack->posicion->pagina, variableStack->posicion->offset, variableStack->posicion->size, 0);		//TODO En realidad no se tendrian que inicializar las variables
 
 	return convertirPosicionAPuntero(variableStack->posicion);
 	}
 
 
 t_puntero obtenerPosicionVariable(t_nombre_variable identificador_variable) {
+
 
 	t_variable_stack * variableStack;
 
@@ -275,6 +295,8 @@ t_valor_variable dereferenciar(t_puntero direccion_variable) {
 
 	posicion = convertirPunteroAPosicion(direccion_variable);
 
+	puts("Leer variable en UMC");
+
 	valorVariable = leerBytesDeVariable(posicion.pagina, posicion.offset, posicion.size);
 	return  valorVariable;
 
@@ -287,9 +309,15 @@ void asignar(t_puntero direccion_variable, t_valor_variable valor) {
 
 }
 
-t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){				//TODO enviar a nucleo
+t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
-	//mandar a nucleo
+	t_header * header_in;
+
+	enviar_obtener_valor_compartido( variable, socketNucleo);
+
+	header_in = recibir_header(socketNucleo);
+
+	return (header_in->tamanio);
 
 }
 
@@ -301,12 +329,16 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 
 void irAlLabel(t_nombre_etiqueta etiqueta){
 
+	printf("Ir a etiqueta: %s", etiqueta);
 
 	pcbActual->pcb_pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indice_etiquetas, pcbActual->cantidad_de_etiquetas);
 
 }
 
 void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){							//TODO faltan los argumentos!!
+
+	printf("Ejecutando funcion: %s", etiqueta);
+
 	uint32_t direccionDeRetorno; 			//numero que debera tomar el PC al finalizar la funcion
 	t_posicion posicionDeRetorno;
 
@@ -323,6 +355,8 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){				
 
 void retornar(t_valor_variable retorno){
 
+	printf("Retornando valor: %s \n", retorno);
+
 	retornarValorAVariable(retorno);
 	modificarElPC();
 	eliminarStackActivo();
@@ -331,6 +365,8 @@ void retornar(t_valor_variable retorno){
 
 void imprimir(t_valor_variable valor_mostrar){
 
+	printf("Imprimiendo valor: %s \n", valor_mostrar);
+
 	if(enviar_valor_de_variable(valor_mostrar,socketNucleo) == -1){
 	 			salirPor("No se concreto la impresion por pantalla");
 	 		}
@@ -338,11 +374,15 @@ void imprimir(t_valor_variable valor_mostrar){
 
 void imprimirTexto(char* texto){
 
+	printf("Imprimiendo texto: %s", texto);
+
 	mandarTextoANucleo(texto);
 
 }
 
 void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
+
+	printf ("Entrada y salida en: %s , por: %d tiempo \n", dispositivo, tiempo);
 
 	//TODO serializar y mandar
 	pcbCorriendo = false;
@@ -350,6 +390,8 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 }
 
 void wait(t_nombre_semaforo identificador_semaforo){
+
+	printf("Wait semaforo:  %s \n", identificador_semaforo);
 
 	t_header * header_in;
 
@@ -370,6 +412,9 @@ void wait(t_nombre_semaforo identificador_semaforo){
 		break;
 
 	case SEMAFORO_BLOQUEADO:
+
+		puts("Semaforo bloqueado, PCB detenido");
+
 		pcbCorriendo = false;
 		break;
 		}
@@ -379,10 +424,15 @@ void wait(t_nombre_semaforo identificador_semaforo){
 
 void signals(t_nombre_semaforo identificador_semaforo){
 
+	printf ("Signal semaforo:  %s \n", identificador_semaforo);
+
 	enviar_signal_identificador_semaforo(identificador_semaforo, socketNucleo);
 }
 
 void finalizar(){
+
+	printf ("Finalizando programa:  %d \n", pcbActual->pcb_pid);
+
 	mandarTextoANucleo("end");
 	finalizacionPrograma();
 	}
@@ -396,12 +446,14 @@ void finalizar(){
 void rutina (int n) {
 	switch (n) {
 		case SIGUSR1:
+
 			printf("Hot plug activado \n");
 			printf("Se desconectará el CPU cuando termine la ejecucion del programa actual\n");
+
 			hotPlugActivado = true;
 			break;
 
-		case SIGINT:
+		case SIGINT:																		//TODO ver como abortar
 			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
 			pcbCorriendo = false;
 			hotPlugActivado = true;
@@ -456,8 +508,12 @@ int getQuantumPcb(){
 }
 
 void ejecutarProximaInstruccion(){
-	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
+
+	printf("Quantum actual: %d \n", pcbActual->quantum_actual);
+
 	char* instruccionEnString;
+
+	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 
 	instruccionACorrer = buscarProximaInstruccion();    // busco la instruccion en el indice de codigo
 	actualizarPC();
@@ -480,6 +536,8 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 
 
 void restaurarQuantum(){
+
+	puts("Restaurando Quantum");
 
 	pcbActual->quantum_actual = 0;
 }
@@ -615,6 +673,8 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 }
 
 void borrarPCBActual(){
+
+	puts("Borrando PCB actual");
 
 	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
 	list_destroy(pcbActual->indice_codigo);
