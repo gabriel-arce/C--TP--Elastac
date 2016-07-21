@@ -126,6 +126,8 @@ int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket)
 char* recibir_signal_identificador_semaforo(int buffer_size, int socket);
 
 int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket);
+char* recibir_obtener_valor_compartido(int buffer_size, int socket);
+
 
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */

@@ -618,6 +618,19 @@ int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket){
 
 }
 
+char* recibir_obtener_valor_compartido(int buffer_size, int socket) {
+
+	void * buffer = malloc(buffer_size);
+	int r = recv(socket, buffer, buffer_size, 0);
+
+	if (r <= 0)
+		return 0;
+
+	char * respuesta = deserializar_imprimir_texto(buffer);
+
+	return respuesta;
+}
+
 
 //---------------------------------------------------->
 
