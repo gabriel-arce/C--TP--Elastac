@@ -34,11 +34,11 @@ AnSISOP_kernel kernel_functions = {
 
 
 
-void cargarConfiguracion(){
+void cargarConfiguracion(char ** config_path){
 
 	printf("PROCESO CPU \n");
 	printf(" Cargando configuracion.. \n");
-	t_config *config = config_create(CONFIG_PATH);
+	t_config *config = config_create(config_path[1]);
 
 	cpu = malloc(sizeof(t_CPU_config));
 

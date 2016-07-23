@@ -8,12 +8,15 @@
 #include "CPU.h"
 
 
-int main(void){
+int main(int argc, char * argv[]){
 
 	signal(SIGUSR1,rutina);		//HotPlug
 	signal(SIGINT, rutina);
 
-	cargarConfiguracion();		//Cargar configuracion
+	if (!chequear_argumentos(argc, 2))
+			return EXIT_FAILURE;
+
+	cargar_archivo_config(argv, (void *) cargarConfiguracion);
 
 
 	conectarConNucleo();		//Conectar al nucleo

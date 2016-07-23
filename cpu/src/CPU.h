@@ -26,7 +26,7 @@
 #include <elestac_comunicaciones.h>
 #include <time.h>
 
-#define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
+//#define CONFIG_PATH "../cpu/src/CPU.conf"  			//Eclipse
 //#define CONFIG_PATH "CPU.conf"					//Terminal
 #define MAXIMO_BUFFER 2000
 #define SERIALIZADOR				"##"
@@ -76,7 +76,7 @@ bool pcbCorriendo;
 //------------------Funciones
 
 t_CPU_config * cargar_config();
-void cargarConfiguracion();
+void cargarConfiguracion(char ** config_path);
 void conectarConNucleo();
 void conectarConUMC();
 void cambiar_proceso_activo(int pid);
