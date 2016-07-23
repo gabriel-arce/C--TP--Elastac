@@ -537,16 +537,16 @@ int leer_bytes(int socket_cpu, int bytes) {
 	printf("Offset: %d\n", solicitud->offset);
 	printf("bytes: %d\n", solicitud->bytes);
 
-	bool sol_pag_val = pagina_valida(cpu->proceso_activo,
+	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
+
+	int sol_pag_val = pagina_valida(proceso,
 			solicitud->nro_pagina);
-	if (!sol_pag_val) {
+	if (sol_pag_val) {
 		free(solicitud);
 		return -1;
 	}
 
 	t_tlb * tlb_entry = NULL;
-	t_proceso * proceso = NULL;
-	proceso = buscar_proceso(cpu->proceso_activo);
 
 	if (tlb_on)
 		tlb_entry = buscar_en_tlb(solicitud->nro_pagina, proceso->pid);
