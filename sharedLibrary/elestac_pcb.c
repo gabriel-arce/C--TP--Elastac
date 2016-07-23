@@ -52,6 +52,9 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 						meta->instrucciones_serializado[i].offset));
 
 	//***INDICE DE ETIQUETAS
+	if(meta->etiquetas == NULL)
+		pcb->indice_etiquetas = string_new();
+	else
 	pcb->indice_etiquetas = meta->etiquetas;
 	//***CANTIDAD DE ETIQUETAS
 	pcb->cantidad_de_etiquetas = meta->cantidad_de_etiquetas;

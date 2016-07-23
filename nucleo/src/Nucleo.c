@@ -183,16 +183,15 @@ int CPUestaDisponible(t_clienteCPU *cpu){
 
 void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
-//	char *serial = serializarPCB(pcb);
-//	int tamanio  =string_length(serial);
-//
-//	enviar_header(20, tamanio, cpu->fd);
-//	enviarPorSocket(cpu->fd,serial);
-//
-//	//Crear hilo para CPU entrante
-//	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
-//	pthread_join(pIDCpu, NULL);
-//
+	int tamanio  =calcular_size_pcb(pcb);
+
+	enviar_header(20, tamanio, cpu->fd);
+	enviar_pcb(pcb, cpu->fd);
+
+	//Crear hilo para CPU entrante
+	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
+	pthread_join(pIDCpu, NULL);
+
 
 
 }
