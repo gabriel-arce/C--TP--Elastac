@@ -55,6 +55,18 @@ typedef struct {
 	void * buffer;
 } t_paquete_almacenar_pagina;
 
+typedef struct{
+	t_valor_variable valor;
+	int nombre_length;
+	t_nombre_compartida nombre;
+}t_paquete_asignar_valor_compartido;
+
+typedef struct{
+	int tiempo;
+	int nombre_length;
+	t_nombre_dispositivo nombre;
+}t_paquete_entrada_salida;
+
 void * serializar_header(uint8_t id, uint32_t size);
 t_header * deserializar_header(void * buffer);
 
@@ -94,6 +106,12 @@ char * deserializar_identificador_semaforo(void * buffer);
 void * serializar_nombre_compartida(t_nombre_compartida variable);
 char * deserializar_nombre_compartida(void * buffer);
 
+void * serializar_asignar_valor_compartido(t_nombre_compartida nombre_variable, t_valor_variable valor_variable);
+t_paquete_asignar_valor_compartido * deserializar_asignar_valor_compartido(void * buffer);
+
+void * serializar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int tiempo);
+t_paquete_entrada_salida * deserializar_entrada_salida(void * buffer);
+
 int enviar_handshake(int socket, int id);
 int recibir_handshake(int socket);
 
@@ -128,6 +146,10 @@ char* recibir_signal_identificador_semaforo(int buffer_size, int socket);
 int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket);
 char* recibir_obtener_valor_compartido(int buffer_size, int socket);
 
+int enviar_asignar_valor_compartido(t_nombre_compartida nombre_variable, t_valor_variable valor, int socket);
+t_paquete_asignar_valor_compartido * recibir_asignar_valor_compartido(int buffer_size, int socket);
 
+int enviar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int tiempo, int socket);
+t_paquete_entrada_salida * recibir_entrada_salida(int buffer_size, int socket);
 
 #endif /* ELESTAC_COMUNICACIONES_H_ */
