@@ -121,7 +121,7 @@ int tamanio_pagina;
 int pid_global;
 
 t_queue *cola_listos;
-t_list	*cola_bloqueados;
+t_list	*lista_bloqueados;
 //, *cola_ejecutando;
 
 t_list *lista_ejecutando;
@@ -204,6 +204,6 @@ void destruirCPU(t_clienteCPU *cpu);
 void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo);
 void ejecutarImprimirTexto(int socket, int tamanio_buffer);
 void ejecutarImprimirVariable(int socket, int tamanio_buffer);
-void ejecutaFinalizacionDeQuantum(int socket);
+void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu);
 
 #endif /* NUCLEO_H_ */

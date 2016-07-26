@@ -87,7 +87,7 @@ void crearSemaforos(){
 void crearListasYColas(){
 
 	cola_listos 				= queue_create();
-	cola_bloqueados	= queue_create();
+	lista_bloqueados	= list_create();
 //	cola_ejecutando	= queue_create();
 
 
@@ -142,9 +142,12 @@ void planificar_consolas(){
 
 	//Crear los hilos para las colas de ejecucion y bloqueados
 	pthread_create(&hiloEjecucion, NULL, (void *)mainEjecucion, NULL);
-	pthread_create(&hiloBloqueado, NULL, (void *)mainBloqueado, NULL);
+
+	//pthread_create(&hiloBloqueado, NULL, (void *)mainBloqueado, NULL);
+
 	pthread_join(hiloEjecucion, NULL);
-	pthread_join(hiloBloqueado, NULL);
+
+	//pthread_join(hiloBloqueado, NULL);
 }
 
 void mainEjecucion(){
@@ -157,19 +160,19 @@ void mainEjecucion(){
 		waitSemaforo(semCpuDisponible);		//Si hay al menos una CPU, que planifique
 			puts("Pasando a ejecutar consola..");
 			pasarAEjecutar();
-			finalizar();
+			//finalizar();
 		//}
 	}
 }
 
-void mainBloqueado(){
+/*void mainBloqueado(){
 	while(1){
 		waitSemaforo(semBloqueados);
 		entradaSalida();
 		signalSemaforo(semBloqueados);
 	}
 }
-
+*/
 
 t_clienteCPU *obtenerCPUDisponible(){
 
@@ -191,15 +194,16 @@ void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 	enviar_header(20, tamanio, cpu->fd);
 	enviar_pcb(pcb, cpu->fd);
 
+	/*
 	//Crear hilo para CPU entrante
 	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
 	pthread_join(pIDCpu, NULL);
-
+	 */
 
 
 }
 
-void entradaSalida(){
+/*void entradaSalida(){
 	//Obtener el elemento por encima de la cola
 	t_pcb *pcbBloqueado = (t_pcb *)queue_peek(cola_bloqueados);
 
@@ -214,14 +218,16 @@ void entradaSalida(){
 	pasarAListos(pcbBloqueado);
 
 }
-
+*/
 void pasarAEjecutar(){
-	t_pcb *pcbEjecutando, *pcbActual;;
+	t_pcb *pcbEjecutando;
 
 	waitSemaforo(mutexListos);
 
 	//Obtener una CPU disponible para procesar
 	t_clienteCPU *cpuDeEjecucion = obtenerCPUDisponible();
+
+	cpuDeEjecucion->disponible = No;
 
 	if(cpuDeEjecucion != NULL){
 
@@ -406,9 +412,9 @@ void crearServerCPU(){
 		if (enviar_header(29, nucleo->quantum_sleep, newfd) == -1)
 			puts("[NUCLEO] Envio de Quantum fallido");
 
-/*		//Crear hilo para CPU entrante
+		//Crear hilo para CPU entrante
 		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
-		pthread_join(pIDCpu, NULL);*/
+		pthread_join(pIDCpu, NULL);
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);
@@ -481,11 +487,9 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
-	bool PCBRetornado = true;
 
-	while(PCBRetornado){
+	while(1){
 		if ((header = recibir_header(cpu->fd)) == NULL){
-			puts("Error");
 			continue;}
 
 	   switch(header->identificador){
@@ -518,8 +522,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
-	  		   ejecutaFinalizacionDeQuantum(cpu->fd);
-	  		   cpu->disponible = Si;
+	  		   ejecutaFinalizacionDeQuantum(cpu);
 	  		   break;}
 
 	  	   case abortarPrograma:{
@@ -574,7 +577,7 @@ int getSemValue(char *valor){
 t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
 	semNucleo->id						= semaforo;
-	semNucleo->valor					= valor;
+	semNucleo->valor					= valor;      //TODO castea int a semaforo?
 	semNucleo->io_sleep					= io_sleep;
 	semNucleo->bloqueados	= list_create();
 	return semNucleo;
@@ -608,8 +611,10 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 		header = recibir_header(cpu->fd);
 		pcb = recibir_pcb(cpu->fd, header->tamanio);
 
+		cpu->disponible = Si;
+
 		//enviar el pcb a bloqueados
-		queue_push(cola_bloqueados, pcb);
+		list_add(lista_bloqueados, pcb);
 
 
 
@@ -633,9 +638,9 @@ t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
 	for(i = 0; i < list_size(lista_semaforos); i++){
 		semaforo = list_get(lista_semaforos, i);
 		if(strcmp(semaforo->id, nombreSemaforo) == 0){
-			printf("Valor actual: %d\n", semaforo->valor);
+			printf("Valor actual: %d\n", (int)semaforo->valor);		//TODO castea semaforo a int?
 			semaforo->valor--;
-			printf("Valor actual: %d\n", semaforo->valor);
+			printf("Valor actual: %d\n", (int)semaforo->valor);
 			break;
 		}
 	}
@@ -687,14 +692,17 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 	   t_pcb *pcb = recibir_pcb(cpu->fd, header->tamanio);
+	   cpu->disponible = Si;
 
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
+
+	   finalizar();
 }
 
 void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
 	t_paquete_entrada_salida * paquete;
 	t_semNucleo *semaforo;
-	int i;
+
 	t_pcb * pcb  = malloc(sizeof(t_pcb));
 	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
 
@@ -703,6 +711,7 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
 	//recibir el pcb y enviar a bloqueados
 	header = recibir_header(cpu->fd);
 	pcb = recibir_pcb(cpu->fd, header->tamanio);
+	cpu->disponible = Si;
 
 	semaforo = obtenerSemaforoPorID(paquete->nombre);
 
@@ -729,7 +738,7 @@ void ejecutarMuerteCPU(t_clienteCPU *cpu){
 	for(i = 0; i < list_size(lista_cpu); i++){
 		cpuAux = (t_clienteCPU *) list_get(lista_cpu, i);
 		if(cpuAux->cpuID == cpu->cpuID){
-			list_remove_and_destroy_element(lista_cpu, i, destruirCPU);
+			list_remove_and_destroy_element(lista_cpu, i, (void*)destruirCPU); //castear funcion a void*? TODO
 			break;
 		}
 	};
@@ -761,11 +770,11 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 	}
 	int i=0;
 
-	for(i; i < list_size(cola_bloqueados); i++){
-		t_pcb * pcbAux= list_get(cola_bloqueados, i);
+	for(i=0; i < list_size(lista_bloqueados); i++){
+		t_pcb * pcbAux= list_get(lista_bloqueados, i);
 
 		if(pcbAux->pcb_pid == pcb->pcb_pid){
-			list_remove(cola_bloqueados, i);
+			list_remove(lista_bloqueados, i);
 			break;
 		}
 
@@ -791,9 +800,11 @@ void ejecutarImprimirVariable(int socket, int tamanio_buffer){
 	//enviar_valor_de_variable(variable, pcb->consola); no se como obtener la consola correspondiente
 }
 
-void ejecutaFinalizacionDeQuantum(int socket){
-	t_header * header = recibir_header(socket);
-	t_pcb * pcb = recibir_pcb(socket,header->tamanio);
+void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu){
+	t_header * header = recibir_header(cpu->fd);
+	t_pcb * pcb = recibir_pcb(cpu->fd,header->tamanio);
+
+	cpu->disponible = Si;
 
 	queue_push(cola_listos, pcb);
 }

@@ -182,34 +182,34 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	t_valor_variable valor;
-	t_header * header;
+	t_valor_variable retorno;
+	void* valor = malloc(size);
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 		salirPor("No se concreto la solicitud de lectura");
 	}
 
-	header = recibir_header(socketUMC);
-	if(header->tamanio == 0){salirPor("no se pudo leer la variable");} //TODO segmentation Fault
+	if(recv(socketUMC, valor, size, 0) != size){
+		 		salirPor("no se pudo recibir la variable");
+		 	}
 
-	valor = recibir_valor_de_variable(socketUMC);
-
-	return valor;
+	memcpy(&retorno,valor, size);
+	return  retorno;
 }
 
 char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	char * instruccion = string_new();
+	void * instruccion = malloc(size);
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 			salirPor("No se concreto la solicitud de lectura");
 		}
 
-	if(recv(socketUMC, instruccion, size, 0) <= 0){
+	if(recv(socketUMC, instruccion, size, 0) != size){
 	 		salirPor("no se pudo recibir la instruccion");
 	 	}
 
-	return instruccion;
+	return (char*)instruccion;
 }
 
 void mandarTextoANucleo(char* texto){
