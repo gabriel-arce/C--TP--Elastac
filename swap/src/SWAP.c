@@ -16,6 +16,8 @@ void inicializar_espacio_swap() {
 			swap_config->cant_paginas);
 	system(comando);
 	free(comando);
+
+	list_swap = list_create();
 }
 
 void inicializar_bitmap() {

@@ -244,7 +244,6 @@ void atiende_swap(void * args) {
 		header = recibir_header(socket);
 
 		if (!header) {
-			puts("ERROR");
 			keep_running = false;
 			pthread_mutex_unlock(&mutex_swap);
 			continue;
