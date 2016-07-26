@@ -175,7 +175,7 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 	if(header->tamanio == 0){
 
-		imprimirTexto("Stack Overflow, abortando el programa");
+		imprimirTexto("Segmentation fault, abortando el programa");
 		finalizacionPrograma();
 	}
 }
@@ -436,7 +436,7 @@ void finalizar(){
 
 	printf ("Finalizando programa:  %d \n", pcbActual->pcb_pid);
 
-	mandarTextoANucleo("end");
+	//mandarTextoANucleo("end");
 	finalizacionPrograma();
 	}
 
@@ -456,10 +456,9 @@ void rutina (int n) {
 			hotPlugActivado = true;
 			break;
 
-		case SIGINT:																		//TODO ver como abortar
+		case SIGINT:	//TODO ver como abortar
 			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
-			pcbCorriendo = false;
-			hotPlugActivado = true;
+			exit(EXIT_FAILURE);
 			break;
 	}
 }
@@ -514,7 +513,7 @@ void ejecutarProximaInstruccion(){
 
 	printf("Quantum actual: %d \n", pcbActual->quantum_actual);
 
-	char* instruccionEnString;
+	/*char* instruccionEnString;
 
 	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 
@@ -523,10 +522,13 @@ void ejecutarProximaInstruccion(){
 
 	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
+	printf("Ejecutando la instruccion: %s \n", instruccionEnString);
+
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 	free(instruccionACorrer);
-
+*/
+	analizadorLinea("end",&functions, &kernel_functions);
 
 }
 

@@ -88,7 +88,8 @@ typedef struct {
 
 typedef struct {
 	char *id;
-	uint32_t valor;
+	sem_t *valor;
+	int io_sleep;
 	t_list *bloqueados;
 } t_semNucleo;
 
@@ -103,6 +104,12 @@ typedef struct {
 	uint8_t disponible;
 } t_clienteCPU;
 
+typedef struct {
+	t_pcb * pcb;
+	t_semNucleo * semaforo;
+	int tiempo;
+}t_parametrosHiloBloqueados;
+
 /****** Variables Globales ******/
 t_nucleo *nucleo;
 t_config  *config;
@@ -111,7 +118,7 @@ int tamanio_pagina;
 int pid_global;
 
 t_queue *cola_listos;
-t_queue	*cola_bloqueados;
+t_list	*cola_bloqueados;
 //, *cola_ejecutando;
 
 t_list *lista_ejecutando;
@@ -141,7 +148,7 @@ pthread_t pIDPlanificador;
 pthread_t hiloEjecucion;
 pthread_t hiloBloqueado;
 pthread_t pIDCpu;
-
+pthread_t PiDBloqueado;
 
 fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;				// conjunto temporal de descriptores de fichero para select()
@@ -173,23 +180,24 @@ void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu);
 void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu);
 char *getSemaforo(char *valor);
 int getSemValue(char *valor);
-t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor);
+t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep);
 char *getIOId(char *valor);
 int getIOSleep(char *valor);
 t_ioNucleo *crearIOGlobal(nombre, valor);
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo);
-void ejecutarSignal(char *nombreSemaforo);
-void ejecutarWait(char *nombreSemaforo, t_clienteCPU *cpu);
+void ejecutarSignal(int tamanio_buffer, t_clienteCPU * cpu);
+void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu);
 //t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio);
-void ejecutarObtenerValorCompartido(int fd);
-void ejecutarAsignarValorCompartido(int fd);
+void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer);
+void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer);
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header);
-void ejecutarEntradaSalida(t_clienteCPU *cpu);
+void ejecutarEntradaSalida(t_clienteCPU *cpu,t_header * header);
 void inicializar_programa(void * fd);
 int calcular_cantidad_paginas(int codigo_length);
 int generar_pid();
 void ejecutarMuerteCPU(t_clienteCPU *cpu);
 void  interrupcionConsola(int interrupcion);
 void destruirCPU(t_clienteCPU *cpu);
+void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo);
 
 #endif /* NUCLEO_H_ */
