@@ -542,7 +542,7 @@ t_paquete_inicializar_programa * recibir_inicializar_programa(
 }
 //----------------------------------------------------->
 int enviar_texto(char * texto, int socket) {
-	int result = enviar_header(12, sizeof(texto) + 4, socket);
+	int result = enviar_header(12, string_length(texto) + 4, socket);
 
 	if (result == -1)
 		return result;
@@ -603,7 +603,7 @@ t_valor_variable recibir_valor_de_variable(int socket) {
 //---------------------------------------------------->
 int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket) {
 
-	int result = enviar_header(22, sizeof(identificador_semaforo) + 4, socket);
+	int result = enviar_header(22, string_length(identificador_semaforo) + 4, socket);
 
 	if (result == -1)
 		return result;
@@ -634,7 +634,7 @@ char* recibir_wait_identificador_semaforo(int buffer_size, int socket) {
 //---------------------------------------------------->
 int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socket) {
 
-	int result = enviar_header(23, sizeof(identificador_semaforo) + 4, socket);
+	int result = enviar_header(23, string_length(identificador_semaforo) + 4, socket);
 
 	if (result == -1)
 		return result;
@@ -667,7 +667,7 @@ char* recibir_signal_identificador_semaforo(int buffer_size, int socket) {
 //---------------------------------------------------->
 int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket){
 
-	int result = enviar_header(25, sizeof(t_nombre_compartida) + 4, socket);
+	int result = enviar_header(25, string_length(variable) + 4, socket);
 
 	if (result == -1)
 			return result;

@@ -175,41 +175,41 @@ void escribirBytes(uint32_t pagina, uint32_t offset, uint32_t size, t_valor_vari
 
 	if(header->tamanio == 0){
 
-		imprimirTexto("Stack Overflow, abortando el programa");
+		imprimirTexto("Segmentation fault, abortando el programa");
 		finalizacionPrograma();
 	}
 }
 
 t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	t_valor_variable valor;
-	t_header * header;
+	t_valor_variable retorno;
+	void* valor = malloc(size);
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 		salirPor("No se concreto la solicitud de lectura");
 	}
 
-	header = recibir_header(socketUMC);
-	if(header->tamanio == 0){salirPor("no se pudo leer la variable");} //TODO segmentation Fault
+	if(recv(socketUMC, valor, size, 0) != size){
+		 		salirPor("no se pudo recibir la variable");
+		 	}
 
-	valor = recibir_valor_de_variable(socketUMC);
-
-	return valor;
+	memcpy(&retorno,valor, size);
+	return  retorno;
 }
 
 char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	char * instruccion = string_new();
+	void * instruccion = malloc(size);
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 			salirPor("No se concreto la solicitud de lectura");
 		}
 
-	if(recv(socketUMC, instruccion, size, 0) <= 0){
+	if(recv(socketUMC, instruccion, size, 0) != size){
 	 		salirPor("no se pudo recibir la instruccion");
 	 	}
 
-	return instruccion;
+	return (char*)instruccion;
 }
 
 void mandarTextoANucleo(char* texto){
@@ -317,6 +317,8 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
 	header_in = recibir_header(socketNucleo);
 
+	if(header_in->tamanio == 0){ salirPor("no existe la variable compartida");}
+
 	return (header_in->tamanio);
 
 }
@@ -325,7 +327,9 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 
 	enviar_asignar_valor_compartido(variable, valor, socketNucleo);
 
-	//TODO ver si no existe variable
+	t_header * header = recibir_header(socketNucleo);
+
+	if(header->tamanio == 0){ salirPor("no existe la variable compartida");}
 	return valor;
 }
 
@@ -436,7 +440,7 @@ void finalizar(){
 
 	printf ("Finalizando programa:  %d \n", pcbActual->pcb_pid);
 
-	mandarTextoANucleo("end");
+	//mandarTextoANucleo("end");
 	finalizacionPrograma();
 	}
 
@@ -456,10 +460,10 @@ void rutina (int n) {
 			hotPlugActivado = true;
 			break;
 
-		case SIGINT:																		//TODO ver como abortar
+		case SIGINT:	//TODO ver como abortar
+			enviar_texto("Abortando el programa", socketNucleo);
 			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
-			pcbCorriendo = false;
-			hotPlugActivado = true;
+			exit(EXIT_FAILURE);
 			break;
 	}
 }
@@ -514,7 +518,7 @@ void ejecutarProximaInstruccion(){
 
 	printf("Quantum actual: %d \n", pcbActual->quantum_actual);
 
-	char* instruccionEnString;
+	/*char* instruccionEnString;
 
 	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 
@@ -523,10 +527,13 @@ void ejecutarProximaInstruccion(){
 
 	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
+	printf("Ejecutando la instruccion: %s \n", instruccionEnString);
+
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 	free(instruccionACorrer);
-
+*/
+	analizadorLinea("end",&functions, &kernel_functions);
 
 }
 
@@ -539,6 +546,8 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 
 
 void restaurarQuantum(){
+
+	finDeQuantum();
 
 	puts("Restaurando Quantum");
 
@@ -718,8 +727,6 @@ void finalizacionPrograma(){
 }
 
 void finDeQuantum(){
-	pcbCorriendo = false;
-
 	enviar_header(FINALIZACION_QUANTUM,0,socketNucleo);
 }
 

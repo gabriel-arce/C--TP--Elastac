@@ -97,13 +97,12 @@ int main(int argc, char * argv[]) {
 		switch (cabecera->identificador) {
 		case Imprimir_valor:
 			printf("\n");
-			printf("VALOR: %d\n", cabecera->tamanio);
+			t_valor_variable valor = recibir_valor_de_variable(socketConsola);
+			printf("VALOR: %d\n", valor);
 			break;
 		case Imprimir_texto:
 			printf("\n");
-			void * text_buff = malloc(cabecera->tamanio);
-			recv(socketConsola, text_buff, cabecera->tamanio, MSG_WAITALL);
-			char * texto = deserializar_imprimir_texto(text_buff);
+			char* texto = recibir_texto(cabecera->tamanio, socketConsola);
 			printf("TEXTO: %s\n", texto);
 			free(texto);
 			break;
