@@ -64,6 +64,9 @@ typedef enum {
 	FinalizacionQuantum,
 	SemaforoBloqueado,
 	SemaforoNoBloqueado,
+	abortarPrograma,
+	imprimir_variable,
+	imprimir_texto,
 } t_accionesPCB;
 
 typedef enum {

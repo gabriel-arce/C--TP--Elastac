@@ -522,6 +522,17 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   cpu->disponible = Si;
 	  		   break;}
 
+	  	   case abortarPrograma:{
+	  		   //eliminar pcb y estructuras del UMC
+	  		   break;}
+
+	  	 case imprimir_texto:{
+	  	 	    ejecutarImprimirTexto(cpu->fd, header->tamanio);
+	  	 	  	break;}
+	  	case imprimir_variable:{
+	  		  	ejecutarImprimirVariable(cpu->fd, header->tamanio);
+	  		    break;}
+
 	   } //Fin switch
 
 
@@ -762,4 +773,20 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 
 	queue_push(cola_listos, pcb);
 	pthread_exit(NULL);
+}
+
+void ejecutarImprimirTexto(int socket, int tamanio_buffer){
+	char * texto;
+
+	texto = recibir_texto(tamanio_buffer);
+
+	//mandar a consola el texto
+}
+
+void ejecutarImprimirVariable(int socket, int tamanio_buffer){
+	int variable;
+
+	variable = recibir_valor_de_variable(tamanio_buffer);
+
+	//mandar a consola la variable
 }
