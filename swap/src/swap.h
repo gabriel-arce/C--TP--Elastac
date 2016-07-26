@@ -71,6 +71,7 @@ typedef struct {
 	int cant_paginas;
 	int pagina_size;
 	int retardo_compactacion;
+	int retardo_acceso;
 } t_swap_config;
 
 t_swap_config * swap_config;
