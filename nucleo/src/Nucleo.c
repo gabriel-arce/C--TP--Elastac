@@ -481,7 +481,6 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
-	t_pcb *pcb					= malloc(sizeof(t_pcb));
 	bool PCBRetornado = true;
 
 	while(PCBRetornado){
@@ -519,6 +518,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case FinalizacionQuantum:{
+	  		   ejecutaFinalizacionDeQuantum(cpu->fd);
 	  		   cpu->disponible = Si;
 	  		   break;}
 
@@ -527,10 +527,10 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	 case imprimir_texto:{
-	  	 	    ejecutarImprimirTexto(cpu->fd, header->tamanio, pcb);
+	  	 	    ejecutarImprimirTexto(cpu->fd, header->tamanio);
 	  	 	  	break;}
 	  	case imprimir_variable:{
-	  		  	ejecutarImprimirVariable(cpu->fd, header->tamanio, pcb);
+	  		  	ejecutarImprimirVariable(cpu->fd, header->tamanio);
 	  		    break;}
 
 	   } //Fin switch
@@ -775,18 +775,25 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 	pthread_exit(NULL);
 }
 
-void ejecutarImprimirTexto(int socket, int tamanio_buffer, t_pcb * pcb){
+void ejecutarImprimirTexto(int socket, int tamanio_buffer){
 	char * texto;
 
 	texto = recibir_texto(tamanio_buffer, socket);
 
-	enviar_texto(texto, pcb->consola);
+	// enviar_texto(texto, pcb->consola); no se como obtener la consola correspondiente
 }
 
-void ejecutarImprimirVariable(int socket, int tamanio_buffer, t_pcb * pcb){
+void ejecutarImprimirVariable(int socket, int tamanio_buffer){
 	int variable;
 
 	variable = recibir_valor_de_variable(tamanio_buffer);
 
-	enviar_valor_de_variable(variable, pcb->consola);
+	//enviar_valor_de_variable(variable, pcb->consola); no se como obtener la consola correspondiente
+}
+
+void ejecutaFinalizacionDeQuantum(int socket){
+	t_header * header = recibir_header(socket);
+	t_pcb * pcb = recibir_pcb(socket,header->tamanio);
+
+	queue_push(cola_listos, pcb);
 }

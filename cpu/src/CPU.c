@@ -542,6 +542,8 @@ t_indice_de_codigo * buscarProximaInstruccion(){
 
 void restaurarQuantum(){
 
+	finDeQuantum();
+
 	puts("Restaurando Quantum");
 
 	pcbActual->quantum_actual = 0;
@@ -720,8 +722,6 @@ void finalizacionPrograma(){
 }
 
 void finDeQuantum(){
-	pcbCorriendo = false;
-
 	enviar_header(FINALIZACION_QUANTUM,0,socketNucleo);
 }
 

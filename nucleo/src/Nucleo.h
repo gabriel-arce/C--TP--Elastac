@@ -202,7 +202,8 @@ void ejecutarMuerteCPU(t_clienteCPU *cpu);
 void  interrupcionConsola(int interrupcion);
 void destruirCPU(t_clienteCPU *cpu);
 void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo);
-void ejecutarImprimirTexto(int socket, int tamanio_buffer, t_pcb * pcb);
-void ejecutarImprimirVariable(int socket, int tamanio_buffer, t_pcb * pcb);
+void ejecutarImprimirTexto(int socket, int tamanio_buffer);
+void ejecutarImprimirVariable(int socket, int tamanio_buffer);
+void ejecutaFinalizacionDeQuantum(int socket);
 
 #endif /* NUCLEO_H_ */
