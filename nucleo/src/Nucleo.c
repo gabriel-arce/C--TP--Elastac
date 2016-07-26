@@ -75,7 +75,8 @@ void crearSemaforos(){
 	semListos						= crearSemaforo(0);
 	semCpuDisponible	= crearSemaforo(0);
 	semBloqueados			= crearSemaforo(0);
-	pthread_mutex_init(&mutex_pid, 0);
+	mutex_pid					= crearMutex();
+
 }
 
 /*void destruirPCB(t_pcb *pcb){
@@ -371,10 +372,10 @@ int calcular_cantidad_paginas(int codigo_length) {
 
 int generar_pid() {
 	int pid;
-	pthread_mutex_lock(&mutex_pid);
+	waitSemaforo(mutex_pid);
 		pid_global++;
 		pid = pid_global;
-	pthread_mutex_unlock(&mutex_pid);
+	signalSemaforo(mutex_pid);
 
 	return pid;
 }
