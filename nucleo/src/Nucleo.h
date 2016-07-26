@@ -52,6 +52,8 @@
 
 /****** Estructuras ******/
 typedef enum {
+	imprimir_variable = 11,
+	imprimir_texto,
 	FinalizacionPrograma = 21,
 	Wait,
 	Signal,
@@ -65,8 +67,6 @@ typedef enum {
 	SemaforoBloqueado,
 	SemaforoNoBloqueado,
 	abortarPrograma,
-	imprimir_variable,
-	imprimir_texto,
 } t_accionesPCB;
 
 typedef enum {
@@ -202,5 +202,7 @@ void ejecutarMuerteCPU(t_clienteCPU *cpu);
 void  interrupcionConsola(int interrupcion);
 void destruirCPU(t_clienteCPU *cpu);
 void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo);
+void ejecutarImprimirTexto(int socket, int tamanio_buffer, t_pcb * pcb);
+void ejecutarImprimirVariable(int socket, int tamanio_buffer, t_pcb * pcb);
 
 #endif /* NUCLEO_H_ */

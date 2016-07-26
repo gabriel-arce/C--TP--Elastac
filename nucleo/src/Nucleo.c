@@ -523,14 +523,14 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case abortarPrograma:{
-	  		   //eliminar pcb y estructuras del UMC
+	  		   //TODO eliminar pcb y estructuras del UMC
 	  		   break;}
 
 	  	 case imprimir_texto:{
-	  	 	    ejecutarImprimirTexto(cpu->fd, header->tamanio);
+	  	 	    ejecutarImprimirTexto(cpu->fd, header->tamanio, pcb);
 	  	 	  	break;}
 	  	case imprimir_variable:{
-	  		  	ejecutarImprimirVariable(cpu->fd, header->tamanio);
+	  		  	ejecutarImprimirVariable(cpu->fd, header->tamanio, pcb);
 	  		    break;}
 
 	   } //Fin switch
@@ -686,7 +686,7 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 }
 
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
-	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
+	   t_pcb *pcb = recibir_pcb(cpu->fd, header->tamanio);
 
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
 }
@@ -775,18 +775,18 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 	pthread_exit(NULL);
 }
 
-void ejecutarImprimirTexto(int socket, int tamanio_buffer){
+void ejecutarImprimirTexto(int socket, int tamanio_buffer, t_pcb * pcb){
 	char * texto;
 
-	texto = recibir_texto(tamanio_buffer);
+	texto = recibir_texto(tamanio_buffer, socket);
 
-	//mandar a consola el texto
+	enviar_texto(texto, pcb->consola);
 }
 
-void ejecutarImprimirVariable(int socket, int tamanio_buffer){
+void ejecutarImprimirVariable(int socket, int tamanio_buffer, t_pcb * pcb){
 	int variable;
 
 	variable = recibir_valor_de_variable(tamanio_buffer);
 
-	//mandar a consola la variable
+	enviar_valor_de_variable(variable, pcb->consola);
 }
