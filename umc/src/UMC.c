@@ -313,26 +313,18 @@ void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid) {
 	free(buffer_solicitud);
 	free(buff_aux);
 
-	t_header * head = recibir_header(socket_swap);
-
-	if (!head)
-		puts("aca se rommpe");
-
-	printf("id: %d", head->identificador);
-	printf("t: %d", head->tamanio);
-
 	void * datos_solicitados = malloc(paquete->bytes);
-//	r = recv(socket_swap, datos_solicitados, paquete->bytes, 0);
-//
-//	if (r < 0)
-//		return NULL;
-//
-//	printf("datos: %s", (char *) datos_solicitados);
+	r = recv(socket_swap, datos_solicitados, paquete->bytes, 0);
+
+	if (r < paquete->bytes)
+		return NULL;
+
+	//printf("datos: %s", (char *) datos_solicitados);
 
 	return datos_solicitados;
 }
 
-void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid) {
+int escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid) {
 	void * buffer_solicitud = NULL;
 
 	memcpy(buffer_solicitud, &(pid), 4);
@@ -344,11 +336,18 @@ void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid) {
 	int last_size = 4 + second_size;
 	enviar_header(Almacenar_pagina, last_size, socket_swap);
 	send(socket_swap, buffer_solicitud, last_size, 0);
+
+	void * buffer_respuesta = malloc(2);
+	recv(socket_swap, buffer_respuesta, 2, 0);
+
+	char * expected_response = string_duplicate("+1");
+
+	return (int) string_equals_ignore_case(((char *) buffer_respuesta), expected_response);
 }
 
 //********************************************************************************************
 
-//******************************  NUCLEO  **************************************************
+//********************************  NUCLEO  **************************************************
 
 void * atiende_nucleo(void * args) {
 
@@ -521,32 +520,37 @@ void * atiende_cpu(void * args) {
 
 int leer_bytes(int socket_cpu, int bytes) {
 
+	int catch_read_error() {
+		send(socket_cpu, (void *) " ", 1, 0);
+		return -1;
+	}
+
 	t_paquete_solicitar_pagina * solicitud = recibir_solicitud_lectura(bytes,
 			socket_cpu);
 	if (solicitud == NULL)
-		return -1;
+		return catch_read_error();
 
 	t_sesion_cpu * cpu = buscar_cpu(socket_cpu);
 	if (!cpu) {
 		free(solicitud);
-		return -1;
+		return catch_read_error();
 	}
 
-	printf("PID: %d\n", cpu->proceso_activo);
-	printf("Pagina: %d\n", solicitud->nro_pagina);
-	printf("Offset: %d\n", solicitud->offset);
-	printf("bytes: %d\n", solicitud->bytes);
-
 	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
+	if (proceso == NULL) {
+		free(solicitud);
+		return catch_read_error();
+	}
 
 	int sol_pag_val = pagina_valida(proceso,
-			solicitud->nro_pagina);
-	if (sol_pag_val) {
+			solicitud->nro_pagina, solicitud->offset, solicitud->bytes);
+	if (!sol_pag_val) {
 		free(solicitud);
-		return -1;
+		return catch_read_error();
 	}
 
 	t_tlb * tlb_entry = NULL;
+	int frame_to_read = -1;
 
 	if (tlb_on)
 		tlb_entry = buscar_en_tlb(solicitud->nro_pagina, proceso->pid);
@@ -557,56 +561,86 @@ int leer_bytes(int socket_cpu, int bytes) {
 		t_tabla_pagina * page = buscar_pagina(solicitud->nro_pagina,
 				proceso->tabla_paginas);
 		page->accessedbit = 1;
+
+		frame_to_read = page->frame;
 	} else {
 		//TLB MISS
-		if (!esta_en_memoria(solicitud->nro_pagina, proceso, 0)) {
+		frame_to_read = esta_en_memoria(solicitud->nro_pagina, proceso, 0);
+		if (frame_to_read == -1) {
 			//PAGE FAULT
 			switch (umc_config->algoritmo) {
 			case CLOCK:
-				clock_algorithm(solicitud->nro_pagina, proceso);
+				frame_to_read = clock_algorithm(solicitud->nro_pagina, solicitud->offset, solicitud->bytes, proceso, 0);
 				break;
 			case CLOCK_MODIFICADO:
-				clock_modificado(solicitud->nro_pagina, proceso, 0);
+				frame_to_read = clock_modificado(solicitud->nro_pagina, solicitud->offset, solicitud->bytes, proceso, 0);
 				break;
 			}
 		}
 	}
 
+	if (frame_to_read == -1) {
+		free(solicitud);
+		return catch_read_error();
+	}
+
+	void * datos_leidos = leer_datos(frame_to_read, solicitud->offset, solicitud->bytes);
+
+	if ((send(cpu->socket_cpu, datos_leidos, solicitud->bytes, 0)) < 0) {
+		free(solicitud);
+		free(datos_leidos);
+		return catch_read_error();
+	}
+
 	agregar_referencia(solicitud->nro_pagina, proceso);
+
+	free(datos_leidos);
 	free(solicitud);
 
 	return EXIT_SUCCESS;
 }
 
 int almacenar_bytes(int socket_cpu, int bytes) {
+
+	int catch_write_error() {
+		enviar_header(Almacenar_pagina, 0, socket_cpu);
+		return -1;
+	}
+
 	t_paquete_almacenar_pagina * solicitud = recibir_solicitud_escritura(bytes,
 			socket_cpu);
 
 	if (solicitud == NULL)
-		return -1;
+		return catch_write_error();
 
 	t_sesion_cpu * cpu = buscar_cpu(socket_cpu);
 	if (!cpu) {
 		free(solicitud);
-		return -1;
+		return catch_write_error();
 	}
 
-	printf("PID: %d\n", cpu->proceso_activo);
-	printf("Pagina: %d\n", solicitud->nro_pagina);
-	printf("Offset: %d\n", solicitud->offset);
-	printf("bytes: %d\n", solicitud->bytes);
-	printf("Buffer: %s\n", (char *) solicitud->buffer);
+//	printf("PID: %d\n", cpu->proceso_activo);
+//	printf("Pagina: %d\n", solicitud->nro_pagina);
+//	printf("Offset: %d\n", solicitud->offset);
+//	printf("bytes: %d\n", solicitud->bytes);
+//	printf("Buffer: %s\n", (char *) solicitud->buffer);
 
-	bool sol_pag_val = pagina_valida(cpu->proceso_activo,
-			solicitud->nro_pagina);
+	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
+
+	if (!proceso) {
+		free(solicitud);
+		return catch_write_error();
+	}
+
+	int sol_pag_val = pagina_valida(proceso,
+			solicitud->nro_pagina, solicitud->offset, solicitud->bytes);
 	if (!sol_pag_val) {
 		free(solicitud);
-		return -1;
+		return catch_write_error();
 	}
 
 	t_tlb * tlb_entry = NULL;
-	t_proceso * proceso = NULL;
-	proceso = buscar_proceso(cpu->proceso_activo);
+	int frame_to_write = -1;
 
 	if (tlb_on)
 		tlb_entry = buscar_en_tlb(solicitud->nro_pagina, proceso->pid);
@@ -619,19 +653,34 @@ int almacenar_bytes(int socket_cpu, int bytes) {
 		page->accessedbit = 1;
 		if (!(page->dirtybit))
 			page->dirtybit = 1;
+
+		frame_to_write = page->frame;
 	} else {
 		//TLB MISS
-		if (!esta_en_memoria(solicitud->nro_pagina, proceso, 1)) {
+		frame_to_write = esta_en_memoria(solicitud->nro_pagina, proceso, 1);
+		if (frame_to_write == -1) {
 			//PAGE FAULT
 			switch (umc_config->algoritmo) {
 			case CLOCK:
-				clock_algorithm(solicitud->nro_pagina, proceso);
+				frame_to_write = clock_algorithm(solicitud->nro_pagina, solicitud->offset, solicitud->bytes, proceso, 1);
 				break;
 			case CLOCK_MODIFICADO:
-				clock_modificado(solicitud->nro_pagina, proceso, 1);
+				frame_to_write = clock_modificado(solicitud->nro_pagina, solicitud->offset, solicitud->bytes, proceso, 1);
 				break;
 			}
 		}
+	}
+
+	if (frame_to_write == -1) {
+		free(solicitud);
+		return catch_write_error();
+	}
+
+	escribir_datos(frame_to_write, solicitud);
+
+	if (enviar_header(Almacenar_pagina, 1, socket_cpu) < 0) {
+		free(solicitud);
+		return catch_write_error();
 	}
 
 	agregar_referencia(solicitud->nro_pagina, proceso);

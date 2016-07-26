@@ -11,11 +11,11 @@
 #include <swap.h>
 
 void inicializar_espacio_swap() {
-	char * comando = string_new();
-	sprintf(comando, "dd if=/dev/zero of=%s bs=%d count=%d",
-			swap_config->espacio_swap, swap_config->pagina_size,
+	char * comando = malloc(sizeof(char) * 50);
+	sprintf(comando, "dd if=/dev/zero of=swap.data bs=%d count=%d", swap_config->pagina_size,
 			swap_config->cant_paginas);
 	system(comando);
+	free(comando);
 }
 
 void inicializar_bitmap() {

@@ -29,10 +29,6 @@
 #include <elestac_comunicaciones.h>
 #include "ADM.h"
 
-//#define CONFIG_PATH "umc.conf" //para runear en terminal
-#define CONFIG_PATH "../umc/src/umc.conf"  //para runear en eclipse
-//#define REPORT_PATH "reporte.txt"
-#define REPORT_PATH "../umc/src/reporte.txt"
 #define LOG_FILE "../umc/src/umc.log"
 #define MSJ_ERROR1 "Error en sintaxis del comando\n"
 #define MSJ_ERROR2 "Error en # de variable"
@@ -133,8 +129,6 @@ void respuesta_inicio_swap(int respuesta_inicio);
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
 void finalizar_en_swap(int pid);
 void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid);
-void escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid);
-
-void simulacion_con_swap();
+int escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid);
 
 #endif /* UMC_H_ */

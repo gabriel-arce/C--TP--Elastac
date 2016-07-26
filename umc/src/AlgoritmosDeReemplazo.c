@@ -39,28 +39,28 @@ void run_LRU(t_tlb * reemplazo) {
 //****-------****
 
 //****CLOCK****
-int clock_algorithm(int page_to_replace, t_proceso * proceso) {
+int clock_algorithm(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write) {
 
 	int supera, hay_libres, nro_frame;
 
 	supera = supera_limite_frames(proceso->pid);
 
 	if (supera) {
-		nro_frame = run_clock(page_to_replace, proceso);
+		nro_frame = run_clock(page_to_replace, offset, bytes, proceso, read_or_write);
 	} else {
 		hay_libres = hay_frames_libres();
 		if (hay_libres) {
 			//agrego
-			nro_frame = agregar_en_frame_libre(page_to_replace, proceso, 0);
+			nro_frame = agregar_en_frame_libre(page_to_replace, proceso, read_or_write);
 		} else {
-			nro_frame = run_clock(page_to_replace, proceso);
+			nro_frame = run_clock(page_to_replace, offset, bytes, proceso, read_or_write);
 		}
 	}
 
 	return nro_frame;
 }
 
-int run_clock(int page_to_replace, t_proceso * proceso) {
+int run_clock(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write) {
 
 	int cant_referencias = 0;
 	bool page_victim_not_found = true;
@@ -84,6 +84,11 @@ int run_clock(int page_to_replace, t_proceso * proceso) {
 		if ((page_ref->accessedbit) && (page_ref->presentbit)) {
 			page_ref->accessedbit = 0;
 		} else {
+
+			nro_frame = page_ref->frame;
+
+			swapping(page_to_replace, ref, proceso->pid, page_ref->dirtybit, nro_frame);
+
 			t_mem_frame * frame_target = buscar_frame(page_ref->frame);
 			frame_target->pagina = page_to_replace;
 			frame_target->pid = proceso->pid;
@@ -94,12 +99,24 @@ int run_clock(int page_to_replace, t_proceso * proceso) {
 			pagina_reemp->accessedbit = 1;
 			pagina_reemp->presentbit = 1;
 			pagina_reemp->frame = page_ref->frame;
-
-			nro_frame = page_ref->frame;
+			pagina_reemp->dirtybit = read_or_write;
 
 			page_ref->accessedbit = 0;
 			page_ref->presentbit = 0;
 			page_ref->frame = -1;
+			page_ref->dirtybit = 0;
+
+			if (tlb_on) {
+				eliminar_referencia_en_tlb(ref, proceso->pid);
+
+				t_tlb * reemplazo_tlb = malloc(sizeof(t_tlb));
+				reemplazo_tlb->referencebit = 0;
+				reemplazo_tlb->frame = pagina_reemp->frame;
+				reemplazo_tlb->pagina = page_to_replace;
+				reemplazo_tlb->pid = proceso->pid;
+
+				run_LRU(reemplazo_tlb);
+			}
 
 			eliminar_referencia(ref, proceso);
 			page_victim_not_found = false;
@@ -114,7 +131,7 @@ int run_clock(int page_to_replace, t_proceso * proceso) {
 //****-----****
 
 //****CLOCK_MODIFICADO****
-int clock_modificado(int page_to_replace, t_proceso * proceso,
+int clock_modificado(int page_to_replace, int offset, int bytes, t_proceso * proceso,
 		int read_or_write) {
 
 	int supera, hay_libres, nro_frame;
@@ -122,38 +139,38 @@ int clock_modificado(int page_to_replace, t_proceso * proceso,
 	supera = supera_limite_frames(proceso->pid);
 
 	if (supera) {
-		nro_frame = run_clock_modificado(page_to_replace, proceso, read_or_write);
+		nro_frame = run_clock_modificado(page_to_replace, offset, bytes, proceso, read_or_write);
 	} else {
 		hay_libres = hay_frames_libres();
 		if (hay_libres) {
 			//agrego
 			nro_frame = agregar_en_frame_libre(page_to_replace, proceso, read_or_write);
 		} else {
-			nro_frame = run_clock_modificado(page_to_replace, proceso, read_or_write);
+			nro_frame = run_clock_modificado(page_to_replace, offset, bytes, proceso, read_or_write);
 		}
 	}
 
 	return nro_frame;
 }
 
-int run_clock_modificado(int page_to_replace, t_proceso * proceso,
+int run_clock_modificado(int page_to_replace, int offset, int bytes, t_proceso * proceso,
 		int read_or_write) {
 
 	bool page_victim_not_found = true;
 	int res_paso1;
 	int res_paso2;
-	int nro_frame;
+	int nro_frame = -1;
 
 	while (page_victim_not_found) {
-		res_paso1 = paso_1(page_to_replace, proceso, read_or_write);
+		res_paso1 = paso_1(page_to_replace, offset, bytes, proceso, read_or_write);
 
-		if (res_paso1) {
+		if (res_paso1 >= 0) {
 			page_victim_not_found = false;
 			nro_frame = res_paso1;
 			continue;
 		} else {
-			res_paso2 = paso_2(page_to_replace, proceso, read_or_write);
-			if (res_paso2) {
+			res_paso2 = paso_2(page_to_replace, offset, bytes, proceso, read_or_write);
+			if (res_paso2 >= 0) {
 				page_victim_not_found = false;
 				nro_frame = res_paso2;
 				continue;
@@ -166,12 +183,13 @@ int run_clock_modificado(int page_to_replace, t_proceso * proceso,
 	return nro_frame;
 }
 
-int paso_1(int page_to_replace, t_proceso * proceso, int read_or_write) {
+int paso_1(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write) {
 
 	int cant_referencias = list_size(proceso->referencias);
 	int i;
 	int ref = -1;
 	t_tabla_pagina * page_ref = NULL;
+	int nro_frame = -1;
 
 	for (i = 0; i < cant_referencias; i++) {
 		ref = (int) list_get(proceso->referencias, i);
@@ -180,7 +198,9 @@ int paso_1(int page_to_replace, t_proceso * proceso, int read_or_write) {
 		if ((page_ref->presentbit) && (page_ref->accessedbit == 0)
 				&& (page_ref->dirtybit == 0)) {
 
-			// PREVIAMENTE HACER UN SWAPPING CON EL CONTENIDO DE LA PAGINA REEMPLAZADA
+			nro_frame = page_ref->frame;
+
+			swapping(page_to_replace, ref, proceso->pid, page_ref->dirtybit, nro_frame);
 
 			t_mem_frame * frame_target = buscar_frame(page_ref->frame);
 			frame_target->libre = 0;
@@ -219,17 +239,18 @@ int paso_1(int page_to_replace, t_proceso * proceso, int read_or_write) {
 	}
 
 	if (i >= cant_referencias)
-		return 0;
+		return -1;
 
-	return 1;
+	return nro_frame;
 }
 
-int paso_2(int page_to_replace, t_proceso * proceso, int read_or_write) {
+int paso_2(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write) {
 
 	int cant_referencias = list_size(proceso->referencias);
 	int i;
 	int ref = -1;
 	t_tabla_pagina * page_ref = NULL;
+	int nro_frame = -1;
 
 	for (i = 0; i < cant_referencias; i++) {
 		ref = (int) list_get(proceso->referencias, i);
@@ -238,7 +259,9 @@ int paso_2(int page_to_replace, t_proceso * proceso, int read_or_write) {
 		if ((page_ref->presentbit) && (page_ref->accessedbit == 0)
 				&& (page_ref->dirtybit == 1)) {
 
-			// PREVIAMENTE HACER UN SWAPPING CON EL CONTENIDO DE LA PAGINA REEMPLAZADA
+			nro_frame = page_ref->frame;
+
+			swapping(page_to_replace, ref, proceso->pid, page_ref->dirtybit, nro_frame);
 
 			t_mem_frame * frame_target = buscar_frame(page_ref->frame);
 			frame_target->libre = 0;
@@ -279,9 +302,9 @@ int paso_2(int page_to_replace, t_proceso * proceso, int read_or_write) {
 	}
 
 	if (i >= cant_referencias)
-		return 0;
+		return -1;
 
-	return 1;
+	return nro_frame;
 }
 
 //****----------------****

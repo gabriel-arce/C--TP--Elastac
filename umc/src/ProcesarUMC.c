@@ -63,12 +63,3 @@ int main(int argc, char * argv[]) {
 
 	return EXIT_SUCCESS;
 }
-
-void simulacion_con_swap() {
-	t_paquete_solicitar_pagina * paquete = malloc(sizeof(t_paquete_solicitar_pagina));
-	paquete->nro_pagina = 1;
-	paquete->offset = 23;
-	paquete->bytes = 29;
-
-	lectura_en_swap(paquete, 7);
-}

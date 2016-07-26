@@ -49,7 +49,7 @@ int its_clock_m;
 void inicializar_memoria();
 void inicializar_tabla_paginas(int pags, t_proceso * proceso);
 int inicializar_proceso(int pid, int paginas);
-int pagina_valida(t_proceso * proceso, int pagina);
+int pagina_valida(t_proceso * proceso, int pagina, int offset, int bytes);
 int supera_limite_frames(int pid);
 int hay_frames_libres();
 int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit);
@@ -68,19 +68,19 @@ t_mem_frame * buscar_frame_por_pagina(int pagina, int pid);
 void run_LRU(t_tlb * reemplazo);
 
 //---CLOCK
-int clock_algorithm(int page_to_replace, t_proceso * proceso);
-int run_clock(int page_to_replace, t_proceso * proceso);
+int clock_algorithm(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write);
+int run_clock(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write);
 
 //---CLOCK MODIFICADO
-int clock_modificado(int page_to_replace, t_proceso * proceso, int read_or_write);
-int run_clock_modificado(int page_to_replace, t_proceso * proceso, int read_or_write);
-int paso_1(int page_to_replace, t_proceso * proceso, int read_or_write);
-int paso_2(int page_to_replace, t_proceso * proceso, int read_or_write);
+int clock_modificado(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write);
+int run_clock_modificado(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write);
+int paso_1(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write);
+int paso_2(int page_to_replace, int offset, int bytes, t_proceso * proceso, int read_or_write);
 
 //MISCELLANEOUS
 void agregar_referencia(int page_referenced, t_proceso * proceso);
 void eliminar_referencia(int page_referenced, t_proceso * proceso);
-int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int dirty_bit);
+int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int read_or_write);
 void imprimir_tabla_de_paginas(t_list * tabla);
 void imprimir_frames();
 void imprimir_tlb();
@@ -88,5 +88,6 @@ void imprimir_tlb();
 //EN MEMORIA FISICA
 void * leer_datos(int frame, int offset, int bytes);
 void escribir_datos(int frame, t_paquete_almacenar_pagina * solicitud);
+void swapping(int pagina_solicitada, int pagina_a_reemplazar, int pid, int dirty_bit, int frame);
 
 #endif /* ADM_H_ */

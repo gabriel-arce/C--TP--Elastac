@@ -13,7 +13,8 @@ void inicializar_memoria() {
 
 //	memoria_principal = malloc(memoria_size);
 //	memset(memoria_principal, 0, memoria_size);
-	memoria_principal = (void *) calloc(umc_config->cant_frames, umc_config->frames_size);
+	memoria_principal = (void *) calloc(umc_config->cant_frames,
+			umc_config->frames_size);
 
 //	log_trace(logger, "Se ha creado el espacio de memoria de %d bytes",
 //			memoria_size);
@@ -21,7 +22,8 @@ void inicializar_memoria() {
 	frames_memoria = list_create();
 	int indice_frame = 0;
 
-	for (indice_frame = 0; indice_frame < umc_config->cant_frames; indice_frame++) {
+	for (indice_frame = 0; indice_frame < umc_config->cant_frames;
+			indice_frame++) {
 		t_mem_frame * frame = malloc(sizeof(t_mem_frame));
 
 		frame->pagina = -1;
@@ -69,15 +71,24 @@ int inicializar_proceso(int pid, int paginas) {
 	return EXIT_SUCCESS;
 }
 
-int pagina_valida(t_proceso * proceso, int pagina) {
+int pagina_valida(t_proceso * proceso, int pagina, int offset, int bytes) {
 
 	t_tabla_pagina * pagina_val = buscar_pagina(pagina, proceso->tabla_paginas);
 
-	if (pagina_val) {
-		return EXIT_SUCCESS;
-	} else {
-		return EXIT_FAILURE;
+	if (pagina_val == NULL)
+		return 0;
+
+	int valida = 0;
+
+	int dato_menor_a_pagesize(int dato) {
+		return (dato <= umc_config->frames_size);
 	}
+
+	valida = dato_menor_a_pagesize(offset);
+	valida = dato_menor_a_pagesize(bytes);
+	valida = dato_menor_a_pagesize((offset + bytes));
+
+	return valida;
 }
 
 int supera_limite_frames(int pid) {
@@ -107,8 +118,6 @@ int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit) {
 	t_mem_frame * target = buscar_frame_por_pagina(pagina, proceso->pid);
 
 	if (target) {
-		printf("Esta en memoria\n");
-
 		t_tabla_pagina * page = buscar_pagina(pagina, proceso->tabla_paginas);
 		page->accessedbit = 1;
 		page->presentbit = 1;
@@ -117,8 +126,7 @@ int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit) {
 			page->dirtybit = dirty_bit;
 
 		if (tlb_on) {
-			t_tlb * reemplazo_tlb = malloc(
-					sizeof(t_tlb));
+			t_tlb * reemplazo_tlb = malloc(sizeof(t_tlb));
 			reemplazo_tlb->referencebit = 0;
 			reemplazo_tlb->frame = page->frame;
 			reemplazo_tlb->pagina = target->pagina;
@@ -127,10 +135,10 @@ int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit) {
 			run_LRU(reemplazo_tlb);
 		}
 
-		esta = true;
+		esta = page->frame;
 	} else {
 		//page fault
-		esta = false;
+		esta = -1;
 	}
 
 	return esta;
@@ -189,7 +197,7 @@ t_tlb * buscar_en_tlb(int pagina, int pid) {
 	t_tlb * tlb_entry = NULL;
 
 	bool find_tlb(t_tlb * entry) {
-		return ((entry->pid == pid)&&(entry->pagina == pagina));
+		return ((entry->pid == pid) && (entry->pagina == pagina));
 	}
 	tlb_entry = list_find(tabla_tlb, (void *) find_tlb);
 
@@ -208,7 +216,7 @@ t_mem_frame * buscar_frame_por_pagina(int pagina, int pid) {
 	t_mem_frame * frame = NULL;
 
 	bool find_by_page(t_mem_frame * f) {
-		return ((f->pagina == pagina)&&(f->pid == pid));
+		return ((f->pagina == pagina) && (f->pid == pid));
 	}
 	frame = list_find(frames_memoria, (void *) find_by_page);
 
@@ -234,7 +242,6 @@ void agregar_referencia(int page_referenced, t_proceso * proceso) {
 		list_add(proceso->referencias, (void *) page_referenced);
 }
 
-
 void eliminar_referencia(int page_referenced, t_proceso * proceso) {
 	bool la_referenciada(int ref) {
 		return (ref == page_referenced);
@@ -242,7 +249,7 @@ void eliminar_referencia(int page_referenced, t_proceso * proceso) {
 	list_remove_by_condition(proceso->referencias, (void *) la_referenciada);
 }
 
-int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int dirty_bit) {
+int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int read_or_write) {
 
 	t_mem_frame * frame_libre = NULL;
 	int nro_frame = 0;
@@ -254,15 +261,23 @@ int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int dirty_bit) 
 			break;
 	}
 
-	frame_libre->libre = false;
-	frame_libre->pagina = page_to_add;
-	frame_libre->pid = proceso->pid;
+	if (nro_frame >= umc_config->cant_frames)
+		return -1;
+
+	//SWAPPING
+	swapping(page_to_add, -1, proceso->pid, 0, nro_frame);
+	//--------
 
 	t_tabla_pagina * page = buscar_pagina(page_to_add, proceso->tabla_paginas);
 	page->accessedbit = 1;
 	page->frame = nro_frame;
 	page->presentbit = 1;
-	page->dirtybit = dirty_bit;
+	page->dirtybit = read_or_write;
+
+	frame_libre->libre = false;
+	frame_libre->pagina = page_to_add;
+	frame_libre->pid = proceso->pid;
+
 
 	if (tlb_on) {
 		t_tlb * reemplazo_tlb = malloc(sizeof(t_tlb));
@@ -276,7 +291,6 @@ int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int dirty_bit) 
 
 	return nro_frame;
 }
-
 
 void imprimir_tabla_de_paginas(t_list * tabla) {
 	int i = 0;
@@ -333,5 +347,42 @@ void escribir_datos(int frame, t_paquete_almacenar_pagina * solicitud) {
 	dir_fisica = (frame * umc_config->frames_size) + solicitud->offset;
 
 	memcpy(memoria_principal + dir_fisica, solicitud->buffer, solicitud->bytes);
+}
+
+void swapping(int pagina_solicitada, int pagina_a_reemplazar, int pid, int dirty_bit, int frame) {
+	//actualizar swap
+	if (dirty_bit&&(pagina_a_reemplazar >= 0)) {
+		t_paquete_almacenar_pagina * almacenar_swap = malloc(sizeof(t_paquete_almacenar_pagina));
+		almacenar_swap->nro_pagina = pagina_a_reemplazar;
+		almacenar_swap->offset = 0;
+		almacenar_swap->bytes = umc_config->frames_size;
+		almacenar_swap->buffer = leer_datos(frame, 0, umc_config->frames_size);
+		escritura_en_swap(almacenar_swap, pid);
+
+		free(almacenar_swap);
+	}
+	//---------------
+
+	//pedir pagina a swap
+	t_paquete_solicitar_pagina * leer_swap = malloc(sizeof(t_paquete_solicitar_pagina));
+	leer_swap->nro_pagina = pagina_solicitada;
+	leer_swap->offset = 0;
+	leer_swap->bytes = umc_config->frames_size;
+
+	t_paquete_almacenar_pagina * solicitud = malloc(
+			sizeof(t_paquete_almacenar_pagina));
+	solicitud->nro_pagina = pagina_solicitada;
+	solicitud->offset = 0;
+	solicitud->bytes = umc_config->frames_size;
+	solicitud->buffer = lectura_en_swap(leer_swap, pid);
+
+	if (solicitud->buffer != NULL) {
+		escribir_datos(frame, solicitud);
+		free(solicitud->buffer);
+	}
+
+	free(leer_swap);
+	free(solicitud);
+	//-------------------
 }
 //****-------------****
