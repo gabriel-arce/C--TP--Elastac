@@ -315,6 +315,7 @@ int finalizar_en_archivo(int pid) {
 }
 
 int compactar() {
+	sleep(swap_config->retardo_acceso);
 	int cantidad_de_elemenos = list_swap->elements_count;
 	int i = 0;
 	void * copia_persistencia = NULL;
@@ -398,6 +399,8 @@ void cargar_config(char ** config_path) {
 	swap_config->pagina_size = getIntProperty(config_file, "TAMANIO_PAGINA");
 	swap_config->retardo_compactacion = getIntProperty(config_file,
 			"RETARDO_COMPACTACION");
+	swap_config->retardo_acceso = getIntProperty(config_file,
+				"RETARDO_ACCESO");
 
 	config_destroy(config_file);
 }
@@ -408,6 +411,7 @@ void imprimir_config() {
 	printf("CANTIDAD_PAGINAS: %d\n", swap_config->cant_paginas);
 	printf("TAMANIO_PAGINA: %d\n", swap_config->pagina_size);
 	printf("RETARDO_COMPACTACION: %d\n", swap_config->retardo_compactacion);
+	printf("RETARDO_ACCESO: %d\n", swap_config->retardo_acceso);
 }
 
 void inicializar_semaforos() {
@@ -531,6 +535,8 @@ int finalizar_programa(int pid) {
 }
 
 int leer_pagina(int buffer_read_size) {
+
+	sleep(swap_config->retardo_acceso);
 	t_paquete_solicitar_pagina * paquete_lect_pag = NULL;
 	void * buffer = malloc(buffer_read_size);
 	int tamanio_paquete = buffer_read_size - 4;
@@ -588,6 +594,7 @@ int leer_pagina(int buffer_read_size) {
 
 int almacenar_pagina(int buffer_write_size) {
 
+	sleep(swap_config->retardo_acceso);
 	puts("ALMACENAR_PAGINA");
 
 	t_paquete_almacenar_pagina * paquete_escrt_pag = NULL;
