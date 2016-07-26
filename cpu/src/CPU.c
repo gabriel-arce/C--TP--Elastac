@@ -317,6 +317,8 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
 	header_in = recibir_header(socketNucleo);
 
+	if(header_in->tamanio == 0){ salirPor("no existe la variable compartida");}
+
 	return (header_in->tamanio);
 
 }
@@ -325,7 +327,9 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 
 	enviar_asignar_valor_compartido(variable, valor, socketNucleo);
 
-	//TODO ver si no existe variable
+	t_header * header = recibir_header(socketNucleo);
+
+	if(header->tamanio == 0){ salirPor("no existe la variable compartida");}
 	return valor;
 }
 
@@ -457,6 +461,7 @@ void rutina (int n) {
 			break;
 
 		case SIGINT:	//TODO ver como abortar
+			enviar_texto("Abortando el programa", socketNucleo);
 			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
 			exit(EXIT_FAILURE);
 			break;
