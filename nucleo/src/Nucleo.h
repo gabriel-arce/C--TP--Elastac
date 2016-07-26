@@ -75,6 +75,11 @@ typedef enum {
 } t_respuesta;
 
 typedef struct {
+	char *id;
+	t_valor_variable valor;
+} t_variableCompartida;
+
+typedef struct {
 	int puerto_programas;
 	int puerto_cpu;
 	int puerto_umc;
@@ -129,6 +134,7 @@ t_list *lista_cpu;
 t_list *lista_finalizados;
 t_list *lista_semaforos;
 t_list *lista_io;
+t_list *lista_sharedValues ;
 
 sem_t *mutexListos;
 sem_t *mutexCPU;
@@ -205,5 +211,7 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo);
 void ejecutarImprimirTexto(int socket, int tamanio_buffer);
 void ejecutarImprimirVariable(int socket, int tamanio_buffer);
 void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu);
+t_variableCompartida *crearSharedGlobal(char *sharedNombre);
+char *getSharedValue(char *valor);
 
 #endif /* NUCLEO_H_ */

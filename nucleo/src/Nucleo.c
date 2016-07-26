@@ -97,13 +97,17 @@ void crearListasYColas(){
 	lista_semaforos		= list_create();
 	lista_io						= list_create();
 
-	t_list *sem_id			= list_map(nucleo->sem_ids, getSemaforo);
-	t_list *sem_value	= list_map(nucleo->sem_init, getSemValue);
-	t_list *io_id				= list_map(nucleo->io_ids, getIOId);
-	t_list *io_value		= list_map(nucleo->io_sleep, getIOSleep);
+	lista_sharedValues = list_create();
 
-	char *semaforo		= malloc(NOMBRE_SEMAFORO);
-	char *io_nombre	=	malloc(NOMBRE_IO);
+	t_list *sem_id				=  list_map(nucleo->sem_ids, getSemaforo);
+	t_list *sem_value		= list_map(nucleo->sem_init, getSemValue);
+	t_list *io_id					= list_map(nucleo->io_ids, getIOId);
+	t_list *io_value			= list_map(nucleo->io_sleep, getIOSleep);
+	t_list *shared_value = list_map(nucleo->shared_vars, getSharedValue);
+
+	char *semaforo			 	= string_new();
+	char *io_nombre			=	string_new();
+	char *sharedNombre;
 
 	int valor = 0;
 	int io_sleep;
@@ -117,12 +121,20 @@ void crearListasYColas(){
 
 	for(i = 0; i < list_size(nucleo->io_ids); i++){
 		io_nombre	= list_get(io_id, i);
-		io_sleep				= list_get(io_value, i);
+		io_sleep		= list_get(io_value, i);
 		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre,0, io_sleep));
+	}
+
+	for(i = 0; i < list_size(nucleo->shared_vars); i++){
+		sharedNombre = string_new();
+		sharedNombre = list_get(shared_value, i);
+		list_add(lista_sharedValues, crearSharedGlobal(sharedNombre));
+		printf("Shared: %s\n", sharedNombre);
 	}
 
 	free(semaforo);
 	free(io_nombre);
+	free(sharedNombre);
 
 }
 
@@ -456,13 +468,14 @@ void finalizar(){
 		pcb = list_get(lista_finalizados, i);
 
 		//Envio un mensaje de finalizacion a la consola
-		enviar_texto("Finalizado", pcb->consola);
+		enviar_header(13, pcb->pcb_pid, pcb->consola);
 		close(pcb->consola);
 
 		//Sacar de la lista de finalizados
 		list_remove(lista_finalizados, i);
 
-		//TODO avisar a UMC que termino
+		//Avisar a UMC que termino
+		enviar_header(13, pcb->pcb_pid, socketUMC);
 
 		//Destruyo el pcb creado
 		destruirPCB(pcb);
@@ -526,7 +539,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	  		   break;}
 
 	  	   case abortarPrograma:{
-	  		   //TODO eliminar pcb y estructuras del UMC
+	  		   ejecutarFinalizacionPrograma(cpu, header);
 	  		   break;}
 
 	  	 case imprimir_texto:{
@@ -579,9 +592,15 @@ t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
 	semNucleo->id						= semaforo;
 	semNucleo->valor					= valor;      //TODO castea int a semaforo?
-	semNucleo->io_sleep					= io_sleep;
+	semNucleo->io_sleep			= io_sleep;
 	semNucleo->bloqueados	= list_create();
 	return semNucleo;
+}
+
+t_variableCompartida *crearSharedGlobal(char *sharedNombre){
+	t_variableCompartida *variable = string_new();
+	variable->id = sharedNombre;
+	return variable;
 }
 
 char *getIOId(char *valor){
@@ -590,6 +609,10 @@ char *getIOId(char *valor){
 
 int getIOSleep(char *valor){
 	return atoi(valor);
+}
+
+char *getSharedValue(char *valor){
+	return valor;
 }
 
 void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
@@ -667,14 +690,22 @@ void ejecutarSignal(int tamanio_buffer, t_clienteCPU * cpu){
 void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer){
 
 	char * nombreVariable;
-	t_valor_variable valor;
+	t_variableCompartida *variable;
 
 	nombreVariable = recibir_obtener_valor_compartido(tamanio_buffer, fd);
 
-
    // buscar por id variable y tomar valor
-	//valor =
-	enviar_header(0,valor,fd);
+	int i;
+	for(i = 0; list_size(lista_sharedValues); i++){
+		variable = list_get(lista_sharedValues, i);
+		if (variable->id == nombreVariable)
+			break;
+	}
+
+	if(variable->id != nombreVariable)
+		enviar_header(0,variable->valor,fd);
+	else
+		enviar_header(0,0,fd);
 
 }
 
@@ -683,13 +714,26 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 	char * nombreVariable;
 	t_valor_variable valor;
 	t_paquete_asignar_valor_compartido * paquete;
+	t_variableCompartida *variable;
 
 	paquete = recibir_asignar_valor_compartido(tamanio_buffer, fd);
 
-	nombreVariable = paquete->nombre;
-	valor = paquete->valor;
+	nombreVariable	= paquete->nombre;
+	valor 							= paquete->valor;
 
 	//buscar por id variable y pisar valor
+	int i;
+	for(i = 0; list_size(lista_sharedValues); i++){
+		variable = list_get(lista_sharedValues, i);
+		if (variable->id == nombreVariable){
+			variable->valor = valor;
+		}
+	}
+
+	if(variable != nombreVariable)
+		enviar_header(0, 1,fd);
+	else
+		enviar_header(0,0,fd);
 }
 
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
@@ -742,7 +786,7 @@ void ejecutarMuerteCPU(t_clienteCPU *cpu){
 	for(i = 0; i < list_size(lista_cpu); i++){
 		cpuAux = (t_clienteCPU *) list_get(lista_cpu, i);
 		if(cpuAux->cpuID == cpu->cpuID){
-			list_remove_and_destroy_element(lista_cpu, i, (void*)destruirCPU); //castear funcion a void*? TODO
+			list_remove_and_destroy_element(lista_cpu, i, (void*)destruirCPU);
 			break;
 		}
 	};
