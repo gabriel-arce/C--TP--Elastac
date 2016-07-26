@@ -561,7 +561,6 @@ void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu){
 		puts("Agregando a finalizados..");
 		list_add(lista, pcb);
 
-		cpu->disponible = Si;
 
 		signalSemaforo(semCpuDisponible);
 		signalSemaforo(semFinalizados);
@@ -695,11 +694,12 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 	   t_pcb *pcb = recibir_pcb(cpu->fd, header->tamanio);
-	   cpu->disponible = Si;
+
 
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
 
 	   finalizar();
+	   cpu->disponible = Si;
 }
 
 void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
@@ -723,6 +723,7 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
 	param->tiempo = paquete->tiempo;
 
 	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);
+	pthread_join(PiDBloqueado, NULL);
 
 
 /*
@@ -784,7 +785,6 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 	}
 
 	pasarAListos(pcb);
-	pthread_exit(NULL);
 }
 
 void ejecutarImprimirTexto(int socket, int tamanio_buffer){
