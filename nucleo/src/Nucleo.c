@@ -456,13 +456,13 @@ void finalizar(){
 		pcb = list_get(lista_finalizados, i);
 
 		//Envio un mensaje de finalizacion a la consola
-		enviarPorSocket(pcb->consola, "Finalizado");
+		enviar_texto("Finalizado", pcb->consola);
 		close(pcb->consola);
 
 		//Sacar de la lista de finalizados
 		list_remove(lista_finalizados, i);
 
-		//avisar a UMC que termino
+		//TODO avisar a UMC que termino
 
 		//Destruyo el pcb creado
 		destruirPCB(pcb);
@@ -551,6 +551,7 @@ void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
 
 	cpu->disponible = Si;
 
+	signalSemaforo(semCpuDisponible);
 	signalSemaforo(semBloqueados);
 }
 
@@ -562,6 +563,7 @@ void agregarPCBaFinalizados(t_list *lista, t_pcb *pcb, t_clienteCPU *cpu){
 
 		cpu->disponible = Si;
 
+		signalSemaforo(semCpuDisponible);
 		signalSemaforo(semFinalizados);
 		signalSemaforo(mutexFinalizados);
 }
@@ -612,6 +614,7 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 		pcb = recibir_pcb(cpu->fd, header->tamanio);
 
 		cpu->disponible = Si;
+		signalSemaforo(semCpuDisponible);
 
 		//enviar el pcb a bloqueados
 		list_add(lista_bloqueados, pcb);
@@ -780,7 +783,7 @@ void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 
 	}
 
-	queue_push(cola_listos, pcb);
+	pasarAListos(pcb);
 	pthread_exit(NULL);
 }
 
@@ -806,5 +809,5 @@ void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu){
 
 	cpu->disponible = Si;
 
-	queue_push(cola_listos, pcb);
+	pasarAListos(pcb);
 }

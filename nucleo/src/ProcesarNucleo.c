@@ -10,10 +10,6 @@
 
 int main(int argc, char * argv[]) {
 
-/*	// Obtener el directorio actual - TEST
-	char *directorio = getcwd(NULL, 0);
-	printf("El directorio actual es: %s\n", directorio);
-	free(directorio);*/
 	pid_global = 0;
 
 	//Chequear argumentos
