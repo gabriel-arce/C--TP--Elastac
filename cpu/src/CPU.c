@@ -190,7 +190,7 @@ t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t 
 	}
 
 	header = recibir_header(socketUMC);
-	if(header->tamanio == 0){salirPor("no se pudo leer la variable");}
+	if(header->tamanio == 0){salirPor("no se pudo leer la variable");} //TODO segmentation Fault
 
 	valor = recibir_valor_de_variable(socketUMC);
 
@@ -321,9 +321,11 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
 }
 
-t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){			//TODO enviar a nucleo
+t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_variable valor){
 
-	//mandar a nucleo
+	enviar_asignar_valor_compartido(variable, valor, socketNucleo);
+
+	//TODO ver si no existe variable
 	return valor;
 }
 
@@ -335,7 +337,7 @@ void irAlLabel(t_nombre_etiqueta etiqueta){
 
 }
 
-void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){							//TODO faltan los argumentos!!
+void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){							//TODO faltan los argumentos!! (creo que no hay que hacer nada)
 
 	printf("Ejecutando funcion: %s", etiqueta);
 
@@ -355,7 +357,7 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){				
 
 void retornar(t_valor_variable retorno){
 
-	printf("Retornando valor: %s \n", retorno);
+	printf("Retornando valor: %d \n", retorno);
 
 	retornarValorAVariable(retorno);
 	modificarElPC();
@@ -365,7 +367,7 @@ void retornar(t_valor_variable retorno){
 
 void imprimir(t_valor_variable valor_mostrar){
 
-	printf("Imprimiendo valor: %s \n", valor_mostrar);
+	printf("Imprimiendo valor: %d \n", valor_mostrar);
 
 	if(enviar_valor_de_variable(valor_mostrar,socketNucleo) == -1){
 	 			salirPor("No se concreto la impresion por pantalla");
@@ -384,7 +386,8 @@ void entradaSalida(t_nombre_dispositivo dispositivo, int tiempo){
 
 	printf ("Entrada y salida en: %s , por: %d tiempo \n", dispositivo, tiempo);
 
-	//TODO serializar y mandar
+	enviar_entrada_salida(dispositivo, tiempo, socketNucleo);
+
 	pcbCorriendo = false;
 
 }

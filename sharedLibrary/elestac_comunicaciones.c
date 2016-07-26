@@ -288,6 +288,72 @@ char * deserializar_nombre_compartida(void * buffer) {
 	return texto;
 }
 //----------------------------------------------------->
+
+void * serializar_asignar_valor_compartido(t_nombre_compartida nombre_variable, t_valor_variable valor_variable){
+
+	int nombre_variable_lentgh = string_length(nombre_variable);
+
+	t_paquete_asignar_valor_compartido * paquete = malloc(sizeof(t_paquete_solicitar_pagina));
+	void * buffer = malloc(4 + nombre_variable_lentgh);
+
+	paquete->valor = valor_variable;
+	paquete->nombre_length = nombre_variable_lentgh;
+	paquete->nombre = nombre_variable;
+
+	memcpy(buffer, &(paquete->valor), 4);
+	memcpy(buffer + 4, &(paquete->nombre_length), 4);
+	memcpy(buffer + 8, &(paquete->nombre), nombre_variable_lentgh);
+
+	free(paquete);
+	return buffer;
+
+}
+
+
+t_paquete_asignar_valor_compartido * deserializar_asignar_valor_compartido(void * buffer) {
+
+	t_paquete_asignar_valor_compartido * paquete = malloc(sizeof(t_paquete_asignar_valor_compartido));
+
+	memcpy(&(paquete->valor), buffer, 4);
+	memcpy(&(paquete->nombre_length), buffer + 4, 4);
+	memcpy(&(paquete->nombre), buffer + 8, paquete->nombre_length);
+
+	free(buffer);
+	return paquete;
+}
+
+//----------------------------------------------------->
+
+void * serializar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
+
+	int nombre_dispositivo_length = string_length(nombre_dispositivo);
+
+	t_paquete_entrada_salida * paquete = malloc(sizeof(t_paquete_entrada_salida));
+	void * buffer = malloc(4 + nombre_dispositivo_length);
+
+		paquete->nombre = nombre_dispositivo;
+		paquete->tiempo = tiempo;
+
+		memcpy(buffer, &(paquete->tiempo), 4);
+		memcpy(buffer + 4, &(paquete->nombre), nombre_dispositivo_length);
+
+		free(paquete);
+		return buffer;
+}
+
+
+t_paquete_entrada_salida * deserializar_entrada_salida(void * buffer){
+
+	t_paquete_entrada_salida* paquete = malloc(sizeof(t_paquete_entrada_salida));
+
+		memcpy(&(paquete->tiempo), buffer, 4);
+		memcpy(&(paquete->nombre_length), buffer + 4, 4);
+		memcpy(&(paquete->nombre), buffer + 8, paquete->nombre_length);
+
+		free(buffer);
+		return paquete;
+}
+//----------------------------------------------------->
 int enviar_handshake(int socket, int id) {
 	void * buffer = serializar_header((uint8_t) id, (uint32_t) 0);
 
@@ -634,3 +700,74 @@ char* recibir_obtener_valor_compartido(int buffer_size, int socket) {
 
 //---------------------------------------------------->
 
+int enviar_asignar_valor_compartido(t_nombre_compartida nombre_variable, t_valor_variable valor, int socket){
+
+	int nombre_variable_length = string_length(nombre_variable);
+
+	int result = enviar_header(26, nombre_variable_length + 8, socket);
+
+	if (result == -1)
+			return result;
+
+	void * buffer_out = serializar_asignar_valor_compartido(nombre_variable,valor);
+
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+
+	if (result == -1)
+			return result;
+
+		free(buffer_out);
+		return EXIT_SUCCESS;
+
+}
+
+t_paquete_asignar_valor_compartido * recibir_asignar_valor_compartido(int buffer_size, int socket) {
+
+	void * buffer = malloc(buffer_size);
+
+	int r = recv(socket, buffer, buffer_size, 0);
+
+	if (r <= 0)
+		return 0;
+
+	t_paquete_asignar_valor_compartido * respuesta = deserializar_asignar_valor_compartido(buffer);
+
+	return respuesta;
+}
+
+//---------------------------------------------------->
+
+int enviar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int tiempo, int socket){
+
+	int nombre_dispositivo_length = string_length(nombre_dispositivo);
+
+	int result = enviar_header(24, nombre_dispositivo_length + 8, socket);
+
+	if (result == -1)
+			return result;
+
+	void * buffer_out = serializar_entrada_salida(nombre_dispositivo, tiempo);
+
+	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+
+	if (result == -1)
+			return result;
+
+		free(buffer_out);
+		return EXIT_SUCCESS;
+
+}
+
+t_paquete_entrada_salida * recibir_entrada_salida(int buffer_size, int socket) {
+
+	void * buffer = malloc(buffer_size);
+
+	int r = recv(socket, buffer, buffer_size, 0);
+
+	if (r <= 0)
+		return 0;
+
+	t_paquete_entrada_salida * respuesta = deserializar_entrada_salida(buffer);
+
+	return respuesta;
+}
