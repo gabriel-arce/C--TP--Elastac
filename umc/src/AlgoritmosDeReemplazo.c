@@ -41,32 +41,33 @@ void run_LRU(t_tlb * reemplazo) {
 //****CLOCK****
 int clock_algorithm(int page_to_replace, t_proceso * proceso) {
 
-	int supera, hay_libres;
+	int supera, hay_libres, nro_frame;
 
 	supera = supera_limite_frames(proceso->pid);
 
 	if (supera) {
-		run_clock(page_to_replace, proceso);
+		nro_frame = run_clock(page_to_replace, proceso);
 	} else {
 		hay_libres = hay_frames_libres();
 		if (hay_libres) {
 			//agrego
-			agregar_en_frame_libre(page_to_replace, proceso, 0);
+			nro_frame = agregar_en_frame_libre(page_to_replace, proceso, 0);
 		} else {
-			run_clock(page_to_replace, proceso);
+			nro_frame = run_clock(page_to_replace, proceso);
 		}
 	}
 
-	return EXIT_SUCCESS;
+	return nro_frame;
 }
 
-void run_clock(int page_to_replace, t_proceso * proceso) {
+int run_clock(int page_to_replace, t_proceso * proceso) {
 
 	int cant_referencias = 0;
 	bool page_victim_not_found = true;
 	int index = 0;
 	int ref = -1;
 	t_tabla_pagina * page_ref = NULL;
+	int nro_frame;
 
 	cant_referencias = list_size(proceso->referencias);
 
@@ -94,6 +95,8 @@ void run_clock(int page_to_replace, t_proceso * proceso) {
 			pagina_reemp->presentbit = 1;
 			pagina_reemp->frame = page_ref->frame;
 
+			nro_frame = page_ref->frame;
+
 			page_ref->accessedbit = 0;
 			page_ref->presentbit = 0;
 			page_ref->frame = -1;
@@ -105,6 +108,8 @@ void run_clock(int page_to_replace, t_proceso * proceso) {
 
 		index++;
 	}
+
+	return nro_frame;
 }
 //****-----****
 
@@ -112,48 +117,53 @@ void run_clock(int page_to_replace, t_proceso * proceso) {
 int clock_modificado(int page_to_replace, t_proceso * proceso,
 		int read_or_write) {
 
-	int supera, hay_libres;
+	int supera, hay_libres, nro_frame;
 
 	supera = supera_limite_frames(proceso->pid);
 
 	if (supera) {
-		run_clock_modificado(page_to_replace, proceso, read_or_write);
+		nro_frame = run_clock_modificado(page_to_replace, proceso, read_or_write);
 	} else {
 		hay_libres = hay_frames_libres();
 		if (hay_libres) {
 			//agrego
-			agregar_en_frame_libre(page_to_replace, proceso, read_or_write);
+			nro_frame = agregar_en_frame_libre(page_to_replace, proceso, read_or_write);
 		} else {
-			run_clock_modificado(page_to_replace, proceso, read_or_write);
+			nro_frame = run_clock_modificado(page_to_replace, proceso, read_or_write);
 		}
 	}
 
-	return 0;
+	return nro_frame;
 }
 
-void run_clock_modificado(int page_to_replace, t_proceso * proceso,
+int run_clock_modificado(int page_to_replace, t_proceso * proceso,
 		int read_or_write) {
 
 	bool page_victim_not_found = true;
 	int res_paso1;
 	int res_paso2;
+	int nro_frame;
 
 	while (page_victim_not_found) {
 		res_paso1 = paso_1(page_to_replace, proceso, read_or_write);
 
 		if (res_paso1) {
 			page_victim_not_found = false;
+			nro_frame = res_paso1;
 			continue;
 		} else {
 			res_paso2 = paso_2(page_to_replace, proceso, read_or_write);
 			if (res_paso2) {
 				page_victim_not_found = false;
+				nro_frame = res_paso2;
 				continue;
 			} else {
 				continue;
 			}
 		}
 	}
+
+	return nro_frame;
 }
 
 int paso_1(int page_to_replace, t_proceso * proceso, int read_or_write) {

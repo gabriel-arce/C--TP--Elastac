@@ -69,11 +69,11 @@ void run_LRU(t_tlb * reemplazo);
 
 //---CLOCK
 int clock_algorithm(int page_to_replace, t_proceso * proceso);
-void run_clock(int page_to_replace, t_proceso * proceso);
+int run_clock(int page_to_replace, t_proceso * proceso);
 
 //---CLOCK MODIFICADO
 int clock_modificado(int page_to_replace, t_proceso * proceso, int read_or_write);
-void run_clock_modificado(int page_to_replace, t_proceso * proceso, int read_or_write);
+int run_clock_modificado(int page_to_replace, t_proceso * proceso, int read_or_write);
 int paso_1(int page_to_replace, t_proceso * proceso, int read_or_write);
 int paso_2(int page_to_replace, t_proceso * proceso, int read_or_write);
 
