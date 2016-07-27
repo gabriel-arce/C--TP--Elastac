@@ -425,9 +425,11 @@ void crearServerCPU(){
 		if (enviar_header(29, nucleo->quantum_sleep, newfd) == -1)
 			puts("[NUCLEO] Envio de Quantum fallido");
 
+
+
 		//Crear hilo para CPU entrante
 		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
-		pthread_join(pIDCpu, NULL);
+		//pthread_join(pIDCpu, NULL);
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);

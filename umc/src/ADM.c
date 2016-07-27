@@ -376,6 +376,8 @@ void swapping(int pagina_solicitada, int pagina_a_reemplazar, int pid, int dirty
 	solicitud->bytes = umc_config->frames_size;
 	solicitud->buffer = lectura_en_swap(leer_swap, pid);
 
+	printf("%s",(char*)solicitud->buffer);
+
 	if (solicitud->buffer != NULL) {
 		escribir_datos(frame, solicitud);
 		free(solicitud->buffer);

@@ -538,7 +538,7 @@ int finalizar_programa(int pid) {
 
 int leer_pagina(int buffer_read_size) {
 
-	sleep(swap_config->retardo_acceso);
+	usleep(swap_config->retardo_acceso);
 	t_paquete_solicitar_pagina * paquete_lect_pag = NULL;
 	void * buffer = malloc(buffer_read_size);
 	int tamanio_paquete = buffer_read_size - 4;
