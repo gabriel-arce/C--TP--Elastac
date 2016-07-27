@@ -132,6 +132,8 @@ int iniciar_programa(t_paquete_inicializar_programa * paquete_init,
 }
 
 int almacenar_codigo(char * codigo, int posicion_inicial_swap) {
+	usleep(swap_config->retardo_acceso * 1000);
+
 	int fd = open("swap.data", O_RDWR, S_IWRITE | S_IREAD);
 
 	if (fd == -1)
@@ -165,7 +167,7 @@ int almacenar_codigo(char * codigo, int posicion_inicial_swap) {
 	return 0;
 }
 
-void * leer_bytes(int pid, t_paquete_solicitar_pagina * paquete) {
+void * leer_bytes(int pid, int pagina) {
 	int fd = open("swap.data", O_RDONLY);
 
 	if (fd == -1)
@@ -178,7 +180,7 @@ void * leer_bytes(int pid, t_paquete_solicitar_pagina * paquete) {
 		return NULL;
 	}
 
-	char * espacio_swap = mmap((caddr_t) 0, buf.st_size, PROT_READ,
+	void * espacio_swap = mmap((caddr_t) 0, buf.st_size, PROT_READ,
 	MAP_SHARED, fd, 0);
 
 	if (espacio_swap == MAP_FAILED) {
@@ -186,22 +188,19 @@ void * leer_bytes(int pid, t_paquete_solicitar_pagina * paquete) {
 		return NULL;
 	}
 
-	int direccion_fisica = calcular_direccion_fisica(pid, paquete->nro_pagina,
-			paquete->offset);
+	usleep(swap_config->retardo_acceso * 1000);
 
-	char * datos = string_substring(espacio_swap, direccion_fisica,
-			paquete->bytes);
+	void * datos = malloc(swap_config->pagina_size);
+	int direccion = pagina * swap_config->pagina_size;
+	memcpy(datos, espacio_swap + direccion, swap_config->pagina_size);
 
 	close(fd);
 	munmap(espacio_swap, buf.st_size);
 
-	return (void *) datos;
+	return datos;
 }
 
-int escribir_bytes(int pid, t_paquete_almacenar_pagina * paquete) {
-
-	if ((swap_config->pagina_size - paquete->bytes) < 0)
-		return -1;
+int escribir_bytes(int pid, int pagina, void * datos_a_escribir) {
 
 	int fd = open("swap.data", O_RDWR, S_IWRITE | S_IREAD);
 
@@ -223,10 +222,11 @@ int escribir_bytes(int pid, t_paquete_almacenar_pagina * paquete) {
 		return -1;
 	}
 
-	int direccion_fisica = calcular_direccion_fisica(pid, paquete->nro_pagina,
-			paquete->offset);
+	usleep(swap_config->retardo_acceso * 1000);
 
-	memcpy(espacio_swap + direccion_fisica, paquete->buffer, paquete->bytes);
+	int direccion_fisica = pagina * swap_config->pagina_size;
+
+	memcpy(espacio_swap + direccion_fisica, datos_a_escribir, swap_config->pagina_size);
 	msync(espacio_swap, buf.st_size, 0);
 
 	close(fd);
@@ -235,24 +235,24 @@ int escribir_bytes(int pid, t_paquete_almacenar_pagina * paquete) {
 	return 0;
 }
 
-int calcular_direccion_fisica(int pid, int pagina, int offset) {
-	int bloque = 0;
-	int direccion_fisica = 0;
-
-	bool buscar_en_swap(t_swap * s) {
-		return ((s->pid == pid) && (s->pagina == pagina));
-	}
-	t_swap * swap_reg = list_find(list_swap, (void *) buscar_en_swap);
-
-	if (swap_reg == NULL)
-		return -1;
-
-	bloque = swap_reg->posicion_en_swap;
-
-	direccion_fisica = (bloque * swap_config->pagina_size) + offset;
-
-	return direccion_fisica;
-}
+//int calcular_direccion_fisica(int pid, int pagina, int offset) {
+//	int bloque = 0;
+//	int direccion_fisica = 0;
+//
+//	bool buscar_en_swap(t_swap * s) {
+//		return ((s->pid == pid) && (s->pagina == pagina));
+//	}
+//	t_swap * swap_reg = list_find(list_swap, (void *) buscar_en_swap);
+//
+//	if (swap_reg == NULL)
+//		return -1;
+//
+//	bloque = swap_reg->posicion_en_swap;
+//
+//	direccion_fisica = (bloque * swap_config->pagina_size) + offset;
+//
+//	return direccion_fisica;
+//}
 
 void fin_programa(int pid) {
 
@@ -272,6 +272,7 @@ void fin_programa(int pid) {
 }
 
 int finalizar_en_archivo(int pid) {
+	usleep(swap_config->retardo_acceso * 1000);
 
 	int fd = open("swap.data", O_RDWR, S_IWRITE | S_IREAD);
 
@@ -317,7 +318,7 @@ int finalizar_en_archivo(int pid) {
 }
 
 int compactar() {
-	sleep(swap_config->retardo_acceso);
+	usleep(swap_config->retardo_compactacion * 1000);
 	int cantidad_de_elemenos = list_swap->elements_count;
 	int i = 0;
 	void * copia_persistencia = NULL;
@@ -538,57 +539,42 @@ int finalizar_programa(int pid) {
 
 int leer_pagina(int buffer_read_size) {
 
-	usleep(swap_config->retardo_acceso);
-	t_paquete_solicitar_pagina * paquete_lect_pag = NULL;
 	void * buffer = malloc(buffer_read_size);
-	int tamanio_paquete = buffer_read_size - 4;
-	void * buffer_paquete = malloc(tamanio_paquete);
 	int pid = -1;
+	int pagina = -1;
 
 	int catch_read_error() {
-		send(socket_UMC, (void *) " ", 1, 0);
+		char * buffer_error = string_repeat('?', swap_config->pagina_size);
+		send(socket_UMC, (void *) buffer_error, swap_config->pagina_size, 0);
+		free(buffer_error);
 		free(buffer);
 		return EXIT_ERROR;
 	}
 
-	if (recv(socket_UMC, buffer, buffer_read_size, 0) <= 0) {
-		printf("\nError en el recv para lectura de datos\n");
-		free(buffer_paquete);
+	if (recv(socket_UMC, buffer, buffer_read_size, 0) <= 0)
 		return catch_read_error();
-	}
 
 	memcpy(&(pid), buffer, 4);
-	memcpy(buffer_paquete, buffer + 4, tamanio_paquete);
-
-	paquete_lect_pag = deserializar_leer_pagina(buffer_paquete);
-
-	if (paquete_lect_pag == NULL)
-		return catch_read_error();
+	memcpy(&(pagina), buffer + 4, 4);
 
 	printf("pid: %d\n", pid);
-	printf("pagina: %d\n", paquete_lect_pag->nro_pagina);
-	printf("offset: %d\n", paquete_lect_pag->offset);
-	printf("bytes: %d\n", paquete_lect_pag->bytes);
+	printf("pagina: %d\n", pagina);
 
-	if (!pagina_valida(pid, paquete_lect_pag->nro_pagina,
-			paquete_lect_pag->offset, paquete_lect_pag->bytes)) {
+	if (!pagina_valida(pid, pagina)) {
 		printf("\nERROR: Solicitud de lectura invalida\n");
-		free(paquete_lect_pag);
 		return catch_read_error();
 	}
 
-	void * datos_leidos = leer_bytes(pid, paquete_lect_pag);
+	void * datos_leidos = leer_bytes(pid, pagina);
 
 	if (datos_leidos == NULL) {
 		printf("\nERROR: No se pudo leer los datos solicitados\n");
-		free(paquete_lect_pag);
 		return catch_read_error();
 	}
 
-	send(socket_UMC, datos_leidos, paquete_lect_pag->bytes, 0);
+	send(socket_UMC, datos_leidos, swap_config->pagina_size, 0);
 
 	free(buffer);
-	free(paquete_lect_pag);
 	free(datos_leidos);
 
 	return EXIT_SUCCESS;
@@ -596,65 +582,50 @@ int leer_pagina(int buffer_read_size) {
 
 int almacenar_pagina(int buffer_write_size) {
 
-	sleep(swap_config->retardo_acceso);
-	puts("ALMACENAR_PAGINA");
-
-	t_paquete_almacenar_pagina * paquete_escrt_pag = NULL;
 	void * buffer = malloc(buffer_write_size);
-	int tamanio_paquete = buffer_write_size - 4;
-	void * buffer_paquete = malloc(tamanio_paquete);
+	int contenido_size = buffer_write_size - 8;
+	void * contenido = malloc(contenido_size);
 	int pid = -1;
+	int pagina = -1;
 
 	int catch_write_error() {
-		send(socket_UMC, (void *) "-1", 2, 0);
+		enviar_respuesta_inicio(socket_UMC, -1);
 		free(buffer);
+		free(contenido);
 		return EXIT_ERROR;
 	}
 
 	if (recv(socket_UMC, buffer, buffer_write_size, 0) <= 0) {
 		printf("\nError en el recv para escritura de datos\n");
-		free(buffer_paquete);
 		return catch_write_error();
 	}
 
 	memcpy(&(pid), buffer, 4);
-	memcpy(buffer_paquete, buffer + 4, tamanio_paquete);
+	memcpy(&(pagina), buffer + 4, 4);
+	memcpy(contenido, buffer + 8, contenido_size);
 
-	paquete_escrt_pag = deserializar_almacenar_pagina(buffer_paquete);
+	printf("pagina: %d\n", pagina);
+	printf("buffer: %s\n", (char *) contenido);
 
-	if (paquete_escrt_pag == NULL)
-		return catch_write_error();
-
-	printf("pagina: %d\n", paquete_escrt_pag->nro_pagina);
-	printf("offset: %d\n", paquete_escrt_pag->offset);
-	printf("bytes: %d\n", paquete_escrt_pag->bytes);
-	printf("buffer: %s\n", (char *) paquete_escrt_pag->buffer);
-
-	if (!pagina_valida(pid, paquete_escrt_pag->nro_pagina,
-			paquete_escrt_pag->offset, paquete_escrt_pag->bytes)) {
+	if (!pagina_valida(pid, pagina)) {
 		printf("\nERROR: Solicitud de escritura invalida\n");
-		free(paquete_escrt_pag->buffer);
-		free(paquete_escrt_pag);
 		return catch_write_error();
 	}
 
-	if ((escribir_bytes(pid, paquete_escrt_pag)) == -1) {
+	if ((escribir_bytes(pid, pagina, contenido)) == -1) {
 		printf("\nERROR: No se pudo escribir los datos solicitados\n");
-		free(paquete_escrt_pag->buffer);
-		free(paquete_escrt_pag);
 		return catch_write_error();
 	}
 
-	send(socket_UMC, (void *) "+1", 2, 0);
+	enviar_respuesta_inicio(socket_UMC, 1);
 
 	free(buffer);
-	free(paquete_escrt_pag->buffer);
-	free(paquete_escrt_pag);
+	free(contenido);
 
 	return EXIT_SUCCESS;
 }
 
-bool pagina_valida(int pid, int pagina, int offset, int bytes) {
+bool pagina_valida(int pid, int pagina) {
 	bool del_pid(t_swap * s) {
 		return (s->pid == pid);
 	}
@@ -664,15 +635,6 @@ bool pagina_valida(int pid, int pagina, int offset, int bytes) {
 		return false;
 
 	t_list * paginas_del_pid = list_filter(list_swap, (void *) del_pid);
-
-	if (paginas_del_pid == NULL)
-		return false;
-
-	if (offset > swap_config->pagina_size)
-		return false;
-
-	if (bytes > (swap_config->pagina_size - offset))
-		return false;
 
 	bool match_pagina(t_swap * p) {
 		return (p->pagina == pagina);

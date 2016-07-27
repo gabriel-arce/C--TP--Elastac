@@ -128,7 +128,7 @@ void * atiende_cpu(void * args);
 void respuesta_inicio_swap(int respuesta_inicio);
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
 void finalizar_en_swap(int pid);
-void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid);
-int escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid);
+void * lectura_en_swap(int pagina, int pid);
+int escritura_en_swap(int pagina, int frame, int pid);
 
 #endif /* UMC_H_ */

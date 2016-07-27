@@ -36,6 +36,8 @@ void inicializar_memoria() {
 
 void inicializar_tabla_paginas(int pags, t_proceso * proceso) {
 
+	usleep(umc_config->retardo * 1000);
+
 	int i;
 	for (i = 0; i <= pags; i++) {
 		t_tabla_pagina * entry = malloc(sizeof(t_tabla_pagina));
@@ -71,24 +73,23 @@ int inicializar_proceso(int pid, int paginas) {
 	return EXIT_SUCCESS;
 }
 
-int pagina_valida(t_proceso * proceso, int pagina, int offset, int bytes) {
+bool pagina_valida(t_proceso * proceso, int pagina, int offset, int bytes) {
 
 	t_tabla_pagina * pagina_val = buscar_pagina(pagina, proceso->tabla_paginas);
 
 	if (pagina_val == NULL)
-		return 0;
+		return false;
 
-	int valida = 0;
+	if (offset > umc_config->frames_size)
+		return false;
 
-	int dato_menor_a_pagesize(int dato) {
-		return (dato <= umc_config->frames_size);
-	}
+	if (bytes > umc_config->frames_size)
+		return false;
 
-	valida = dato_menor_a_pagesize(offset);
-	valida = dato_menor_a_pagesize(bytes);
-	valida = dato_menor_a_pagesize((offset + bytes));
+	if ((offset + bytes) > umc_config->frames_size)
+		return false;
 
-	return valida;
+	return true;
 }
 
 int supera_limite_frames(int pid) {
@@ -115,10 +116,12 @@ int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit) {
 
 	int esta;
 
-	t_mem_frame * target = buscar_frame_por_pagina(pagina, proceso->pid);
+	usleep(umc_config->retardo * 1000);
 
-	if (target) {
-		t_tabla_pagina * page = buscar_pagina(pagina, proceso->tabla_paginas);
+	t_tabla_pagina * page = buscar_pagina(pagina, proceso->tabla_paginas);
+
+	if (page->presentbit) {
+
 		page->accessedbit = 1;
 		page->presentbit = 1;
 
@@ -129,7 +132,7 @@ int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit) {
 			t_tlb * reemplazo_tlb = malloc(sizeof(t_tlb));
 			reemplazo_tlb->referencebit = 0;
 			reemplazo_tlb->frame = page->frame;
-			reemplazo_tlb->pagina = target->pagina;
+			reemplazo_tlb->pagina = pagina;
 			reemplazo_tlb->pid = proceso->pid;
 
 			run_LRU(reemplazo_tlb);
@@ -333,6 +336,9 @@ void imprimir_tlb() {
 
 //****LECTURAS Y ESCRITURAS****
 void * leer_datos(int frame, int offset, int bytes) {
+
+	usleep(umc_config->retardo * 1000);
+
 	void * datos = malloc(bytes);
 	int dir_fisica = 0;
 	dir_fisica = (frame * umc_config->frames_size) + offset;
@@ -343,6 +349,9 @@ void * leer_datos(int frame, int offset, int bytes) {
 }
 
 void escribir_datos(int frame, t_paquete_almacenar_pagina * solicitud) {
+
+	usleep(umc_config->retardo * 1000);
+
 	int dir_fisica = 0;
 	dir_fisica = (frame * umc_config->frames_size) + solicitud->offset;
 
@@ -351,40 +360,23 @@ void escribir_datos(int frame, t_paquete_almacenar_pagina * solicitud) {
 
 void swapping(int pagina_solicitada, int pagina_a_reemplazar, int pid, int dirty_bit, int frame) {
 	//actualizar swap
-	if (dirty_bit&&(pagina_a_reemplazar >= 0)) {
-		t_paquete_almacenar_pagina * almacenar_swap = malloc(sizeof(t_paquete_almacenar_pagina));
-		almacenar_swap->nro_pagina = pagina_a_reemplazar;
-		almacenar_swap->offset = 0;
-		almacenar_swap->bytes = umc_config->frames_size;
-		almacenar_swap->buffer = leer_datos(frame, 0, umc_config->frames_size);
-		escritura_en_swap(almacenar_swap, pid);
-
-		free(almacenar_swap);
-	}
+	if (dirty_bit&&(pagina_a_reemplazar >= 0))
+		escritura_en_swap(pagina_a_reemplazar, frame, pid);
 	//---------------
 
 	//pedir pagina a swap
-	t_paquete_solicitar_pagina * leer_swap = malloc(sizeof(t_paquete_solicitar_pagina));
-	leer_swap->nro_pagina = pagina_solicitada;
-	leer_swap->offset = 0;
-	leer_swap->bytes = umc_config->frames_size;
+	t_paquete_almacenar_pagina * escritura_swap = malloc(sizeof(t_paquete_almacenar_pagina));
+	escritura_swap->nro_pagina = pagina_solicitada;
+	escritura_swap->offset = 0;
+	escritura_swap->bytes = umc_config->frames_size;
+	escritura_swap->buffer = lectura_en_swap(pagina_solicitada, pid);
 
-	t_paquete_almacenar_pagina * solicitud = malloc(
-			sizeof(t_paquete_almacenar_pagina));
-	solicitud->nro_pagina = pagina_solicitada;
-	solicitud->offset = 0;
-	solicitud->bytes = umc_config->frames_size;
-	solicitud->buffer = lectura_en_swap(leer_swap, pid);
-
-	printf("%s",(char*)solicitud->buffer);
-
-	if (solicitud->buffer != NULL) {
-		escribir_datos(frame, solicitud);
-		free(solicitud->buffer);
+	if (escritura_swap->buffer != NULL) {
+		escribir_datos(frame, escritura_swap);
+		free(escritura_swap->buffer);
 	}
 
-	free(leer_swap);
-	free(solicitud);
+	free(escritura_swap);
 	//-------------------
 }
 //****-------------****

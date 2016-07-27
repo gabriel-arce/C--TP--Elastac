@@ -49,7 +49,7 @@ int its_clock_m;
 void inicializar_memoria();
 void inicializar_tabla_paginas(int pags, t_proceso * proceso);
 int inicializar_proceso(int pid, int paginas);
-int pagina_valida(t_proceso * proceso, int pagina, int offset, int bytes);
+bool pagina_valida(t_proceso * proceso, int pagina, int offset, int bytes);
 int supera_limite_frames(int pid);
 int hay_frames_libres();
 int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit);
