@@ -21,8 +21,9 @@ void * lanzar_consola() {
 		printf("Comandos disponibles:\n");
 		printf("(1): retardo x[ms]\n");
 		printf("(2): dump #\n");
-		printf("	#1- estructuras de memoria\n");
+		printf("	#1- tablas de paginas\n");
 		printf("	#2- contenido de memoria\n");
+		printf("	#3- cache TLB\n");
 		printf("(3): flush #\n");
 		printf("	#1- tlb\n");
 		printf("	#2- memory\n");
@@ -83,7 +84,9 @@ void * lanzar_consola() {
 			case 2:
 				reporte_contenido(snd_var);
 				break;
-
+			case 3:
+				tlb_on ? imprimir_tlb() : puts("No esta la TLB activada");
+				break;
 			default:
 				puts(MSJ_ERROR2);
 				continue;
