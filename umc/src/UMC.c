@@ -321,7 +321,6 @@ void * lectura_en_swap(int pagina, int pid) {
 
 	free(pedido_swap);
 
-	//TODO ver bien si no me conviene hacerlo asincronico
 	if (recv(socket_swap, datos_solicitados, umc_config->frames_size, 0) <= 0)
 		return NULL;
 

@@ -148,7 +148,7 @@ void modificar_retardo(int new_ret) {
 void reporte_estructuras(int pid) {
 	puts("comando dump - estructuras");
 
-	if (pid) {
+	if (pid != 0) {
 		t_proceso * proceso = buscar_proceso(pid);
 
 		if (proceso != NULL) {
@@ -177,11 +177,11 @@ void reporte_estructuras_del_pid(t_proceso * proceso) {
 void reporte_contenido(int pid) {
 	puts("comando dump - contenido");
 
-	if (pid) {
+	if (pid != 0) {
 		if (dump_memory_from_pid(pid) == -1)
 			printf("\nError: no existe el pid que se ingreso\n");
 	} else {
-		puts("dumpeo memoria principal");
+		printf("\nDump de la memoria principal\n");
 		dump_memory(memoria_principal, memoria_size);
 	}
 }
