@@ -207,12 +207,12 @@ void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 	enviar_header(20, tamanio, cpu->fd);
 	enviar_pcb(pcb, cpu->fd);
 
-	/*
+/*
 	//Crear hilo para CPU entrante
 	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
-	pthread_join(pIDCpu, NULL);
-	 */
-
+	//pthread_join(pIDCpu, NULL);
+	//signal(cpu->disponible, pthread_join(pIDCpu, NULL));
+*/
 
 }
 
@@ -417,18 +417,11 @@ void crearServerCPU(){
 		//Agregar CPU a la lista
 		list_add(lista_cpu, nuevaCPU);
 
-		//Enviar Quantum
-		if (enviar_header(28, nucleo->quantum, newfd) == -1)
-			puts("[NUCLEO] Envio de Quantum fallido");
-
-		//Enviar Quantum Sleep
-		if (enviar_header(29, nucleo->quantum_sleep, newfd) == -1)
-			puts("[NUCLEO] Envio de Quantum fallido");
-
 
 
 		//Crear hilo para CPU entrante
 		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
+
 		//pthread_join(pIDCpu, NULL);
 
 		//Signal por CPU nueva
@@ -504,9 +497,18 @@ void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
 
+	//Enviar Quantum
+	if (enviar_header(28, nucleo->quantum, cpu->fd) == -1)
+		puts("[NUCLEO] Envio de Quantum fallido");
+
+	//Enviar Quantum Sleep
+	if (enviar_header(29, nucleo->quantum_sleep, cpu->fd) == -1)
+		puts("[NUCLEO] Envio de Quantum fallido");
+
 	while(1){
 		if ((header = recibir_header(cpu->fd)) == NULL){
-			continue;}
+			pthread_join(pIDCpu, NULL);
+			exit;}
 
 	   switch(header->identificador){
 	  	   case FinalizacionPrograma:{
