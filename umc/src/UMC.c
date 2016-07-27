@@ -535,6 +535,11 @@ int leer_bytes(int socket_cpu, int bytes) {
 		return catch_read_error();
 	}
 
+	printf("pid: %d\n", cpu->proceso_activo);
+	printf("pagina: %d\n", solicitud->nro_pagina);
+	printf("offset: %d\n", solicitud->offset);
+	printf("bytes: %d\n", solicitud->bytes);
+
 	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
 	if (proceso == NULL) {
 		free(solicitud);
@@ -618,11 +623,11 @@ int almacenar_bytes(int socket_cpu, int bytes) {
 		return catch_write_error();
 	}
 
-//	printf("PID: %d\n", cpu->proceso_activo);
-//	printf("Pagina: %d\n", solicitud->nro_pagina);
-//	printf("Offset: %d\n", solicitud->offset);
-//	printf("bytes: %d\n", solicitud->bytes);
-//	printf("Buffer: %s\n", (char *) solicitud->buffer);
+	printf("PID: %d\n", cpu->proceso_activo);
+	printf("Pagina: %d\n", solicitud->nro_pagina);
+	printf("Offset: %d\n", solicitud->offset);
+	printf("bytes: %d\n", solicitud->bytes);
+	printf("Buffer: %s\n", (char *) solicitud->buffer);
 
 	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
 
