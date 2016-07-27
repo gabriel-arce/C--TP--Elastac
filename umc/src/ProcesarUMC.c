@@ -10,6 +10,8 @@
 
 int main(int argc, char * argv[]) {
 
+	printf("***Proceso UMC***\n");
+
 	signal(SIGUSR1, signal_handler);
 	signal(SIGUSR2, signal_handler);
 
@@ -18,21 +20,17 @@ int main(int argc, char * argv[]) {
 
 	cargar_archivo_config(argv, (void *) cargar_config);
 	imprimir_config();
+	new_line();
 
 	socket_nucleo = -1;
 	socket_swap = -1;
 	socket_servidor = -1;
 
-	f_memory_report = fopen((char *) "Reporte Memoria.txt", "w");
-
-	printf("***Proceso UMC***\n");
-	new_line();
-
 	//----creo estructuras
 	//crear_archivo_log();
 	inicializar_memoria();
-	//crear_archivo_reporte();
-
+	f_memory_report = fopen((char *) "Reporte Memoria.txt", "w");
+	f_tpp_report = fopen((char *) "Reporte Estructuras.txt", "w");
 	cpu_conectadas = list_create();
 	lista_procesos = list_create();
 

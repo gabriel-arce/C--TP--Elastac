@@ -96,7 +96,7 @@ void * lanzar_consola() {
 				flush_tlb();
 				break;
 			case 2:
-				//flush_memory();
+				flush_memory(snd_var);
 				break;
 			default:
 				puts(MSJ_ERROR2);
@@ -144,6 +144,31 @@ void modificar_retardo(int new_ret) {
 
 void reporte_estructuras(int pid) {
 	puts("comando dump - estructuras");
+
+	if (pid) {
+		t_proceso * proceso = buscar_proceso(pid);
+
+		if (proceso != NULL) {
+			reporte_estructuras_del_pid(proceso);
+		} else {
+			printf("\n*** DUMP_ERROR: NO EXISTE EL PID SOLICITADO ***\n");
+		}
+	} else {
+		//reporte de estructuras de todos los procesos
+		int i;
+		for (i = 0; i < lista_procesos->elements_count; i++) {
+			t_proceso * p = list_get(lista_procesos, i);
+			imprimir_tabla_de_paginas(p->tabla_paginas);
+		}
+	}
+}
+
+void reporte_estructuras_del_pid(t_proceso * proceso) {
+	printf("\n*** PID: %d ***\n", proceso->pid);
+
+	if (!proceso->tabla_paginas)
+		imprimir_tabla_de_paginas(proceso->tabla_paginas);
+	//TODO falta persistirlo en el archivo
 }
 
 void reporte_contenido(int pid) {

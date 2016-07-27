@@ -417,8 +417,12 @@ void crearServerCPU(){
 		//Agregar CPU a la lista
 		list_add(lista_cpu, nuevaCPU);
 
+
+
 		//Crear hilo para CPU entrante
 		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
+
+		//pthread_join(pIDCpu, NULL);
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);

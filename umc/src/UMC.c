@@ -293,55 +293,59 @@ void finalizar_en_swap(int pid) {
 	enviar_header(Finalizar_programa, pid, socket_swap);
 }
 
-void * lectura_en_swap(t_paquete_solicitar_pagina * paquete, int pid) {
+void * lectura_en_swap(int pagina, int pid) {
 
-	int r = enviar_header(Solicitar_pagina, 16, socket_swap);
+	void * datos_solicitados = malloc(umc_config->frames_size);
 
-	if (r < 0)
+	void * pedido_swap = malloc(8);
+	memcpy(pedido_swap, &pid, 4);
+	memcpy(pedido_swap + 4, &pagina, 4);
+
+	if (enviar_header(Solicitar_pagina, 8, socket_swap) <= 0)
+			return NULL;
+
+	if (send(socket_swap, pedido_swap, 8, 0) <= 0) {
+		free(pedido_swap);
+		return NULL;
+	}
+
+	free(pedido_swap);
+
+	//TODO ver bien si no me conviene hacerlo asincronico
+	if (recv(socket_swap, datos_solicitados, umc_config->frames_size, 0) <= 0)
 		return NULL;
 
-	void * buffer_solicitud = malloc(16);
+	char * error_string = string_repeat('?', umc_config->frames_size);
 
-	memcpy(buffer_solicitud, &(pid), 4);
-	void * buff_aux = serializar_leer_pagina(paquete->nro_pagina,
-			paquete->offset, paquete->bytes);
-	memcpy(buffer_solicitud + 4, buff_aux, 12);
-
-	send(socket_swap, buffer_solicitud, 16, 0);
-
-	free(buffer_solicitud);
-	free(buff_aux);
-
-	void * datos_solicitados = malloc(paquete->bytes);
-	r = recv(socket_swap, datos_solicitados, paquete->bytes, 0);
-
-	if (r < paquete->bytes)
+	if (string_equals_ignore_case((char *) datos_solicitados, error_string))
 		return NULL;
 
-	//printf("datos: %s", (char *) datos_solicitados);
-
+	free(error_string);
 	return datos_solicitados;
 }
 
-int escritura_en_swap(t_paquete_almacenar_pagina * paquete, int pid) {
-	void * buffer_solicitud = NULL;
+int escritura_en_swap(int pagina, int frame, int pid) {
 
-	memcpy(buffer_solicitud, &(pid), 4);
-	void * buff_aux = serializar_almacenar_pagina(paquete->nro_pagina,
-			paquete->offset, paquete->bytes, paquete->buffer);
-	int second_size = 12 + paquete->bytes;
-	memcpy(buffer_solicitud + 4, buff_aux, second_size);
+	void * pagina_a_escribir = leer_datos(frame, 0, umc_config->frames_size);
 
-	int last_size = 4 + second_size;
-	enviar_header(Almacenar_pagina, last_size, socket_swap);
-	send(socket_swap, buffer_solicitud, last_size, 0);
+	int pedido_size = 8 + umc_config->frames_size;
+	void * pedido_swap = malloc(pedido_size);
+	memcpy(pedido_swap, &pid, 4);
+	memcpy(pedido_swap + 4, &pagina, 4);
+	memcpy(pedido_swap + 8, pagina_a_escribir, umc_config->frames_size);
 
-	void * buffer_respuesta = malloc(2);
-	recv(socket_swap, buffer_respuesta, 2, 0);
+	if (enviar_header(Almacenar_pagina, pedido_size, socket_swap) <= 0)
+		return -1;
 
-	char * expected_response = string_duplicate("+1");
+	if (send(socket_swap, pedido_swap, 8, 0) <= 0)
+		return -1;
 
-	return (int) string_equals_ignore_case(((char *) buffer_respuesta), expected_response);
+	free(pagina_a_escribir);
+	free(pedido_swap);
+
+	int response = recibir_respuesta_inicio(socket_swap);
+
+	return response;
 }
 
 //********************************************************************************************
@@ -409,7 +413,6 @@ int inicializar_programa(int bytes_to_recv) {
 	new_line();
 
 	if (inicializar_en_swap(paquete_init) <= 0) {
-		printf("\n<<<<<<<ACA explota>>>>>>>\n");
 		//escribo en el log el error
 		enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
 		free(paquete_init->codigo_programa);
@@ -427,6 +430,7 @@ void finalizar_programa(int id_programa) {
 	//--le aviso a swap que libere el programa
 	finalizar_en_swap(id_programa);
 
+	usleep(umc_config->retardo * 1000);
 	//--luego libero aca: tabla de paginas, libero frames si estaba alocado en memoria, etc...
 	t_proceso * proceso = buscar_proceso(id_programa);
 
@@ -535,15 +539,20 @@ int leer_bytes(int socket_cpu, int bytes) {
 		return catch_read_error();
 	}
 
+	printf("pid: %d\n", cpu->proceso_activo);
+	printf("pagina: %d\n", solicitud->nro_pagina);
+	printf("offset: %d\n", solicitud->offset);
+	printf("bytes: %d\n", solicitud->bytes);
+
 	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
 	if (proceso == NULL) {
 		free(solicitud);
 		return catch_read_error();
 	}
 
-	int sol_pag_val = pagina_valida(proceso,
+	bool es_valida = pagina_valida(proceso,
 			solicitud->nro_pagina, solicitud->offset, solicitud->bytes);
-	if (!sol_pag_val) {
+	if (!es_valida) {
 		free(solicitud);
 		return catch_read_error();
 	}
@@ -618,11 +627,11 @@ int almacenar_bytes(int socket_cpu, int bytes) {
 		return catch_write_error();
 	}
 
-//	printf("PID: %d\n", cpu->proceso_activo);
-//	printf("Pagina: %d\n", solicitud->nro_pagina);
-//	printf("Offset: %d\n", solicitud->offset);
-//	printf("bytes: %d\n", solicitud->bytes);
-//	printf("Buffer: %s\n", (char *) solicitud->buffer);
+	printf("PID: %d\n", cpu->proceso_activo);
+	printf("Pagina: %d\n", solicitud->nro_pagina);
+	printf("Offset: %d\n", solicitud->offset);
+	printf("bytes: %d\n", solicitud->bytes);
+	printf("Buffer: %s\n", (char *) solicitud->buffer);
 
 	t_proceso * proceso = buscar_proceso(cpu->proceso_activo);
 
@@ -631,9 +640,9 @@ int almacenar_bytes(int socket_cpu, int bytes) {
 		return catch_write_error();
 	}
 
-	int sol_pag_val = pagina_valida(proceso,
+	bool es_valida = pagina_valida(proceso,
 			solicitud->nro_pagina, solicitud->offset, solicitud->bytes);
-	if (!sol_pag_val) {
+	if (!es_valida) {
 		free(solicitud);
 		return catch_write_error();
 	}

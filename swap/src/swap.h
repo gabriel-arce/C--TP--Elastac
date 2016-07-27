@@ -37,9 +37,9 @@ typedef struct {
 
 void inicializar_espacio_swap();
 void inicializar_bitmap();
-void * leer_bytes(int pid, t_paquete_solicitar_pagina * paquete);
-int escribir_bytes(int pid, t_paquete_almacenar_pagina * paquete);
-int calcular_direccion_fisica(int pid, int pagina, int offset);
+void * leer_bytes(int pid, int pagina);
+int escribir_bytes(int pid, int pagina, void * datos_a_escribir);
+//int calcular_direccion_fisica(int pid, int pagina, int offset);
 int hay_espacios_libres_contiguos(int cantidad_necesaria);
 bool contiguos_necesarios(int posicion_actual, int cantidad_necesaria);
 void marcar_en_bitmap(int start, int end, int bit);
@@ -87,7 +87,7 @@ void inicializar_semaforos();
 void enviar_a_umc_respuesta_inicio(
 		t_paquete_inicializar_programa * paquete_inicio_prog,
 		int respuesta_inicio);
-bool pagina_valida(int pid, int pagina, int offset, int bytes);
+bool pagina_valida(int pid, int pagina);
 
 //*****OPERACIONES CON UMC*****
 int inicializar_programa(int buffer_init_size);
