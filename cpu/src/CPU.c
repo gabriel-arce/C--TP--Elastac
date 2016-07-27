@@ -239,7 +239,10 @@ t_puntero definirVariable(t_nombre_variable identificador_variable) {
 
 
 	t_variable_stack * variableStack = malloc(sizeof(variableStack));
+	t_posicion * posicion = malloc(sizeof(t_posicion));
 	t_stack * stackActivo;
+
+	variableStack->posicion = posicion;
 
 	variableStack->id = identificador_variable;
 
@@ -269,9 +272,9 @@ t_puntero definirVariable(t_nombre_variable identificador_variable) {
 
 
 	stackActivo = buscarStackActivo();
-	list_add(stackActivo->vars, &variableStack);						//Agrego variableStack a stackActivo
+	list_add(stackActivo->vars, variableStack);						//Agrego variableStack a stackActivo
 
-	printf("Escribir variable en UMC:  %s \n", identificador_variable);
+	printf("Escribir variable en UMC:  %c \n", identificador_variable);
 
 	escribirBytes(variableStack->posicion->pagina, variableStack->posicion->offset, variableStack->posicion->size, 0);		//TODO En realidad no se tendrian que inicializar las variables
 
