@@ -518,7 +518,7 @@ void ejecutarProximaInstruccion(){
 
 	printf("Quantum actual: %d \n", pcbActual->quantum_actual);
 
-	/*char* instruccionEnString;
+	char* instruccionEnString;
 
 	t_indice_de_codigo * instruccionACorrer = malloc(sizeof(t_indice_de_codigo));
 
@@ -532,7 +532,7 @@ void ejecutarProximaInstruccion(){
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 	free(instruccionACorrer);
-*/
+
 	analizadorLinea("end",&functions, &kernel_functions);
 
 }
