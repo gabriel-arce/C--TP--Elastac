@@ -85,6 +85,7 @@ t_log * logger;
 bool tlb_on;
 int contador_hilos;
 FILE * f_memory_report;
+FILE * f_tpp_report;
 
 void new_line();
 bool tlb_habilitada();
@@ -114,6 +115,7 @@ void flush_tlb();
 void flush_memory(int pid);
 void dump_memory(const void* data, size_t size);
 int dump_memory_from_pid(int pid);
+void reporte_estructuras_del_pid(t_proceso * proceso);
 
 //FUNCIONES CON HILOS
 void * lanzar_consola();

@@ -297,7 +297,7 @@ int agregar_en_frame_libre(int page_to_add, t_proceso * proceso, int read_or_wri
 
 void imprimir_tabla_de_paginas(t_list * tabla) {
 	int i = 0;
-	printf("#P | #F | P | U | D \n");
+	printf("#P | #F | P | U | M \n");
 	void imprimir_entrada(t_tabla_pagina * entry) {
 		printf("%d | %d | %d | %d | %d \n", i, entry->frame, entry->presentbit,
 				entry->accessedbit, entry->dirtybit);
