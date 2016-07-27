@@ -481,9 +481,9 @@ t_stack * buscarStackActivo(){
 	return list_find(pcbActual->indice_stack, (void*) stackActivo);
 }
 
-int stackActivo(t_stack * stack){
+bool stackActivo(t_stack * stack){
 
-return (stack->stackActivo);
+return (stack->stackActivo == true);
 
 }
 
@@ -495,7 +495,7 @@ void crearStack(){
 	stackNuevo->args = list_create();
 	stackNuevo->vars = list_create();
 
-	list_add(pcbActual->indice_stack, &stackNuevo);
+	list_add(pcbActual->indice_stack, stackNuevo);
 }
 
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id){
@@ -535,8 +535,6 @@ void ejecutarProximaInstruccion(){
 	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 	free(instruccionACorrer);
-
-	analizadorLinea("end",&functions, &kernel_functions);
 
 }
 

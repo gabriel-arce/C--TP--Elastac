@@ -85,7 +85,7 @@ void recibirPCB(void *buffer);
 t_stack * buscarStackActivo();
 void crearStack();
 t_variable_stack * buscarVariableEnStack(t_nombre_variable  id);
-int stackActivo(t_stack * stack);
+bool stackActivo(t_stack * stack);
 int getQuantumPcb();
 int getQuantum();
 void ejecutarProximaInstruccion();
