@@ -227,41 +227,41 @@ void conecta_swap() {
 
 	enviar_handshake(socket_swap, UMC);
 
-	pthread_create(&hilo_cliente, NULL, (void *) atiende_swap, (void *) socket_swap);
+	//pthread_create(&hilo_cliente, NULL, (void *) atiende_swap, (void *) socket_swap);
 }
 
-void atiende_swap(void * args) {
-
-	int socket = (int) args;
-
-	bool keep_running = true;
-
-	while (keep_running) {
-		t_header * header = NULL;
-
-		pthread_mutex_lock(&mutex_swap);
-
-		header = recibir_header(socket);
-
-		if (!header) {
-			keep_running = false;
-			pthread_mutex_unlock(&mutex_swap);
-			continue;
-		}
-
-		switch (header->identificador) {
-		case Respuesta_inicio_programa:
-			respuesta_inicio_swap(header->tamanio);
-			break;
-		default:
-			break;
-		}
-
-		free(header);
-
-		pthread_mutex_unlock(&mutex_swap);
-	}
-}
+//void atiende_swap(void * args) {
+//
+//	int socket = (int) args;
+//
+//	bool keep_running = true;
+//
+//	while (keep_running) {
+//		t_header * header = NULL;
+//
+//		pthread_mutex_lock(&mutex_swap);
+//
+//		header = recibir_header(socket);
+//
+//		if (!header) {
+//			keep_running = false;
+//			pthread_mutex_unlock(&mutex_swap);
+//			continue;
+//		}
+//
+//		switch (header->identificador) {
+//		case Respuesta_inicio_programa:
+//			respuesta_inicio_swap(header->tamanio);
+//			break;
+//		default:
+//			break;
+//		}
+//
+//		free(header);
+//
+//		pthread_mutex_unlock(&mutex_swap);
+//	}
+//}
 
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
 
@@ -276,17 +276,27 @@ int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
 }
 
 void respuesta_inicio_swap(int respuesta_inicio) {
+	if ((respuesta_inicio == Respuesta__SI)||(respuesta_inicio > 0)) {
+		t_header * header = recibir_header(socket_swap);
 
-	t_header * header = recibir_header(socket_swap);
-	t_paquete_inicializar_programa * paquete = recibir_inicializar_programa(header->tamanio, socket_swap);
+		if (header == NULL)
+			enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
 
-	if (respuesta_inicio == Respuesta__SI)
-		inicializar_proceso(paquete->pid, paquete->paginas_requeridas);
+		t_paquete_inicializar_programa * paquete = recibir_inicializar_programa(
+				header->tamanio, socket_swap);
 
-	enviar_respuesta_inicio(socket_nucleo, respuesta_inicio);
+		if (respuesta_inicio == Respuesta__SI)
+			inicializar_proceso(paquete->pid, paquete->paginas_requeridas);
 
-	free(paquete->codigo_programa);
-	free(paquete);
+		enviar_respuesta_inicio(socket_nucleo, respuesta_inicio);
+
+		free(header);
+		free(paquete->codigo_programa);
+		free(paquete);
+
+	} else {
+		enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
+	}
 }
 
 void finalizar_en_swap(int pid) {
@@ -419,6 +429,10 @@ int inicializar_programa(int bytes_to_recv) {
 		free(paquete_init);
 		return EXIT_FAILURE;
 	}
+
+	int respuesta_inicio = recibir_respuesta_inicio(socket_swap);
+
+	respuesta_inicio_swap(respuesta_inicio);
 
 	free(paquete_init->codigo_programa);
 	free(paquete_init);

@@ -24,7 +24,7 @@ int main(int argc, char * argv[]) {
 	socketConsola = 0;		//Descriptor de consola
 
 	//Cargar configuracion
-	if (!chequear_argumentos(argc, 3))
+	if (chequear_argumentos(argc, 3) == -1)
 		return EXIT_FAILURE;
 
 	cargar_archivo_config(argv, (void *) cargar_config);
@@ -97,7 +97,7 @@ int main(int argc, char * argv[]) {
 		switch (cabecera->identificador) {
 		case Imprimir_valor:
 			printf("\n");
-			t_valor_variable valor = recibir_valor_de_variable(socketConsola);
+			int valor = (int) recibir_valor_de_variable(socketConsola);
 			printf("VALOR: %d\n", valor);
 			break;
 		case Imprimir_texto:

@@ -15,7 +15,7 @@ int main(int argc, char * argv[]) {
 	signal(SIGUSR1, signal_handler);
 	signal(SIGUSR2, signal_handler);
 
-	if (!chequear_argumentos(argc, 2))
+	if (chequear_argumentos(argc, 2) == -1)
 		return EXIT_FAILURE;
 
 	cargar_archivo_config(argv, (void *) cargar_config);
@@ -42,8 +42,8 @@ int main(int argc, char * argv[]) {
 	conecta_swap();
 	pthread_create(&hilo_server, NULL, escucha_conexiones, NULL);
 
-	pthread_join(hilo_cliente, NULL);
-	pthread_detach(hilo_cliente);
+//	pthread_join(hilo_cliente, NULL);
+//	pthread_detach(hilo_cliente);
 
 	pthread_join(hilo_server, NULL);
 
