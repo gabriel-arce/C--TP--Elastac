@@ -25,6 +25,13 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 	//***PC
 	pcb->pcb_pc = meta->instruccion_inicio;
 
+	//***CANTIDAD DE PAGINAS DEL CODIGO
+	div_t output = div(programa_length, tamanioPaginas); //me fijo cuantas paginas ocupa el codigo y redondeo para arriba
+	pcb->paginas_codigo = output.quot;
+	if (output.rem > 0) {
+		pcb->paginas_codigo += 1;
+	}
+
 	//***SP
 	pcb->pcb_sp = malloc(sizeof(t_sp));
 	if ((pcb->pcb_sp) == NULL) {
@@ -32,15 +39,8 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 		free(pcb);
 		return pcb;
 	}
-	pcb->pcb_sp->pagina = 0;
+	pcb->pcb_sp->pagina = pcb->paginas_codigo;
 	pcb->pcb_sp->offset = 0;
-
-	//***CANTIDAD DE PAGINAS DEL CODIGO
-	div_t output = div(programa_length, tamanioPaginas); //me fijo cuantas paginas ocupa el codigo y redondeo para arriba
-	pcb->paginas_codigo = output.quot;
-	if (output.rem > 0) {
-		pcb->paginas_codigo += 1;
-	}
 
 	//***INDICE DE CODIGO
 	pcb->indice_codigo = list_create();

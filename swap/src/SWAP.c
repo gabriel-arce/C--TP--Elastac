@@ -682,7 +682,8 @@ void dump_memory(const void* data, size_t size) {
 }
 
 void ver_que_onda() {
-	pthread_mutex_lock(&mutex_umc_recv);
+	//TODO tener un mutex para el espacio swap antes de usar el del servidor de umc
+	//pthread_mutex_lock(&mutex_umc_recv);
 
 	int fd = open("swap.data", O_RDONLY);
 
@@ -707,7 +708,7 @@ void ver_que_onda() {
 	close(fd);
 	munmap(espacio_swap, buf.st_size);
 
-	pthread_mutex_unlock(&mutex_umc_recv);
+	//pthread_mutex_unlock(&mutex_umc_recv);
 }
 
 void mostrar_estructuras_swap() {
