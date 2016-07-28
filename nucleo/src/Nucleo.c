@@ -703,7 +703,11 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 }
 
 void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
-	   t_pcb *pcb = recibir_pcb(cpu->fd, header->tamanio);
+
+	puts("ejecutando finalizacion de programa");
+	t_header * header_pcb = recibir_header(cpu->fd);
+
+	   t_pcb *pcb = recibir_pcb(cpu->fd, header_pcb->tamanio);
 
 
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);

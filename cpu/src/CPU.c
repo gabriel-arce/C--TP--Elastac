@@ -159,6 +159,7 @@ void enviarPCB(){
 
 	puts("enviando PCB a nucleo");
 
+	enviar_header(20,calcular_size_pcb(pcbActual),socketNucleo);
 	enviar_pcb(pcbActual, socketNucleo);
 
 }
@@ -466,6 +467,7 @@ void rutina (int n) {
 		case SIGINT:	//TODO ver como abortar
 			enviar_texto("Abortando el programa", socketNucleo);
 			enviar_header(ABORTAR_PROGRAMA, pcbActual->pcb_pid, socketNucleo);
+			enviarPCB();
 			exit(EXIT_FAILURE);
 			break;
 	}
@@ -533,7 +535,7 @@ void ejecutarProximaInstruccion(){
 
 	printf("Ejecutando la instruccion: %s \n", instruccionEnString);
 
-	//analizadorLinea(instruccionEnString, &functions, &kernel_functions);
+	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 	free(instruccionACorrer);
 
@@ -693,13 +695,13 @@ void borrarPCBActual(){
 
 	puts("Borrando PCB actual");
 //
-//	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
-//	list_destroy(pcbActual->indice_codigo);
-//	free(pcbActual->indice_etiquetas);
-//	free(pcbActual->pcb_sp);
-//	free(pcbActual);
+	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
+	list_destroy(pcbActual->indice_codigo);
+	free(pcbActual->indice_etiquetas);
+	free(pcbActual->pcb_sp);
+	free(pcbActual);
 
-	destruirPCB(pcbActual);
+	//destruirPCB(pcbActual);
 
 }
 

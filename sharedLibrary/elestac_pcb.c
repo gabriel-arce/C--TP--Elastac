@@ -39,7 +39,7 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 		free(pcb);
 		return pcb;
 	}
-	pcb->pcb_sp->pagina = pcb->paginas_codigo;
+	pcb->pcb_sp->pagina = pcb->paginas_codigo + 1;
 	pcb->pcb_sp->offset = 0;
 
 	//***INDICE DE CODIGO
@@ -478,6 +478,7 @@ t_pcb * deserializar_pcb(void * buffer) {
 
 void enviar_pcb(t_pcb * pcb, int socket) {
 	int bytes_to_send = calcular_size_pcb(pcb);
+
 	void * buffer_pcb = serializar_pcb(pcb);
 
 	send(socket, buffer_pcb, bytes_to_send, 0);

@@ -35,14 +35,11 @@ int main(int argc, char * argv[]){
 		enviar_pcb(pcbActual, socketNucleo);*/		/* Anduvo OK */
 
 /*		//Modificar wait
-		enviar_header(22, 4, socketNucleo);
 		enviar_wait_identificador_semaforo("SEM1", socketNucleo);
-		enviar_header(0, 0, socketNucleo);
-		enviar_pcb(pcbActual, socketNucleo);*/		/* TODO Preguntar como enviar desde aca un wait a nucleo.. */
+		enviar_pcb(pcbActual, socketNucleo);	/* TODO Preguntar como enviar desde aca un wait a nucleo.. */
 
 /*		//Modificar obtener valor compartida
 		t_nombre_compartida nombre = "colas";
-		enviar_header(25,strlen(nombre),socketNucleo);
 		enviar_obtener_valor_compartido(nombre, socketNucleo);*/		/* TODO Preguntar como enviar desde aca a nucleo.. */
 
 		while( (getQuantumPcb() <= getQuantum())  &&  (pcbCorriendo)){
@@ -53,7 +50,7 @@ int main(int argc, char * argv[]){
 
 		}
 
-		if(getQuantumPcb() == getQuantum()){
+		if(getQuantumPcb() == (getQuantum() + 1)){
 
 			restaurarQuantum();
 		}
