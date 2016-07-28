@@ -555,7 +555,7 @@ void restaurarQuantum(){
 
 	puts("Restaurando Quantum");
 
-	pcbActual->quantum_actual = 0;
+	pcbActual->quantum_actual = 1;
 }
 
 void actualizarQuantum(){
@@ -617,7 +617,9 @@ void desactivarStackActivo(){
 void asignarPosicionYDireccionDeRetorno(t_posicion donde_retornar, uint32_t direccionDeRetorno){
 	t_stack * stackActivo;
 
+
 	stackActivo = buscarStackActivo();
+	stackActivo->retVar = malloc(sizeof(t_posicion));
 	stackActivo->retVar = &donde_retornar;
 	stackActivo->retPos = direccionDeRetorno;
 

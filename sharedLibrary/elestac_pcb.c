@@ -66,7 +66,7 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 	pcb->consola = fd_consola;
 
 	//***QUANTUM ACTUAL
-	pcb->quantum_actual = 0;
+	pcb->quantum_actual = 1;
 
 	return pcb;
 }
