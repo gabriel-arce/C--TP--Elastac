@@ -294,15 +294,14 @@ void * serializar_asignar_valor_compartido(t_nombre_compartida nombre_variable, 
 	int nombre_variable_lentgh = string_length(nombre_variable);
 
 	t_paquete_asignar_valor_compartido * paquete = malloc(sizeof(t_paquete_solicitar_pagina));
-	void * buffer = malloc(4 + nombre_variable_lentgh);
+	void * buffer = malloc(8 + nombre_variable_lentgh);
 
 	paquete->valor = valor_variable;
 	paquete->nombre_length = nombre_variable_lentgh;
-	paquete->nombre = nombre_variable;
 
 	memcpy(buffer, &(paquete->valor), 4);
 	memcpy(buffer + 4, &(paquete->nombre_length), 4);
-	memcpy(buffer + 8, &(paquete->nombre), nombre_variable_lentgh);
+	memcpy(buffer + 8, nombre_variable, nombre_variable_lentgh);
 
 	free(paquete);
 	return buffer;
@@ -314,9 +313,10 @@ t_paquete_asignar_valor_compartido * deserializar_asignar_valor_compartido(void 
 
 	t_paquete_asignar_valor_compartido * paquete = malloc(sizeof(t_paquete_asignar_valor_compartido));
 
+
 	memcpy(&(paquete->valor), buffer, 4);
 	memcpy(&(paquete->nombre_length), buffer + 4, 4);
-	memcpy(&(paquete->nombre), buffer + 8, paquete->nombre_length);
+	paquete->nombre = string_duplicate((char *)(buffer + 8));
 
 	free(buffer);
 	return paquete;
@@ -548,7 +548,7 @@ int enviar_texto(char * texto, int socket) {
 		return result;
 
 	void * buffer_out = serializar_imprimir_texto(texto);
-	result = send(socket, buffer_out, sizeof(texto), 0);
+	result = send(socket, buffer_out, string_length(texto) + 4, 0);
 
 	if (result == -1)
 		return result;
@@ -578,7 +578,7 @@ int enviar_valor_de_variable(t_valor_variable valor, int socket) {
 		return result;
 
 	void * buffer_out = serializar_imprimir_valor(valor);
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out, sizeof(t_valor_variable), 0);
 
 	if (result == -1)
 		return result;
@@ -610,7 +610,7 @@ int enviar_wait_identificador_semaforo(char* identificador_semaforo, int socket)
 
 	void * buffer_out = serializar_identificador_semaforo(identificador_semaforo);
 
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out, string_length(identificador_semaforo) + 4, 0);
 	if (result == -1)
 		return result;
 
@@ -641,7 +641,7 @@ int enviar_signal_identificador_semaforo(char* identificador_semaforo, int socke
 
 	void * buffer_out = serializar_identificador_semaforo(identificador_semaforo);
 
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out,string_length(identificador_semaforo) + 4, 0);
 
 	if (result == -1)
 		return result;
@@ -674,7 +674,7 @@ int enviar_obtener_valor_compartido(t_nombre_compartida variable, int socket){
 
 	void * buffer_out = serializar_nombre_compartida(variable);
 
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out, string_length(variable) + 4, 0);
 
 	if (result == -1)
 			return result;
@@ -711,7 +711,7 @@ int enviar_asignar_valor_compartido(t_nombre_compartida nombre_variable, t_valor
 
 	void * buffer_out = serializar_asignar_valor_compartido(nombre_variable,valor);
 
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out, nombre_variable_length + 8, 0);
 
 	if (result == -1)
 			return result;
@@ -728,7 +728,7 @@ t_paquete_asignar_valor_compartido * recibir_asignar_valor_compartido(int buffer
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	t_paquete_asignar_valor_compartido * respuesta = deserializar_asignar_valor_compartido(buffer);
 
@@ -748,7 +748,7 @@ int enviar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int tiempo, i
 
 	void * buffer_out = serializar_entrada_salida(nombre_dispositivo, tiempo);
 
-	result = send(socket, buffer_out, sizeof(buffer_out), 0);
+	result = send(socket, buffer_out, nombre_dispositivo_length + 8, 0);
 
 	if (result == -1)
 			return result;

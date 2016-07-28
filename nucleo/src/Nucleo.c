@@ -687,11 +687,11 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 	paquete = recibir_asignar_valor_compartido(tamanio_buffer, fd);
 
 	nombreVariable	= paquete->nombre;
-	valor 							= paquete->valor;
+	valor 			= paquete->valor;
 
 	//buscar por id variable y pisar valor
 	int i;
-	for(i = 0; list_size(lista_sharedValues); i++){
+	for(i = 0; i < list_size(lista_sharedValues); i++){
 		variable = list_get(lista_sharedValues, i);
 		if (variable->id == nombreVariable){
 			variable->valor = valor;
