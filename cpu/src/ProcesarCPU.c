@@ -13,7 +13,7 @@ int main(int argc, char * argv[]){
 	signal(SIGUSR1,rutina);		//HotPlug
 	signal(SIGINT, rutina);
 
-	if (!chequear_argumentos(argc, 2))
+	if (chequear_argumentos(argc, 2) == -1)
 			return EXIT_FAILURE;
 
 	cargar_archivo_config(argv, (void *) cargarConfiguracion);
