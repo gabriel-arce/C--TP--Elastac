@@ -532,7 +532,7 @@ void ejecutarProximaInstruccion(){
 
 	printf("Ejecutando la instruccion: %s \n", instruccionEnString);
 
-	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
+	//analizadorLinea(instruccionEnString, &functions, &kernel_functions);
 
 	free(instruccionACorrer);
 

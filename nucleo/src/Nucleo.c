@@ -75,6 +75,7 @@ void crearSemaforos(){
 	semListos						= crearSemaforo(0);
 	semCpuDisponible	= crearSemaforo(0);
 	semBloqueados			= crearSemaforo(0);
+	semFinalizados			= crearSemaforo(0);
 	mutex_pid					= crearMutex();
 
 }
@@ -88,23 +89,20 @@ void crearSemaforos(){
 void crearListasYColas(){
 
 	cola_listos 				= queue_create();
-	lista_bloqueados	= list_create();
-//	cola_ejecutando	= queue_create();
 
+	lista_bloqueados		=	list_create();
+	lista_ejecutando		=	list_create();
+	lista_cpu						=	list_create();
+	lista_semaforos			=	list_create();
+	lista_io							=	list_create();
+	lista_finalizados			=	list_create();
+	lista_sharedValues	=	list_create();
 
-	lista_ejecutando	=	list_create();
-	lista_cpu					= list_create();
-
-	lista_semaforos		= list_create();
-	lista_io						= list_create();
-
-	lista_sharedValues = list_create();
-
-	t_list *sem_id				=  list_map(nucleo->sem_ids, getSemaforo);
-	t_list *sem_value		= list_map(nucleo->sem_init, getSemValue);
-	t_list *io_id					= list_map(nucleo->io_ids, getIOId);
-	t_list *io_value			= list_map(nucleo->io_sleep, getIOSleep);
-	t_list *shared_value = list_map(nucleo->shared_vars, getSharedValue);
+	t_list *sem_id				=	list_map(nucleo->sem_ids, getSemaforo);
+	t_list *sem_value		=	list_map(nucleo->sem_init, getSemValue);
+	t_list *io_id					=	list_map(nucleo->io_ids, getIOId);
+	t_list *io_value			=	list_map(nucleo->io_sleep, getIOSleep);
+	t_list *shared_value	=	list_map(nucleo->shared_vars, getSharedValue);
 
 	char *semaforo			 	= string_new();
 	char *io_nombre			=	string_new();
@@ -505,59 +503,24 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	if (enviar_header(29, nucleo->quantum_sleep, cpu->fd) == -1)
 		puts("[NUCLEO] Envio de Quantum fallido");
 
-	while(1){
-		if ((header = recibir_header(cpu->fd)) == NULL){
-			pthread_join(pIDCpu, NULL);
-			exit;}
-
-	   switch(header->identificador){
-	  	   case FinalizacionPrograma:{
-	  		   ejecutarFinalizacionPrograma(cpu, header);
-	  		   break;}
-
-	  	   case Wait:{
-	  		   ejecutarWait(header->tamanio, cpu);
-	  		   break; }
-
-	  	   case Signal: {
-	  		   ejecutarSignal(header->tamanio, cpu);
-	  		   break; }
-
-	  	   case EntradaSalida:{
-	  		   ejecutarEntradaSalida(cpu, header);
-	  		   break;}
-
-	  	   case ObtenerValorCompartido:{
-	  		   ejecutarObtenerValorCompartido(cpu->fd, header->tamanio);
-	  		   break;}
-
-	  	   case AsignarValorCompartido:{
-	  		   ejecutarAsignarValorCompartido(cpu->fd, header->tamanio);
-	  		   break;}
-
-	  	   case MuereCPU:{
-	  		   ejecutarMuerteCPU(cpu);
-	  		   break;}
-
-	  	   case FinalizacionQuantum:{
-	  		   ejecutaFinalizacionDeQuantum(cpu);
-	  		   break;}
-
-	  	   case abortarPrograma:{
-	  		   ejecutarFinalizacionPrograma(cpu, header);
-	  		   break;}
-
-	  	 case imprimir_texto:{
-	  	 	    ejecutarImprimirTexto(cpu->fd, header->tamanio);
-	  	 	  	break;}
-	  	case imprimir_variable:{
-	  		  	ejecutarImprimirVariable(cpu->fd, header->tamanio);
-	  		    break;}
-
-	   } //Fin switch
-
-
+	while((header = recibir_header(cpu->fd)) != NULL){
+			switch(header->identificador){
+				case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
+				case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
+				case Signal: 										{ ejecutarSignal(header->tamanio, cpu); break; }
+				case EntradaSalida:							{ ejecutarEntradaSalida(cpu, header); break;}
+				case ObtenerValorCompartido:	{ ejecutarObtenerValorCompartido(cpu->fd, header->tamanio); break;}
+				case AsignarValorCompartido:		{ ejecutarAsignarValorCompartido(cpu->fd, header->tamanio); break;}
+				case MuereCPU:								{ ejecutarMuerteCPU(cpu); break;}
+				case FinalizacionQuantum:				{ ejecutaFinalizacionDeQuantum(cpu); break;}
+				case abortarPrograma:					{ ejecutarFinalizacionPrograma(cpu, header); break;}
+				case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
+				case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
+			} //Fin switch
 	}//Fin while
+
+	if(header == NULL)
+		pthread_cancel(pIDCpu);
 
 }
 
@@ -748,7 +711,10 @@ void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
 
 	   finalizar();
+
 	   cpu->disponible = Si;
+	   signalSemaforo(semCpuDisponible);
+
 }
 
 void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){

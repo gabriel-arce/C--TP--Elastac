@@ -30,6 +30,10 @@ int main(int argc, char * argv[]){
 		escucharAlNucleo();								//Escuchar al nucleo a la espera de nuevos PCBs
 		cambiar_proceso_activo(pcbActual->pcb_pid);		//envio a umc nuevo PID
 
+		//Modifico
+		enviar_header(21,sizeof(pcbActual),socketNucleo);
+		enviarPCB();
+
 		while( (getQuantumPcb() <= getQuantum())  &&  (pcbCorriendo)){
 
 			quantumSleep();
