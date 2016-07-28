@@ -612,6 +612,7 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 	}
 	else
 		{cpu->disponible = Si;
+		signalSemaforo(semCpuDisponible);
 		pcb =NULL;
 		enviar_header(32, 0, cpu->fd);}
 
@@ -715,6 +716,7 @@ void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 	   finalizar();
 
 	   cpu->disponible = Si;
+	   signalSemaforo(semCpuDisponible);
 
 
 }
@@ -732,6 +734,7 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
 	header = recibir_header(cpu->fd);
 	pcb = recibir_pcb(cpu->fd, header->tamanio);
 	cpu->disponible = Si;
+	signalSemaforo(semCpuDisponible);
 
 	semaforo = obtenerSemaforoPorID(paquete->nombre);
 
@@ -825,6 +828,7 @@ void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu){
 	t_pcb * pcb = recibir_pcb(cpu->fd,header->tamanio);
 
 	cpu->disponible = Si;
+	signalSemaforo(semCpuDisponible);
 
 	pasarAListos(pcb);
 }
