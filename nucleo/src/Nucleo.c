@@ -104,9 +104,9 @@ void crearListasYColas(){
 	t_list *io_value			=	list_map(nucleo->io_sleep, getIOSleep);
 	t_list *shared_value	=	list_map(nucleo->shared_vars, getSharedValue);
 
-	char *semaforo			 	= string_new();
+	char *semaforo			 	=	string_new();
 	char *io_nombre			=	string_new();
-	char *sharedNombre;
+	char *sharedNombre	=	string_new();
 
 	int valor = 0;
 	int io_sleep;
@@ -125,7 +125,6 @@ void crearListasYColas(){
 	}
 
 	for(i = 0; i < list_size(nucleo->shared_vars); i++){
-		sharedNombre = string_new();
 		sharedNombre = list_get(shared_value, i);
 		list_add(lista_sharedValues, crearSharedGlobal(sharedNombre));
 		printf("Shared: %s\n", sharedNombre);
@@ -204,13 +203,6 @@ void enviarAEjecutar(t_pcb *pcb, t_clienteCPU *cpu){
 
 	enviar_header(20, tamanio, cpu->fd);
 	enviar_pcb(pcb, cpu->fd);
-
-/*
-	//Crear hilo para CPU entrante
-	pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, cpu);
-	//pthread_join(pIDCpu, NULL);
-	//signal(cpu->disponible, pthread_join(pIDCpu, NULL));
-*/
 
 }
 
@@ -382,6 +374,8 @@ void crearServerCPU(){
 	 int listener;														//Descriptor de escucha
 	 int reuse;
 	 int newfd;
+	 int hiloCPU;
+	 void *respuestaHilo;
 
 	//Crear socket de escucha
 	listener = crearSocket();
@@ -418,9 +412,11 @@ void crearServerCPU(){
 
 
 		//Crear hilo para CPU entrante
-		pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
+		hiloCPU = pthread_create(&pIDCpu, NULL, (void *)accionesDeCPU, nuevaCPU);
 
-		//pthread_join(pIDCpu, NULL);
+/*		hiloCPU = pthread_join(pIDCpu, respuestaHilo);
+		if(respuestaHilo == PTHREAD_CANCELED)
+			printf("El hilo de CPU %d fue terminado", nuevaCPU->cpuID);*/
 
 		//Signal por CPU nueva
 		signalSemaforo(semCpuDisponible);
@@ -504,7 +500,7 @@ void accionesDeCPU(t_clienteCPU *cpu){
 		puts("[NUCLEO] Envio de Quantum fallido");
 
 	while((header = recibir_header(cpu->fd)) != NULL){
-			switch(header->identificador){
+		switch(header->identificador){
 				case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
 				case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
 				case Signal: 										{ ejecutarSignal(header->tamanio, cpu); break; }
@@ -517,10 +513,12 @@ void accionesDeCPU(t_clienteCPU *cpu){
 				case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
 				case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
 			} //Fin switch
+		free(header);
 	}//Fin while
 
-	if(header == NULL)
-		pthread_cancel(pIDCpu);
+	if(header == NULL){
+		printf("Fin hilo de acciones del CPU %d", cpu->fd);
+		pthread_cancel(pIDCpu);}
 
 }
 
@@ -713,7 +711,7 @@ void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 	   finalizar();
 
 	   cpu->disponible = Si;
-	   signalSemaforo(semCpuDisponible);
+
 
 }
 
