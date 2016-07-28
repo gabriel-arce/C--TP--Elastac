@@ -694,14 +694,15 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 void borrarPCBActual(){
 
 	puts("Borrando PCB actual");
-//
+/*
 	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
 	list_destroy(pcbActual->indice_codigo);
 	free(pcbActual->indice_etiquetas);
 	free(pcbActual->pcb_sp);
 	free(pcbActual);
+*/
 
-	//destruirPCB(pcbActual);
+	destruirPCB(pcbActual);
 
 }
 

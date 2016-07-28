@@ -84,18 +84,19 @@ void destruirPCB(t_pcb *pcb){
 		free(pcb->indice_etiquetas);
 
 	void destroyer(t_stack * stack_n) {
-		if ((stack_n->args) != NULL)
-			list_destroy_and_destroy_elements(stack_n->args, (void *) free);
 
 		void inner_destroyer(t_variable_stack * var_stack) {
 			free(var_stack->posicion);
 			free(var_stack);
 		}
+		if ((stack_n->args) != NULL)
+					list_destroy_and_destroy_elements(stack_n->args, (void *) inner_destroyer);
+
 		if ((stack_n->vars) != NULL)
 			list_destroy_and_destroy_elements(stack_n->vars, (void *) inner_destroyer);
 
 		if ((stack_n->retVar) != NULL)
-			free(stack_n->retVar);
+			//free(stack_n->retVar);
 
 		free(stack_n);
 	}
