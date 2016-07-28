@@ -39,7 +39,7 @@ void inicializar_tabla_paginas(int pags, t_proceso * proceso) {
 	usleep(umc_config->retardo * 1000);
 
 	int i;
-	for (i = 0; i <= pags; i++) {
+	for (i = 0; i < pags; i++) {
 		t_tabla_pagina * entry = malloc(sizeof(t_tabla_pagina));
 		entry->presentbit = 0;
 		entry->frame = -1;

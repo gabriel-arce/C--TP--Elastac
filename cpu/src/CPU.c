@@ -239,7 +239,7 @@ void desconectarCPU(){
 t_puntero definirVariable(t_nombre_variable identificador_variable) {
 
 
-	t_variable_stack * variableStack = malloc(sizeof(variableStack));
+	t_variable_stack * variableStack = malloc(sizeof(t_variable_stack));
 	t_posicion * posicion = malloc(sizeof(t_posicion));
 	t_stack * stackActivo;
 

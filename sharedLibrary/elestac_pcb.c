@@ -254,7 +254,7 @@ void * serializar_pcb(t_pcb * pcb) {
 
 	int buffer_size = calcular_size_pcb(pcb);
 	void * buffer = malloc(buffer_size);
-	memset(buffer, 0, buffer_size);
+	//memset(buffer, 0, buffer_size);
 
 	//PID
 	memcpy(buffer + pointer, &(pcb->pcb_pid), 4);
@@ -460,6 +460,9 @@ t_pcb * deserializar_pcb(void * buffer) {
 			pointer += 4;
 			memcpy(&(stack->retVar->size), buffer + pointer, 4);
 			pointer += 4;
+		}
+		else{
+			stack->retVar = NULL;
 		}
 		//stkact
 		memcpy(&(stack->stackActivo), buffer + pointer, sizeof(bool));

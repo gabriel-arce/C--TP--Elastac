@@ -472,7 +472,7 @@ void finalizar_programa(int id_programa) {
 	list_destroy_and_destroy_elements(proceso->tabla_paginas, (void *) free);
 
 	//libero la lista de referencias
-	list_destroy_and_destroy_elements(proceso->referencias, (void *) free);
+	free(proceso->referencias);
 
 	//Hago un flush en tlb
 	flush_tlb_by_certain_pid(proceso->pid);

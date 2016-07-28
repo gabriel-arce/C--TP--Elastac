@@ -418,8 +418,6 @@ void crearServerCPU(){
 		if(respuestaHilo == PTHREAD_CANCELED)
 			printf("El hilo de CPU %d fue terminado", nuevaCPU->cpuID);*/
 
-		//Signal por CPU nueva
-		signalSemaforo(semCpuDisponible);
 
 	}
 }
@@ -498,6 +496,9 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	//Enviar Quantum Sleep
 	if (enviar_header(29, nucleo->quantum_sleep, cpu->fd) == -1)
 		puts("[NUCLEO] Envio de Quantum fallido");
+
+	//Signal por CPU nueva
+	signalSemaforo(semCpuDisponible);
 
 	while((header = recibir_header(cpu->fd)) != NULL){
 		switch(header->identificador){
