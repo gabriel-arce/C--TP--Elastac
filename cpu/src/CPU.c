@@ -492,10 +492,12 @@ return (stack->stackActivo == true);
 
 void crearStack(){
 
-	t_stack * stackNuevo = malloc(sizeof(stackNuevo));
+	t_stack * stackNuevo = malloc(sizeof(t_stack));
 	stackNuevo->stackActivo = true;
 	stackNuevo->args = list_create();
 	stackNuevo->vars = list_create();
+	stackNuevo->retVar = NULL;
+	stackNuevo->retPos = 0;
 
 	list_add(pcbActual->indice_stack, stackNuevo);
 }

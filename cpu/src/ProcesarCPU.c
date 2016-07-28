@@ -56,8 +56,8 @@ int main(int argc, char * argv[]){
 		}
 
 		enviarPCB();
-
-		borrarPCBActual();
+		imprimir_pcb(pcbActual);
+		//borrarPCBActual();
 
 	}
 
