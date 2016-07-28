@@ -502,8 +502,9 @@ t_variable_stack * buscarVariableEnStack(t_nombre_variable  id){
 
 	t_stack * stackActivo = buscarStackActivo();
 
-	int _es_la_que_busco(t_variable_stack *variable){
-		return string_equals_ignore_case(&variable->id, &id);
+	bool _es_la_que_busco(t_variable_stack *variable){
+		//return string_equals_ignore_case(&variable->id, &id);
+		return (id == (variable->id));
 	}
 
 	return list_find(stackActivo->vars, (void*) _es_la_que_busco);
@@ -691,12 +692,14 @@ t_puntero  convertirPosicionAPuntero(t_posicion * posicion){
 void borrarPCBActual(){
 
 	puts("Borrando PCB actual");
+//
+//	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
+//	list_destroy(pcbActual->indice_codigo);
+//	free(pcbActual->indice_etiquetas);
+//	free(pcbActual->pcb_sp);
+//	free(pcbActual);
 
-	list_destroy_and_destroy_elements(pcbActual->indice_stack, (void*) stack_destroy);
-	list_destroy(pcbActual->indice_codigo);
-	free(pcbActual->indice_etiquetas);
-	free(pcbActual->pcb_sp);
-	free(pcbActual);
+	destruirPCB(pcbActual);
 
 }
 
