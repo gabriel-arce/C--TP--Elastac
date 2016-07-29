@@ -9,11 +9,12 @@
  */
 
 #include "Nucleo.h"
-
+#include <elestac_inotify.h>
 
 int cpuID = 0;						//Numero de CPU
 
 void cargarConfiguracion(char ** config_path){
+
 
 	config = config_create(config_path[1]);
 	nucleo = malloc(sizeof(t_nucleo));
@@ -43,8 +44,31 @@ void cargarConfiguracion(char ** config_path){
 
 	config_destroy(config);
 
+	//Crear hilo unicamente para notificaciones
+	pthread_create(&pIDInotify, NULL, (void *)crearObserverConfiguracion, config_path[1]);
+
 }
 
+void crearObserverConfiguracion(char *ruta){
+	int fd;
+	int observer;
+
+	if ((fd = inotify_init()) < 0)
+		puts("[INOTIFY] Error al iniciar Inotify");
+
+	if ((observer = inotify_add_watch(fd, ruta, IN_MODIFY | IN_CREATE | IN_DELETE)) < 0)
+		puts("[INOTIFY] Error al crear observer");
+
+	while(1){
+		inotify_getEvent(fd, observer);
+	}
+
+
+	/*
+		inotify_rm_watch(fd, observer);
+		close(fd);
+	*/
+}
 
 /*
  * Función que devuelve el valor máximo en la tabla.

@@ -23,6 +23,7 @@
 #include <commons/string.h>
 #include <commons/log.h>
 
+
 #define COLADECONEXIONES 10			//Cantidad de conexiones
 
 int crearSocket();											//Se crea el Fd del socket

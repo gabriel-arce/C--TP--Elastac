@@ -23,6 +23,9 @@
 #include <elestac_comunicaciones.h>
 #include <parser/metadata_program.h>
 
+
+
+
 /****** Constantes ******/
 
 #define CONFIG_NUCLEO	"nucleo.conf"
@@ -154,6 +157,7 @@ pthread_t pIDServerConsola;
 pthread_t pIDServerCPU;
 pthread_t pIDProcesarMensaje;
 pthread_t pIDPlanificador;
+pthread_t pIDInotify;
 pthread_t hiloEjecucion;
 pthread_t hiloBloqueado;
 pthread_t pIDCpu;
@@ -213,5 +217,6 @@ void ejecutarImprimirVariable(int socket, int tamanio_buffer);
 void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu);
 t_variableCompartida *crearSharedGlobal(char *sharedNombre);
 char *getSharedValue(char *valor);
+void crearObserverConfiguracion(char *ruta);
 
 #endif /* NUCLEO_H_ */
