@@ -653,7 +653,7 @@ void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer){
 	int i;
 	for(i = 0; list_size(lista_sharedValues); i++){
 		variable = list_get(lista_sharedValues, i);
-		if (variable->id == nombreVariable)
+		if (string_equals_ignore_case(variable->id,nombreVariable))
 			break;
 	}
 
@@ -680,12 +680,13 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 	int i;
 	for(i = 0; i < list_size(lista_sharedValues); i++){
 		variable = list_get(lista_sharedValues, i);
-		if (variable->id == nombreVariable){
+		if (string_equals_ignore_case(variable->id,nombreVariable)){
 			variable->valor = valor;
+			break;
 		}
 	}
 
-	if(variable != nombreVariable)
+	if(!string_equals_ignore_case(variable->id,nombreVariable))
 		enviar_header(0, 1,fd);
 	else
 		enviar_header(0,0,fd);
