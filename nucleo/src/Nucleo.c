@@ -565,7 +565,7 @@ t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 }
 
 t_variableCompartida *crearSharedGlobal(char *sharedNombre){
-	t_variableCompartida *variable = string_new();
+	t_variableCompartida *variable = malloc(sizeof(t_variableCompartida));
 	variable->id = sharedNombre;
 	return variable;
 }
@@ -670,10 +670,10 @@ void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer){
 			break;
 	}
 
-	if(variable->id != nombreVariable)
+	if(variable->id == nombreVariable)
 		enviar_header(0,variable->valor,fd);
 	else
-		enviar_header(0,0,fd);
+		enviar_header(1,0,fd);
 
 }
 
