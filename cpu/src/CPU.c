@@ -321,7 +321,7 @@ t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
 	header_in = recibir_header(socketNucleo);
 
-	if(header_in->tamanio == 0){ salirPor("no existe la variable compartida");}
+	if(header_in->identificador == 1){ salirPor("no existe la variable compartida");}
 
 	return (header_in->tamanio);
 
@@ -333,7 +333,7 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 
 	t_header * header = recibir_header(socketNucleo);
 
-	if(header->tamanio == 0){ salirPor("no existe la variable compartida");}
+	if(header->tamanio == 1){ salirPor("no existe la variable compartida");}
 	return valor;
 }
 

@@ -553,6 +553,7 @@ t_variableCompartida *crearSharedGlobal(char *sharedNombre){
 	t_variableCompartida *variable = malloc(sizeof(t_variableCompartida));
 	variable->id = string_duplicate(sharedNombre);
 	variable->valor = 0;
+	variable->id = sharedNombre;
 	return variable;
 }
 
@@ -656,10 +657,10 @@ void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer){
 			break;
 	}
 
-	if(variable->id != nombreVariable)
+	if(variable->id == nombreVariable)
 		enviar_header(0,variable->valor,fd);
 	else
-		enviar_header(0,0,fd);
+		enviar_header(1,0,fd);
 
 }
 
@@ -673,11 +674,11 @@ void ejecutarAsignarValorCompartido(int fd, int tamanio_buffer){
 	paquete = recibir_asignar_valor_compartido(tamanio_buffer, fd);
 
 	nombreVariable	= paquete->nombre;
-	valor 							= paquete->valor;
+	valor 			= paquete->valor;
 
 	//buscar por id variable y pisar valor
 	int i;
-	for(i = 0; list_size(lista_sharedValues); i++){
+	for(i = 0; i < list_size(lista_sharedValues); i++){
 		variable = list_get(lista_sharedValues, i);
 		if (variable->id == nombreVariable){
 			variable->valor = valor;
