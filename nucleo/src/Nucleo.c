@@ -122,21 +122,38 @@ void crearListasYColas(){
 	lista_finalizados			=	list_create();
 	lista_sharedValues	=	list_create();
 
+	semaforos = list_create();
+	dispositivos = list_create();
+
+	//Recorro del config los semaforos
 	int i;
 	for(i = 0; i < list_size(nucleo->sem_ids); i++){
 		char *semaforo = list_get(nucleo->sem_ids, i);
 		char * valor_char = list_get(nucleo->sem_init, i);
 		int valor = atoi(valor_char);
-		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor,0));
+
+		t_semaforo * s = malloc(sizeof(t_semaforo));
+		s->id = string_duplicate(semaforo);
+		s->sem = crearSemaforo(valor);
+		s->bloqueados = queue_create();
+		list_add(semaforos, (void *) s);
 	}
 
+	//Recorro del config los dispositivos
 	for(i = 0; i < list_size(nucleo->io_ids); i++){
 		char * io_nombre	= list_get(nucleo->io_ids, i);
 		char * io_sleep_char  = list_get(nucleo->io_sleep, i);
 		int io_sleep = atoi(io_sleep_char);
-		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre,0, io_sleep));
+
+		t_dispositivo * d = malloc(sizeof(t_dispositivo));
+		d->id = string_duplicate(io_nombre);
+		d->io_sleep = io_sleep;
+		pthread_mutex_init(&(d->mutex_disp), 0);
+		d->bloqueados = queue_create();
+		list_add(dispositivos, (void *) d);
 	}
 
+	//Recorro del config las shared vars
 	for(i = 0; i < list_size(nucleo->shared_vars); i++){
 		char * sharedNombre = list_get(nucleo->shared_vars, i);
 		list_add(lista_sharedValues, crearSharedGlobal(sharedNombre));
@@ -728,27 +745,42 @@ void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 }
 
 void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
-	t_paquete_entrada_salida * paquete;
-	t_semNucleo *semaforo;
 
-	t_pcb * pcb  = malloc(sizeof(t_pcb));
-	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
-
+	t_paquete_entrada_salida * paquete = NULL;
 	paquete = recibir_entrada_salida(header->tamanio, cpu->fd);
 
-	//recibir el pcb y enviar a bloqueados
-	header = recibir_header(cpu->fd);
-	pcb = recibir_pcb(cpu->fd, header->tamanio);
-	cpu->disponible = Si;
-	signalSemaforo(semCpuDisponible);
+	//TODO catchear el error en caso de que dispositivo == null
+	t_header * head = recibir_header(cpu->fd);
+	t_pcb * pcb_recibido = recibir_pcb(cpu->fd, head->tamanio);
 
-	semaforo = obtenerSemaforoPorID(paquete->nombre);
+	t_pth_disp_bloqueados * thread_args = malloc(sizeof(t_pth_disp_bloqueados));
+	thread_args->pcb = pcb_recibido;
+	thread_args->paquete = paquete;
+	thread_args->cpu = cpu;
 
-	param->pcb = pcb;
-	param->semaforo = semaforo;
-	param->tiempo = paquete->tiempo;
+	pthread_create(&PiDBloqueado, NULL, (void *) ejecutar_io, (void *) thread_args);
 
-	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, param);
+//	t_paquete_entrada_salida * paquete;
+//	t_semNucleo *semaforo;
+//
+//	t_pcb * pcb  = malloc(sizeof(t_pcb));
+//	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
+//
+//	paquete = recibir_entrada_salida(header->tamanio, cpu->fd);
+//
+//	//recibir el pcb y enviar a bloqueados
+//	header = recibir_header(cpu->fd);
+//	pcb = recibir_pcb(cpu->fd, header->tamanio);
+//	cpu->disponible = Si;
+//	signalSemaforo(semCpuDisponible);
+//
+//	semaforo = obtenerSemaforoPorID(paquete->nombre);
+//
+//	param->pcb = pcb;
+//	param->semaforo = semaforo;
+//	param->tiempo = paquete->tiempo;
+//
+//	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, param);
 	//pthread_join(PiDBloqueado, NULL);
 
 
@@ -843,4 +875,30 @@ void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu){
 	signalSemaforo(semCpuDisponible);
 
 	pasarAListos(pcb);
+}
+
+void ejecutar_io(void * args) {
+	t_pth_disp_bloqueados * args_disp = args;
+
+	//TODO catchear el error en caso de que paquete == null
+	bool busco_disp(t_dispositivo * d) {
+		return string_equals_ignore_case(d->id, args_disp->paquete->nombre);
+	}
+	t_dispositivo * dispositivo = list_find(dispositivos, (void *) busco_disp);
+
+	agregarPCBaBloqueados(dispositivo->bloqueados, args_disp->pcb, args_disp->cpu);
+
+
+	pthread_mutex_lock(&(dispositivo->mutex_disp));
+
+	usleep(dispositivo->io_sleep * args_disp->paquete->tiempo * 1000);
+
+	t_pcb * pcb = queue_pop(dispositivo->bloqueados);
+	pasarAListos(pcb);
+
+	pthread_mutex_unlock(&(dispositivo->mutex_disp));
+}
+
+void ejecutar_sem(void * args) {
+
 }

@@ -562,7 +562,7 @@ char* recibir_texto(int buffer_size, int socket) {
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	char * respuesta = deserializar_imprimir_texto(buffer);
 
@@ -623,7 +623,7 @@ char* recibir_wait_identificador_semaforo(int buffer_size, int socket) {
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	char * respuesta = deserializar_imprimir_texto(buffer);
 
@@ -764,7 +764,7 @@ t_paquete_entrada_salida * recibir_entrada_salida(int buffer_size, int socket) {
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	t_paquete_entrada_salida * respuesta = deserializar_entrada_salida(buffer);
 

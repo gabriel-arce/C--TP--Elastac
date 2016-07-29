@@ -121,6 +121,30 @@ typedef struct {
 	int tiempo;
 }t_parametrosHiloBloqueados;
 
+typedef struct {
+	char * id;
+	pthread_mutex_t mutex_disp;
+	int io_sleep;
+	t_queue * bloqueados;
+} t_dispositivo;
+
+typedef struct {
+	char * id;
+	sem_t * sem;
+	t_queue * bloqueados;
+} t_semaforo;
+
+typedef struct {
+	t_pcb * pcb;
+	t_paquete_entrada_salida * paquete;
+	t_clienteCPU * cpu;
+} t_pth_disp_bloqueados;
+
+typedef struct {
+	t_pcb * pcb;
+	t_semaforo * semaforo;
+} t_pth_sems_bloqueados;
+
 /****** Variables Globales ******/
 t_nucleo *nucleo;
 t_config  *config;
@@ -138,6 +162,8 @@ t_list *lista_finalizados;
 t_list *lista_semaforos;
 t_list *lista_io;
 t_list *lista_sharedValues ;
+t_list * semaforos;
+t_list * dispositivos;
 
 sem_t *mutexListos;
 sem_t *mutexCPU;
@@ -218,5 +244,8 @@ void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu);
 t_variableCompartida *crearSharedGlobal(char *sharedNombre);
 char *getSharedValue(char *valor);
 void crearObserverConfiguracion(char *ruta);
+
+void ejecutar_io(void * args);
+void ejecutar_sem(void * args);
 
 #endif /* NUCLEO_H_ */
