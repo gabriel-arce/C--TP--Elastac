@@ -118,6 +118,7 @@ void escucharPorSocket(int socket){			//unifico todos los recibos de headers
 void almacenarPCB(uint32_t tamanioBuffer){
  	pcbActual = recibir_pcb(socketNucleo, tamanioBuffer);
 	pcbCorriendo = true;
+	pcbFinalizado = false;
   }
 
 
@@ -760,6 +761,7 @@ void stack_destroy(t_stack * stack){
 
 void finalizacionPrograma(){
 	pcbCorriendo = false;
+	pcbFinalizado = true;
 	enviar_header(FINALIZACION_PROGRAMA,0,socketNucleo);
 }
 

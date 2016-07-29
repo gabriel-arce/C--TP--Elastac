@@ -50,7 +50,7 @@ int main(int argc, char * argv[]){
 
 		}
 
-		if(getQuantumPcb() == (getQuantum() + 1)){
+		if((getQuantumPcb() == (getQuantum() + 1)) && (!pcbFinalizado)){
 
 			restaurarQuantum();
 		}
