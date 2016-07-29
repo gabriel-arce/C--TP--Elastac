@@ -245,30 +245,6 @@ int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
 	return r;
 }
 
-void respuesta_inicio_swap(int respuesta_inicio) {
-	if ((respuesta_inicio == Respuesta__SI)||(respuesta_inicio > 0)) {
-		t_header * header = recibir_header(socket_swap);
-
-		if (header == NULL)
-			enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
-
-		t_paquete_inicializar_programa * paquete = recibir_inicializar_programa(
-				header->tamanio, socket_swap);
-
-		if (respuesta_inicio == Respuesta__SI)
-			inicializar_proceso(paquete->pid, paquete->paginas_requeridas);
-
-		enviar_respuesta_inicio(socket_nucleo, respuesta_inicio);
-
-		free(header);
-		free(paquete->codigo_programa);
-		free(paquete);
-
-	} else {
-		enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
-	}
-}
-
 void finalizar_en_swap(int pid) {
 	enviar_header(Finalizar_programa, pid, socket_swap);
 }
@@ -351,7 +327,7 @@ void * atiende_nucleo(void * args) {
 		switch (head_in->identificador) {
 		case Inicializar_programa:
 			new_line();
-			printf("Inicializo programa...\n");
+			printf("\nInicializo programa...\n");
 			if (inicializar_programa(head_in->tamanio) == EXIT_FAILURE) {
 				free(head_in);
 				pthread_mutex_unlock(&mutex_nucleo);
@@ -359,11 +335,11 @@ void * atiende_nucleo(void * args) {
 			}
 			break;
 		case Finalizar_programa:
-			printf("Finalizo programa\n");
+			printf("\nFinalizo programa\n");
 			finalizar_programa(head_in->tamanio);
 			break;
 		default:
-			printf("Cabecera desconocida\n");
+			printf("\nCabecera desconocida\n");
 			break;
 		}
 
@@ -386,10 +362,7 @@ int inicializar_programa(int bytes_to_recv) {
 		return EXIT_FAILURE;
 	}
 
-	printf("pid: %d\n", paquete_init->pid);
-	printf("paginas: %d\n", paquete_init->paginas_requeridas);
-	printf("%s", paquete_init->codigo_programa);
-	new_line();
+	pthread_mutex_lock(&mutex_memoria);
 
 	if (inicializar_en_swap(paquete_init) <= 0) {
 		//escribo en el log el error
@@ -401,14 +374,27 @@ int inicializar_programa(int bytes_to_recv) {
 
 	int respuesta_inicio = recibir_respuesta_inicio(socket_swap);
 
-	respuesta_inicio_swap(respuesta_inicio);
+	if ((respuesta_inicio == Respuesta__SI) || (respuesta_inicio > 0)) {
+
+		if (respuesta_inicio == Respuesta__SI)
+			inicializar_proceso(paquete_init->pid, paquete_init->paginas_requeridas);
+
+		enviar_respuesta_inicio(socket_nucleo, respuesta_inicio);
+	} else {
+		enviar_respuesta_inicio(socket_nucleo, Respuesta__NO);
+	}
 
 	free(paquete_init->codigo_programa);
 	free(paquete_init);
+
+	pthread_mutex_unlock(&mutex_memoria);
+
 	return EXIT_SUCCESS;
 }
 
 void finalizar_programa(int id_programa) {
+
+	pthread_mutex_lock(&mutex_memoria);
 
 	//--le aviso a swap que libere el programa
 	finalizar_en_swap(id_programa);
@@ -459,6 +445,7 @@ void finalizar_programa(int id_programa) {
 	list_remove_and_destroy_by_condition(lista_procesos,
 			(void *) buscar_proceso, (void *) free);
 
+	pthread_mutex_unlock(&mutex_memoria);
 }
 
 
