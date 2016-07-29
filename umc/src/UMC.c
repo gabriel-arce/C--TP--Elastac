@@ -231,42 +231,7 @@ void conecta_swap() {
 				umc_config->puerto_swap);
 
 	enviar_handshake(socket_swap, UMC);
-
-	//pthread_create(&hilo_cliente, NULL, (void *) atiende_swap, (void *) socket_swap);
 }
-
-//void atiende_swap(void * args) {
-//
-//	int socket = (int) args;
-//
-//	bool keep_running = true;
-//
-//	while (keep_running) {
-//		t_header * header = NULL;
-//
-//		pthread_mutex_lock(&mutex_swap);
-//
-//		header = recibir_header(socket);
-//
-//		if (!header) {
-//			keep_running = false;
-//			pthread_mutex_unlock(&mutex_swap);
-//			continue;
-//		}
-//
-//		switch (header->identificador) {
-//		case Respuesta_inicio_programa:
-//			respuesta_inicio_swap(header->tamanio);
-//			break;
-//		default:
-//			break;
-//		}
-//
-//		free(header);
-//
-//		pthread_mutex_unlock(&mutex_swap);
-//	}
-//}
 
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete) {
 
@@ -351,7 +316,7 @@ int escritura_en_swap(int pagina, int frame, int pid) {
 	if (enviar_header(Almacenar_pagina, pedido_size, socket_swap) <= 0)
 		return -1;
 
-	if (send(socket_swap, pedido_swap, 8, 0) <= 0)
+	if (send(socket_swap, pedido_swap, pedido_size, 0) <= 0)
 		return -1;
 
 	free(pagina_a_escribir);
