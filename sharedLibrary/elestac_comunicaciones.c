@@ -202,11 +202,10 @@ int deserializar_respuesta_inicio(void * buffer) {
 	return response;
 }
 //----------------------------------------------------->
-void * serializar_ansisop(char * programa) {
-
-	int codigo_length = string_length(programa);
+void * serializar_ansisop(void * programa, int codigo_length) {
 
 	void * buffer_pack = malloc(4 + codigo_length);
+	memset(buffer_pack, '\0', 4 + codigo_length);
 
 	memcpy(buffer_pack, &(codigo_length), 4);
 	memcpy(buffer_pack + 4, programa, codigo_length);
@@ -227,7 +226,7 @@ t_paquete_programa * deserializar_ansisop(void * buffer) {
 }
 //----------------------------------------------------->
 void * serializar_imprimir_texto(char * texto) {
-	return serializar_ansisop(texto);
+	return serializar_ansisop((void *)texto, strlen(texto));
 }
 
 char * deserializar_imprimir_texto(void * buffer) {
@@ -258,7 +257,7 @@ int deserializar_imprimir_valor(void * buffer) {
 
 //----------------------------------------------------->
 void * serializar_identificador_semaforo(char* id) {
-	return serializar_ansisop(id);
+	return serializar_ansisop((void *)id, strlen(id));
 }
 
 char * deserializar_identificador_semaforo(void * buffer) {
@@ -274,7 +273,7 @@ char * deserializar_identificador_semaforo(void * buffer) {
 //----------------------------------------------------->
 void * serializar_nombre_compartida(t_nombre_compartida variable){
 
-	return serializar_ansisop(variable);
+	return serializar_ansisop(variable, strlen(variable));
 }
 
 char * deserializar_nombre_compartida(void * buffer) {

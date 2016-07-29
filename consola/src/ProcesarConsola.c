@@ -19,7 +19,7 @@ int main(int argc, char * argv[]) {
 
 	FILE * fp_in;
 	long fp_size;
-	char * prog_buffer = NULL;
+	void * prog_buffer = NULL;
 
 	socketConsola = 0;		//Descriptor de consola
 
@@ -40,13 +40,13 @@ int main(int argc, char * argv[]) {
 	fp_size = ftell(fp_in);
 	rewind(fp_in);
 
-	prog_buffer = malloc((fp_size + 1) * sizeof(char));
+	prog_buffer = malloc(fp_size);
+	memset(prog_buffer, '\0', fp_size);
 	if ((fread(prog_buffer, 1, fp_size, fp_in)) < 0) {
 		fclose(fp_in);
 		free(prog_buffer);
 		puts("Error en el copy");
 	}
-	prog_buffer[fp_size + 1] = '\0';
 
 	if ((socketConsola = clienteDelServidor(consola->ip_nucleo, consola->puerto_nucleo)) == -1) {
 		MostrarMensajeDeError(NoSePudoCrearSocket);
@@ -61,8 +61,7 @@ int main(int argc, char * argv[]) {
 
 	//-----------INICIO ENVIO PROGRAMA
 	//---------primero envio el header
-	int codigo_length = string_length(prog_buffer);
-	int tamanio_paquete = 4 + codigo_length;
+	int tamanio_paquete = 4 + fp_size;
 
 	result = enviar_header(Iniciar_ansisop, tamanio_paquete, socketConsola);
 	if (result == -1) {
@@ -70,7 +69,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	//-----------luego envio el codigo del programa
-	void * buffer_pack = serializar_ansisop(prog_buffer);
+	void * buffer_pack = serializar_ansisop(prog_buffer, fp_size);
 	result = send(socketConsola, buffer_pack, tamanio_paquete, 0);
 	free(buffer_pack);
 	if (result == -1) {
