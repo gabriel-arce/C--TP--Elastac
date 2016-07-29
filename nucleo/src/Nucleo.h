@@ -211,7 +211,7 @@ int generar_pid();
 void ejecutarMuerteCPU(t_clienteCPU *cpu);
 void  interrupcionConsola(int interrupcion);
 void destruirCPU(t_clienteCPU *cpu);
-void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo);
+void crearHiloBloqueados(t_parametrosHiloBloqueados * parametros);
 void ejecutarImprimirTexto(int socket, int tamanio_buffer);
 void ejecutarImprimirVariable(int socket, int tamanio_buffer);
 void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu);

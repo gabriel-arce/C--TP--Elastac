@@ -567,7 +567,7 @@ int getSemValue(char *valor){
 t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
 	semNucleo->id						= string_duplicate(semaforo);
-	semNucleo->valor					= valor;      //TODO castea int a semaforo?
+	semNucleo->valor					= crearSemaforo(valor);
 	semNucleo->io_sleep			= io_sleep;
 	semNucleo->bloqueados	= list_create();
 	return semNucleo;
@@ -642,9 +642,6 @@ t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
 	for(i = 0; i < list_size(lista_semaforos); i++){
 		semaforo = list_get(lista_semaforos, i);
 		if(strcmp(semaforo->id, nombreSemaforo) == 0){
-			printf("Valor actual: %d\n", (int)semaforo->valor);		//TODO castea semaforo a int?
-			semaforo->valor--;
-			printf("Valor actual: %d\n", (int)semaforo->valor);
 			break;
 		}
 	}
@@ -755,8 +752,8 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
 	param->semaforo = semaforo;
 	param->tiempo = paquete->tiempo;
 
-	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);
-	pthread_join(PiDBloqueado, NULL);
+	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, param);
+	//pthread_join(PiDBloqueado, NULL);
 
 
 /*
@@ -796,28 +793,29 @@ void destruirCPU(t_clienteCPU *cpu){
 	free(cpu);
 }
 
-void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
+void crearHiloBloqueados(t_parametrosHiloBloqueados * parametros){
 
-	waitSemaforo(semaforo->valor);
+	waitSemaforo(parametros->semaforo->valor);
 
-	if(semaforo->io_sleep != 0){
+	if(parametros->semaforo->io_sleep != 0){
 
-		//usleep(1);
-		signalSemaforo(semaforo->valor);
-	}
+		usleep(parametros->semaforo->io_sleep * parametros->tiempo);
+		signalSemaforo(parametros->semaforo->valor);
+
 	int i=0;
 
 	for(i=0; i < list_size(lista_bloqueados); i++){
 		t_pcb * pcbAux= list_get(lista_bloqueados, i);
 
-		if(pcbAux->pcb_pid == pcb->pcb_pid){
+		if(pcbAux->pcb_pid == parametros->pcb->pcb_pid){
 			list_remove(lista_bloqueados, i);
 			break;
 		}
 
 	}
 
-	pasarAListos(pcb);
+	pasarAListos(parametros->pcb);
+	}
 }
 
 void ejecutarImprimirTexto(int socket, int tamanio_buffer){
