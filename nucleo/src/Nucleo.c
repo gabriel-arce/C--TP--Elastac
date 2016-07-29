@@ -497,6 +497,11 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 void accionesDeCPU(t_clienteCPU *cpu){
 
 	t_header *header;
+	int recibido;
+	sem_t *mutex_acciones = crearMutex();
+	void *buffer;
+
+	fd_set readset;
 
 	//Enviar Quantum
 	if (enviar_header(28, nucleo->quantum, cpu->fd) == -1)
@@ -509,7 +514,94 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	//Signal por CPU nueva
 	signalSemaforo(semCpuDisponible);
 
-	while((header = recibir_header(cpu->fd)) != NULL){
+	FD_ZERO(&readset);
+	FD_SET(cpu->fd, &readset);
+
+	while(1){
+		if ((recibido = pselect(cpu->fd + 1, &readset, NULL, NULL, NULL, NULL)) < 0){
+			//Error
+			printf("Fin hilo de acciones del CPU %d", cpu->fd);
+			pthread_cancel(pIDCpu);
+			break;
+		} else if( FD_ISSET(cpu->fd, &readset)){
+			if ((header = recibir_header(cpu->fd)) != NULL){
+				switch(header->identificador){
+						case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
+						case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
+						case Signal: 										{ ejecutarSignal(header->tamanio, cpu); break; }
+						case EntradaSalida:							{ ejecutarEntradaSalida(cpu, header); break;}
+						case ObtenerValorCompartido:	{ ejecutarObtenerValorCompartido(cpu->fd, header->tamanio); break;}
+						case AsignarValorCompartido:		{ ejecutarAsignarValorCompartido(cpu->fd, header->tamanio); break;}
+						case MuereCPU:								{ ejecutarMuerteCPU(cpu); break;}
+						case FinalizacionQuantum:				{ ejecutaFinalizacionDeQuantum(cpu); break;}
+						case abortarPrograma:					{ ejecutarFinalizacionPrograma(cpu, header); break;}
+						case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
+						case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
+				} //Fin switch
+				free(header);
+			}
+		}
+	}
+
+
+/*
+	do{
+
+			if( FD_ISSET(cpu->fd, &readset)){
+				if ((header = recibir_header(cpu->fd)) != NULL){
+					switch(header->identificador){
+							case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
+							case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
+							case Signal: 										{ ejecutarSignal(header->tamanio, cpu); break; }
+							case EntradaSalida:							{ ejecutarEntradaSalida(cpu, header); break;}
+							case ObtenerValorCompartido:	{ ejecutarObtenerValorCompartido(cpu->fd, header->tamanio); break;}
+							case AsignarValorCompartido:		{ ejecutarAsignarValorCompartido(cpu->fd, header->tamanio); break;}
+							case MuereCPU:								{ ejecutarMuerteCPU(cpu); break;}
+							case FinalizacionQuantum:				{ ejecutaFinalizacionDeQuantum(cpu); break;}
+							case abortarPrograma:					{ ejecutarFinalizacionPrograma(cpu, header); break;}
+							case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
+							case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
+					} //Fin switch
+					free(header);
+
+				} else{
+					printf("Fin hilo de acciones del CPU %d", cpu->fd);
+					pthread_cancel(pIDCpu);
+					result = -1;
+					break;
+				}
+			}
+	} while (result == -1 && errno == EINTR);
+*/
+
+/*	if(result > 0){
+		if( FD_ISSET(cpu->fd, &readset)){
+			result = recv(cpu->fd, buffer, MAXIMO_BUFFER, 0);
+			if(result == 0){
+				printf("Fin hilo de acciones del CPU %d", cpu->fd);
+				pthread_cancel(pIDCpu);
+				recibido = -1;
+				free(header);
+				//signalSemaforo(mutex_acciones);
+			} else {
+				puts("recibi accion");
+			}
+		}
+	}*/
+
+
+/* 	while(recibido > 0){
+		waitSemaforo(mutex_acciones);
+
+		if ((header = recibir_header(cpu->fd)) == NULL){
+			printf("Fin hilo de acciones del CPU %d", cpu->fd);
+			pthread_cancel(pIDCpu);
+			recibido = -1;
+			free(header);
+			signalSemaforo(mutex_acciones);
+			break;
+		}
+
 		switch(header->identificador){
 				case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
 				case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
@@ -523,13 +615,11 @@ void accionesDeCPU(t_clienteCPU *cpu){
 				case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
 				case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
 			} //Fin switch
+
 		free(header);
-	}//Fin while
+		signalSemaforo(mutex_acciones);*/
 
-	if(header == NULL){
-		printf("Fin hilo de acciones del CPU %d", cpu->fd);
-		pthread_cancel(pIDCpu);}
-
+	//}//Fin while
 }
 
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
@@ -624,10 +714,10 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 		enviar_header(32, 0, cpu->fd);
 	}
 
-	param->pcb = pcb;
+/*	param->pcb = pcb;
 	param->semaforo = semaforo;
 	param->tiempo = 0;
-	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);
+	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);*/
 
 }
 

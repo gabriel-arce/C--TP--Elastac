@@ -51,7 +51,7 @@
 #define Inicializar_programa 14
 #define Respuesta_inicio 17
 #define Fin_programa 13
-
+#define MAXIMO_BUFFER 2000
 
 /****** Estructuras ******/
 typedef enum {
