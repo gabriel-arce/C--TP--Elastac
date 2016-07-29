@@ -651,13 +651,13 @@ void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer){
 
    // buscar por id variable y tomar valor
 	int i;
-	for(i = 0; list_size(lista_sharedValues); i++){
+	for(i = 0; i<list_size(lista_sharedValues); i++){
 		variable = list_get(lista_sharedValues, i);
 		if (string_equals_ignore_case(variable->id,nombreVariable))
 			break;
 	}
 
-	if(variable->id == nombreVariable)
+	if(string_equals_ignore_case(variable->id, nombreVariable))
 		enviar_header(0,variable->valor,fd);
 	else
 		enviar_header(1,0,fd);
@@ -801,7 +801,9 @@ void ejecutarImprimirTexto(int socket, int tamanio_buffer){
 
 	texto = recibir_texto(tamanio_buffer, socket);
 
-	// enviar_texto(texto, pcb->consola); no se como obtener la consola correspondiente
+	t_header * header = recibir_header(socket);
+
+	enviar_texto(texto, header->tamanio);
 }
 
 void ejecutarImprimirVariable(int socket, int tamanio_buffer){
@@ -809,7 +811,9 @@ void ejecutarImprimirVariable(int socket, int tamanio_buffer){
 
 	variable = recibir_valor_de_variable(tamanio_buffer);
 
-	//enviar_valor_de_variable(variable, pcb->consola); no se como obtener la consola correspondiente
+	t_header * header = recibir_header(socket);
+
+	enviar_valor_de_variable(variable, header->tamanio);
 }
 
 void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu){
