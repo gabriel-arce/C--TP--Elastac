@@ -98,41 +98,26 @@ void crearListasYColas(){
 	lista_finalizados			=	list_create();
 	lista_sharedValues	=	list_create();
 
-	t_list *sem_id				=	list_map(nucleo->sem_ids, getSemaforo);
-	t_list *sem_value		=	list_map(nucleo->sem_init, getSemValue);
-	t_list *io_id					=	list_map(nucleo->io_ids, getIOId);
-	t_list *io_value			=	list_map(nucleo->io_sleep, getIOSleep);
-	t_list *shared_value	=	list_map(nucleo->shared_vars, getSharedValue);
-
-	char *semaforo			 	=	string_new();
-	char *io_nombre			=	string_new();
-	char *sharedNombre	=	string_new();
-
-	int valor = 0;
-	int io_sleep;
-
 	int i;
 	for(i = 0; i < list_size(nucleo->sem_ids); i++){
-		semaforo = list_get(sem_id, i);
-		valor			= list_get(sem_value, i);
+		char *semaforo = list_get(nucleo->sem_ids, i);
+		char * valor_char = list_get(nucleo->sem_init, i);
+		int valor = atoi(valor_char);
 		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor,0));
 	}
 
 	for(i = 0; i < list_size(nucleo->io_ids); i++){
-		io_nombre	= list_get(io_id, i);
-		io_sleep		= list_get(io_value, i);
+		char * io_nombre	= list_get(nucleo->io_ids, i);
+		char * io_sleep_char  = list_get(nucleo->io_sleep, i);
+		int io_sleep = atoi(io_sleep_char);
 		list_add(lista_semaforos, crearSemaforoGlobal(io_nombre,0, io_sleep));
 	}
 
 	for(i = 0; i < list_size(nucleo->shared_vars); i++){
-		sharedNombre = list_get(shared_value, i);
+		char * sharedNombre = list_get(nucleo->shared_vars, i);
 		list_add(lista_sharedValues, crearSharedGlobal(sharedNombre));
 		printf("Shared: %s\n", sharedNombre);
 	}
-
-	free(semaforo);
-	free(io_nombre);
-	free(sharedNombre);
 
 }
 
@@ -557,7 +542,7 @@ int getSemValue(char *valor){
 
 t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
-	semNucleo->id						= semaforo;
+	semNucleo->id						= string_duplicate(semaforo);
 	semNucleo->valor					= valor;      //TODO castea int a semaforo?
 	semNucleo->io_sleep			= io_sleep;
 	semNucleo->bloqueados	= list_create();
@@ -565,8 +550,9 @@ t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 }
 
 t_variableCompartida *crearSharedGlobal(char *sharedNombre){
-	t_variableCompartida *variable = string_new();
-	variable->id = sharedNombre;
+	t_variableCompartida *variable = malloc(sizeof(t_variableCompartida));
+	variable->id = string_duplicate(sharedNombre);
+	variable->valor = 0;
 	return variable;
 }
 

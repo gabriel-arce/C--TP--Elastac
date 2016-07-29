@@ -102,6 +102,9 @@ void enviar_pagina_size(int sock_fd) {
 }
 
 void flush_tlb_by_certain_pid(int pid) {
+
+	pthread_mutex_lock(&mutex_tlb);
+
 	void flush_entry_by_pid(t_tlb * tlb_entry) {
 		if (tlb_entry->pid == pid) {
 			tlb_entry->pagina = -1;
@@ -110,6 +113,8 @@ void flush_tlb_by_certain_pid(int pid) {
 		}
 	}
 	list_iterate(tabla_tlb, (void *) flush_entry_by_pid);
+
+	pthread_mutex_unlock(&mutex_tlb);
 }
 
 
@@ -449,6 +454,9 @@ void finalizar_programa(int id_programa) {
 
 	int cantidad_paginas = list_size(proceso->tabla_paginas);
 
+	char * hueco = string_repeat('\0', umc_config->frames_size);
+	int direccion = 0;
+
 	int nro_pagina;
 	for (nro_pagina = 0; nro_pagina < cantidad_paginas; nro_pagina++) {
 		t_tabla_pagina * page_entry = list_get(proceso->tabla_paginas,
@@ -462,11 +470,16 @@ void finalizar_programa(int id_programa) {
 			if (marco == NULL)
 				continue;
 
+			direccion = page_entry->frame * umc_config->frames_size;
+			memcpy(memoria_principal, (void *) hueco, umc_config->frames_size);
+
 			marco->libre = 1;
 			marco->pagina = -1;
 			marco->pid = -1;
 		}
 	}
+
+	free(hueco);
 
 	//libero la tabla de paginas
 	list_destroy_and_destroy_elements(proceso->tabla_paginas, (void *) free);
@@ -536,8 +549,11 @@ void * atiende_cpu(void * args) {
 
 int leer_bytes(int socket_cpu, int bytes) {
 
+	pthread_mutex_lock(&mutex_memoria);
+
 	int catch_read_error() {
 		send(socket_cpu, (void *) " ", 1, 0);
+		pthread_mutex_unlock(&mutex_memoria);
 		return -1;
 	}
 
@@ -578,6 +594,7 @@ int leer_bytes(int socket_cpu, int bytes) {
 
 	if (tlb_entry) {
 		//TLB HIT
+		printf("\nTLB HIT\n");
 		tlb_entry->referencebit = 0;
 		t_tabla_pagina * page = buscar_pagina(solicitud->nro_pagina,
 				proceso->tabla_paginas);
@@ -586,9 +603,11 @@ int leer_bytes(int socket_cpu, int bytes) {
 		frame_to_read = page->frame;
 	} else {
 		//TLB MISS
+		printf("\nTLB MISS\n");
 		frame_to_read = esta_en_memoria(solicitud->nro_pagina, proceso, 0);
 		if (frame_to_read == -1) {
 			//PAGE FAULT
+			printf("PAGE FAULT\n");
 			switch (umc_config->algoritmo) {
 			case CLOCK:
 				frame_to_read = clock_algorithm(solicitud->nro_pagina, solicitud->offset, solicitud->bytes, proceso, 0);
@@ -607,7 +626,7 @@ int leer_bytes(int socket_cpu, int bytes) {
 
 	void * datos_leidos = leer_datos(frame_to_read, solicitud->offset, solicitud->bytes);
 
-	printf("\nDATOS QUE LE ENVIO A CPU: %s\n", (char *) datos_leidos);
+	//printf("\nDATOS QUE LE ENVIO A CPU: %s\n", (char *) datos_leidos);
 
 	if ((send(cpu->socket_cpu, datos_leidos, solicitud->bytes, 0)) < 0) {
 		free(solicitud);
@@ -620,13 +639,18 @@ int leer_bytes(int socket_cpu, int bytes) {
 	free(datos_leidos);
 	free(solicitud);
 
+	pthread_mutex_unlock(&mutex_memoria);
+
 	return EXIT_SUCCESS;
 }
 
 int almacenar_bytes(int socket_cpu, int bytes) {
 
+	pthread_mutex_lock(&mutex_memoria);
+
 	int catch_write_error() {
 		enviar_header(Almacenar_pagina, 0, socket_cpu);
+		pthread_mutex_unlock(&mutex_memoria);
 		return -1;
 	}
 
@@ -709,6 +733,8 @@ int almacenar_bytes(int socket_cpu, int bytes) {
 	agregar_referencia(solicitud->nro_pagina, proceso);
 
 	free(solicitud);
+
+	pthread_mutex_unlock(&mutex_memoria);
 
 	return EXIT_SUCCESS;
 }

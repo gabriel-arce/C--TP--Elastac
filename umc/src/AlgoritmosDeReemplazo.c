@@ -10,6 +10,8 @@
 //****TLB_LRU****
 void run_LRU(t_tlb * reemplazo) {
 
+	pthread_mutex_lock(&mutex_tlb);
+
 	//busco si hay libre
 	t_tlb * entrada_libre = buscar_en_tlb(-1, -1);
 
@@ -35,6 +37,8 @@ void run_LRU(t_tlb * reemplazo) {
 	}
 
 	free(reemplazo);
+
+	pthread_mutex_unlock(&mutex_tlb);
 }
 //****-------****
 

@@ -79,6 +79,7 @@ pthread_mutex_t mutex_lista_cpu;
 pthread_mutex_t mutex_nucleo;
 pthread_mutex_t mutex_memoria;
 pthread_mutex_t mutex_swap;
+pthread_mutex_t mutex_tlb;
 int memoria_size;
 void * memoria_principal;
 t_log * logger;

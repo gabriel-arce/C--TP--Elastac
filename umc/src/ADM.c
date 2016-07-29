@@ -147,11 +147,16 @@ int esta_en_memoria(int pagina, t_proceso * proceso, int dirty_bit) {
 	return esta;
 }
 
-void incrementar_bit_tlb() {
+void incrementar_bit_tlb() { //TODO ver que onda esto porque puede bloquear al pedo.....
+
+	pthread_mutex_lock(&mutex_tlb);
+
 	void incrementar_bit(t_tlb * entry) {
 		entry->referencebit++;
 	}
 	list_iterate(tabla_tlb, (void *) incrementar_bit);
+
+	pthread_mutex_unlock(&mutex_tlb);
 }
 
 void eliminar_referencia_en_tlb(int pagina, int pid) {
@@ -322,6 +327,9 @@ void imprimir_frames() {
 }
 
 void imprimir_tlb() {
+
+	pthread_mutex_lock(&mutex_tlb);
+
 	printf("#P | #F | PID \n");
 	int i;
 	void imprimir_entrada_tlb(t_tlb * t) {
@@ -331,6 +339,8 @@ void imprimir_tlb() {
 	list_iterate(tabla_tlb, (void *) imprimir_entrada_tlb);
 
 	new_line();
+
+	pthread_mutex_unlock(&mutex_tlb);
 }
 //****-------------****
 
