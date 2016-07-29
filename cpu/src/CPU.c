@@ -315,9 +315,22 @@ void asignar(t_puntero direccion_variable, t_valor_variable valor) {
 
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
+	//saco los /n y le hago un trim
+	char* variableString = string_new();
+	variableString = string_duplicate(variable);
+
+	char *pch = strstr(variableString, "\n");
+	while(pch != NULL)
+	{
+	    strncpy(pch, " ", 1);
+	    pch = strstr(variableString, "\n");
+	}
+
+	string_trim(&variableString);
+
 	t_header * header_in;
 
-	enviar_obtener_valor_compartido( variable, socketNucleo);
+	enviar_obtener_valor_compartido( variableString, socketNucleo);
 
 	header_in = recibir_header(socketNucleo);
 
@@ -380,6 +393,8 @@ void imprimir(t_valor_variable valor_mostrar){
 	if(enviar_valor_de_variable(valor_mostrar,socketNucleo) == -1){
 	 			salirPor("No se concreto la impresion por pantalla");
 	 		}
+
+	enviar_header(0,pcbActual->consola,socketNucleo);
 }
 
 void imprimirTexto(char* texto){
@@ -387,6 +402,8 @@ void imprimirTexto(char* texto){
 	printf("Imprimiendo texto: %s", texto);
 
 	mandarTextoANucleo(texto);
+
+	enviar_header(0,pcbActual->consola,socketNucleo);
 
 }
 
@@ -577,11 +594,13 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 	uint32_t offset;
 	uint32_t size;
 	uint32_t aux;
+	uint32_t aux2;
 	uint32_t loQueGuardo;
 
 	pagina = instruccionACorrer->posicion / tamanio_paginas;					//dividir devuelve el numero entero (redondeado para abajo)
 	offset = (instruccionACorrer->posicion - (tamanio_paginas * pagina));
 	aux = offset + instruccionACorrer->tamanio;
+	aux2 = instruccionACorrer->tamanio;
 
 	if(aux <= tamanio_paginas){
 		size= instruccionACorrer->tamanio;
@@ -590,6 +609,9 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 	else{
 
 		while(aux > tamanio_paginas){
+
+			if(aux == offset + instruccionACorrer->tamanio )
+				aux= instruccionACorrer->tamanio;
 
 			loQueGuardo = (tamanio_paginas - offset);
 

@@ -572,13 +572,13 @@ char* recibir_texto(int buffer_size, int socket) {
 
 //------------------------------------------------------>
 int enviar_valor_de_variable(t_valor_variable valor, int socket) {
-	int result = enviar_header(11, sizeof(t_valor_variable), socket);
+	int result = enviar_header(11, 5, socket);
 
 	if (result == -1)
 		return result;
 
 	void * buffer_out = serializar_imprimir_valor(valor);
-	result = send(socket, buffer_out, sizeof(t_valor_variable), 0);
+	result = send(socket, buffer_out, 5, 0);
 
 	if (result == -1)
 		return result;

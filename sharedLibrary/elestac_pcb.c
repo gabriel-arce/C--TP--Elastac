@@ -57,7 +57,7 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 	else
 	pcb->indice_etiquetas = meta->etiquetas;
 	//***CANTIDAD DE ETIQUETAS
-	pcb->cantidad_de_etiquetas = meta->cantidad_de_etiquetas;
+	pcb->cantidad_de_etiquetas = meta->etiquetas_size;
 
 	//***INDICE DE STACK
 	pcb->indice_stack = list_create();
