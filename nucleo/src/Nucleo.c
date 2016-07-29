@@ -620,35 +620,67 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 
 	nombreSemaforo = recibir_wait_identificador_semaforo(tamanio_buffer, cpu->fd);
 
-	t_semNucleo * semaforo = obtenerSemaforoPorID(nombreSemaforo);
-	t_header *header;
-	t_pcb *pcb;
-	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
-	if ((sem_getvalue(semaforo->valor, &valorSemaforo)) < 0){
+	bool busco_sem(t_semaforo * s) {
+		return string_equals_ignore_case(s->id, nombreSemaforo);
+	}
+	t_semaforo * semaforo = list_find(semaforos, busco_sem);
+
+	t_pth_sems_bloqueados * pth_args = malloc(sizeof(t_pth_sems_bloqueados));
+	pth_args->semaforo = semaforo;
+	t_pcb * pcb = NULL;
+
+	if ((sem_getvalue(semaforo->sem, &valorSemaforo)) < 0) {
 		//cpu->disponible = No;
 		enviar_header(31, 0, cpu->fd);
 
 		//recibir el pcb y enviar a bloqueados
-		header = recibir_header(cpu->fd);
-		pcb = recibir_pcb(cpu->fd, header->tamanio);
-
-		cpu->disponible = Si;
-		signalSemaforo(semCpuDisponible);
+		t_header * header = recibir_header(cpu->fd);
+		t_pcb * pcb = recibir_pcb(cpu->fd, header->tamanio);
 
 		//enviar el pcb a bloqueados
-		list_add(lista_bloqueados, pcb);
+//		list_add(lista_bloqueados, pcb);
+		queue_push(semaforo->bloqueados, pcb);
 	} else {
-		cpu->disponible = Si;
-		signalSemaforo(semCpuDisponible);
-		pcb =NULL;
+		pcb = NULL;
 		enviar_header(32, 0, cpu->fd);
 	}
 
-	param->pcb = pcb;
-	param->semaforo = semaforo;
-	param->tiempo = 0;
-	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);
+	cpu->disponible = Si;
+	signalSemaforo(semCpuDisponible);
 
+	pth_args->pcb = pcb;
+
+	pthread_create(&PiDBloqueado, NULL, ejecutar_sem, (void *) pth_args);
+//
+//	t_semNucleo * semaforo = obtenerSemaforoPorID(nombreSemaforo);
+//	t_header *header;
+//	t_pcb *pcb;
+//	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
+//	if ((sem_getvalue(semaforo->valor, &valorSemaforo)) < 0){
+//		//cpu->disponible = No;
+//		enviar_header(31, 0, cpu->fd);
+//
+//		//recibir el pcb y enviar a bloqueados
+//		header = recibir_header(cpu->fd);
+//		pcb = recibir_pcb(cpu->fd, header->tamanio);
+//
+//		cpu->disponible = Si;
+//		signalSemaforo(semCpuDisponible);
+//
+//		//enviar el pcb a bloqueados
+//		list_add(lista_bloqueados, pcb);
+//	} else {
+//		cpu->disponible = Si;
+//		signalSemaforo(semCpuDisponible);
+//		pcb =NULL;
+//		enviar_header(32, 0, cpu->fd);
+//	}
+//
+//	param->pcb = pcb;
+//	param->semaforo = semaforo;
+//	param->tiempo = 0;
+//	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);
+//
 }
 
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
@@ -668,8 +700,14 @@ t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
 void ejecutarSignal(int tamanio_buffer, t_clienteCPU * cpu){
 	char* nombreSemaforo;
 	nombreSemaforo = recibir_signal_identificador_semaforo(tamanio_buffer, cpu->fd);
-	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
-	signalSemaforo(semaforo->valor);
+
+	bool buscar_sem_to_V(t_semaforo * s) {
+		return string_equals_ignore_case(s->id, nombreSemaforo);
+	}
+	t_semaforo * semaforo = list_find(semaforos, (void *) buscar_sem_to_V);
+
+//	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
+	signalSemaforo(semaforo->sem);
 }
 
 //t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio){
