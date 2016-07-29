@@ -132,11 +132,14 @@ void crearListasYColas(){
 		char * valor_char = list_get(nucleo->sem_init, i);
 		int valor = atoi(valor_char);
 
-		t_semaforo * s = malloc(sizeof(t_semaforo));
+
+		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor,0));
+		/*t_semaforo * s = malloc(sizeof(t_semaforo));
 		s->id = string_duplicate(semaforo);
 		s->sem = crearSemaforo(valor);
 		s->bloqueados = queue_create();
 		list_add(semaforos, (void *) s);
+	*/
 	}
 
 	//Recorro del config los dispositivos
@@ -857,14 +860,11 @@ void ejecutarImprimirTexto(int socket, int tamanio_buffer){
 	enviar_texto(texto, header->tamanio);
 }
 
-void ejecutarImprimirVariable(int socket, int tamanio_buffer){
-	int variable;
-
-	variable = recibir_valor_de_variable(tamanio_buffer);
+void ejecutarImprimirVariable(int socket, int valor){
 
 	t_header * header = recibir_header(socket);
 
-	enviar_valor_de_variable(variable, header->tamanio);
+	enviar_valor_de_variable(valor, header->tamanio);
 }
 
 void ejecutaFinalizacionDeQuantum(t_clienteCPU * cpu){

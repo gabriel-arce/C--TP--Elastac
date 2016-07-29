@@ -35,7 +35,7 @@ int main(int argc, char * argv[]){
 		enviar_pcb(pcbActual, socketNucleo);*/		/* Anduvo OK */
 
 		//Modificar wait
-		enviar_wait_identificador_semaforo("b", socketNucleo);
+		/*enviar_wait_identificador_semaforo("b", socketNucleo);
 		enviar_pcb(pcbActual, socketNucleo);	/* TODO Preguntar como enviar desde aca un wait a nucleo.. */
 
 /*		//Modificar obtener valor compartida
