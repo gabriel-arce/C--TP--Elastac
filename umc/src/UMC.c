@@ -351,7 +351,7 @@ int escritura_en_swap(int pagina, int frame, int pid) {
 	if (enviar_header(Almacenar_pagina, pedido_size, socket_swap) <= 0)
 		return -1;
 
-	if (send(socket_swap, pedido_swap, 8, 0) <= 0)
+	if (send(socket_swap, pedido_swap, pedido_size, 0) <= 0)
 		return -1;
 
 	free(pagina_a_escribir);
