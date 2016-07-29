@@ -626,7 +626,7 @@ int leer_bytes(int socket_cpu, int bytes) {
 
 	void * datos_leidos = leer_datos(frame_to_read, solicitud->offset, solicitud->bytes);
 
-	//printf("\nDATOS QUE LE ENVIO A CPU: %s\n", (char *) datos_leidos);
+	printf("\nDATOS QUE LE ENVIO A CPU: %s\n", (char *) datos_leidos);
 
 	if ((send(cpu->socket_cpu, datos_leidos, solicitud->bytes, 0)) < 0) {
 		free(solicitud);

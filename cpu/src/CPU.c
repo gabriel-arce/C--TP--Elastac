@@ -316,17 +316,17 @@ void asignar(t_puntero direccion_variable, t_valor_variable valor) {
 t_valor_variable obtenerValorCompartida(t_nombre_compartida variable){
 
 	//saco los /n y le hago un trim
-	char* variableString = string_new();
-	variableString = string_duplicate(variable);
+		char* variableString = string_new();
+		variableString = string_duplicate(variable);
 
-	char *pch = strstr(variableString, "\n");
-	while(pch != NULL)
-	{
-	    strncpy(pch, " ", 1);
-	    pch = strstr(variableString, "\n");
-	}
+		char *pch = strstr(variableString, "\n");
+		while(pch != NULL)
+		{
+		    strncpy(pch, " ", 1);
+		    pch = strstr(variableString, "\n");
+		}
 
-	string_trim(&variableString);
+		string_trim(&variableString);
 
 	t_header * header_in;
 
@@ -351,10 +351,11 @@ t_valor_variable asignarValorCompartida(t_nombre_compartida variable, t_valor_va
 }
 
 void irAlLabel(t_nombre_etiqueta etiqueta){
+char ** etiquetaSplit = string_split(etiqueta, " ");
 
-	printf("Ir a etiqueta: %s", etiqueta);
+	printf("Ir a etiqueta: %s \n ", etiquetaSplit[0]);
 
-	pcbActual->pcb_pc = metadata_buscar_etiqueta(etiqueta, pcbActual->indice_etiquetas, pcbActual->cantidad_de_etiquetas);
+	pcbActual->pcb_pc = metadata_buscar_etiqueta(etiquetaSplit[0], pcbActual->indice_etiquetas, pcbActual->cantidad_de_etiquetas);
 
 }
 
@@ -552,9 +553,11 @@ void ejecutarProximaInstruccion(){
 
 	instruccionEnString = obtenerInstruccion(instruccionACorrer);   //pido la instruccion al umc
 
-	printf("Ejecutando la instruccion: %s \n", instruccionEnString);
+	char** instruccionSplit = string_split(instruccionEnString, "\n");
 
-	analizadorLinea(instruccionEnString, &functions, &kernel_functions);
+	printf("Ejecutando la instruccion: %s \n", instruccionSplit[0]);
+
+	analizadorLinea(instruccionSplit[0], &functions, &kernel_functions);
 
 	free(instruccionACorrer);
 

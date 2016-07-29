@@ -205,7 +205,7 @@ int calcular_size_pcb(t_pcb * pcb) {
 	//como el cada entrada del indice de codigo pesa 8 bytes entonces -> 8 * cantidad de indices
 	tamanio += (n_indice_cod * sizeof(t_indice_de_codigo));
 
-	int etiquet_length = string_length(pcb->indice_etiquetas);
+	int etiquet_length = pcb->cantidad_de_etiquetas;
 	//le tengo que agregar el length del indice de etiquetas al buffer
 	tamanio += 4;
 	//y luego el indice de etiquetas
@@ -283,16 +283,17 @@ void * serializar_pcb(t_pcb * pcb) {
 		memcpy(buffer + pointer, &(indice->tamanio), 4);
 		pointer += 4;
 	}
+	//CANTIDAD DE ETIQUETAS
+		memcpy(buffer + pointer, &(pcb->cantidad_de_etiquetas), 4);
+		pointer += 4;
 	//----length del indice de etiquetas
-	int etiq_length = string_length(pcb->indice_etiquetas);
+	int etiq_length = pcb->cantidad_de_etiquetas;
 	memcpy(buffer + pointer, &(etiq_length), 4);
 	pointer += 4;
 	//INDICE DE ETIQUETAS
 	memcpy(buffer + pointer, pcb->indice_etiquetas, etiq_length);
 	pointer += etiq_length;
-	//CANTIDAD DE ETIQUETAS
-	memcpy(buffer + pointer, &(pcb->cantidad_de_etiquetas), 4);
-	pointer += 4;
+
 	//----cantidad de elementos del indice de stack
 	int size_i_s = 0;
 	size_i_s = list_size(pcb->indice_stack);
@@ -397,14 +398,15 @@ t_pcb * deserializar_pcb(void * buffer) {
 		list_add(pcb->indice_codigo, indice);
 	}
 	//+++INDICE DE ETIQUETAS
+	memcpy(&(pcb->cantidad_de_etiquetas), buffer + pointer, 4);
+		pointer += 4;
 	int etiq_length = 0;
 	memcpy(&(etiq_length), buffer + pointer, 4);
 	pointer += 4;
 	pcb->indice_etiquetas = malloc(etiq_length * sizeof(char));
 	memcpy(pcb->indice_etiquetas, buffer + pointer, etiq_length);
 	pointer += etiq_length;
-	memcpy(&(pcb->cantidad_de_etiquetas), buffer + pointer, 4);
-	pointer += 4;
+
 	//+++INDICE DE STACK
 	int size_i_s = 0;
 	memcpy(&(size_i_s), buffer + pointer, 4);
