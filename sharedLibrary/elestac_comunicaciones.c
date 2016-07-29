@@ -328,14 +328,14 @@ void * serializar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int ti
 	int nombre_dispositivo_length = string_length(nombre_dispositivo);
 
 	t_paquete_entrada_salida * paquete = malloc(sizeof(t_paquete_entrada_salida));
-	void * buffer = malloc(4 + nombre_dispositivo_length);
+	void * buffer = malloc(8 + nombre_dispositivo_length);
 
 		paquete->nombre = nombre_dispositivo;
 		paquete->tiempo = tiempo;
 
 		memcpy(buffer, &(paquete->tiempo), 4);
 		memcpy(buffer + 4, &(paquete->nombre), nombre_dispositivo_length);
-
+		memcpy(buffer + 8,nombre_dispositivo,nombre_dispositivo_length);
 		free(paquete);
 		return buffer;
 }
@@ -347,7 +347,7 @@ t_paquete_entrada_salida * deserializar_entrada_salida(void * buffer){
 
 		memcpy(&(paquete->tiempo), buffer, 4);
 		memcpy(&(paquete->nombre_length), buffer + 4, 4);
-		memcpy(&(paquete->nombre), buffer + 8, paquete->nombre_length);
+		paquete->nombre = string_duplicate((char *)(buffer + 8));
 
 		free(buffer);
 		return paquete;
@@ -562,7 +562,7 @@ char* recibir_texto(int buffer_size, int socket) {
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	char * respuesta = deserializar_imprimir_texto(buffer);
 
@@ -571,18 +571,10 @@ char* recibir_texto(int buffer_size, int socket) {
 
 //------------------------------------------------------>
 int enviar_valor_de_variable(t_valor_variable valor, int socket) {
-	int result = enviar_header(11, 5, socket);
+	int result = enviar_header(11, valor, socket);
 
 	if (result == -1)
 		return result;
-
-	void * buffer_out = serializar_imprimir_valor(valor);
-	result = send(socket, buffer_out, 5, 0);
-
-	if (result == -1)
-		return result;
-
-	free(buffer_out);
 	return EXIT_SUCCESS;
 }
 
@@ -623,7 +615,7 @@ char* recibir_wait_identificador_semaforo(int buffer_size, int socket) {
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	char * respuesta = deserializar_imprimir_texto(buffer);
 
@@ -764,7 +756,7 @@ t_paquete_entrada_salida * recibir_entrada_salida(int buffer_size, int socket) {
 	int r = recv(socket, buffer, buffer_size, 0);
 
 	if (r <= 0)
-		return 0;
+		return NULL;
 
 	t_paquete_entrada_salida * respuesta = deserializar_entrada_salida(buffer);
 

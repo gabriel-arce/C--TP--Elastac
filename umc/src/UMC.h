@@ -128,7 +128,6 @@ void * atiende_nucleo(void * args);
 void * atiende_cpu(void * args);
 
 //FUNCIONES CON SWAP
-void respuesta_inicio_swap(int respuesta_inicio);
 int inicializar_en_swap(t_paquete_inicializar_programa * paquete);
 void finalizar_en_swap(int pid);
 void * lectura_en_swap(int pagina, int pid);

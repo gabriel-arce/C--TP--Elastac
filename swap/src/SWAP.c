@@ -501,14 +501,17 @@ int inicializar_programa(int buffer_init_size) {
 		return EXIT_ERROR;
 	}
 
-	printf("pid: %d\n", paquete_inicio_prog->pid);
-	printf("paginas: %d\n", paquete_inicio_prog->paginas_requeridas);
-	printf("length: %d\n", paquete_inicio_prog->programa_length);
-	printf("codigo: \n%s\n", paquete_inicio_prog->codigo_programa);
-
 	respuesta_inicio = iniciar_programa(paquete_inicio_prog, true);
 
-	enviar_a_umc_respuesta_inicio(paquete_inicio_prog, respuesta_inicio);
+	if (respuesta_inicio)
+		printf("\nPrograma %d inicializado\n", paquete_inicio_prog->pid);
+	else
+		printf("\nRechazar programa %d\n", paquete_inicio_prog->pid);
+
+	enviar_respuesta_inicio(socket_UMC, respuesta_inicio);
+
+	free(paquete_inicio_prog->codigo_programa);
+	free(paquete_inicio_prog);
 
 	return EXIT_SUCCESS;
 }
