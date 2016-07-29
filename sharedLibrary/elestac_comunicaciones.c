@@ -326,18 +326,12 @@ t_paquete_asignar_valor_compartido * deserializar_asignar_valor_compartido(void 
 void * serializar_entrada_salida(t_nombre_dispositivo nombre_dispositivo, int tiempo){
 
 	int nombre_dispositivo_length = string_length(nombre_dispositivo);
-
-	t_paquete_entrada_salida * paquete = malloc(sizeof(t_paquete_entrada_salida));
 	void * buffer = malloc(8 + nombre_dispositivo_length);
+	memcpy(buffer, &(tiempo), 4);
+	memcpy(buffer + 4, &(nombre_dispositivo_length), 4);
+	memcpy(buffer + 8, nombre_dispositivo, nombre_dispositivo_length);
 
-		paquete->nombre = nombre_dispositivo;
-		paquete->tiempo = tiempo;
-
-		memcpy(buffer, &(paquete->tiempo), 4);
-		memcpy(buffer + 4, &(paquete->nombre), nombre_dispositivo_length);
-		memcpy(buffer + 8,nombre_dispositivo,nombre_dispositivo_length);
-		free(paquete);
-		return buffer;
+	return buffer;
 }
 
 
@@ -347,7 +341,9 @@ t_paquete_entrada_salida * deserializar_entrada_salida(void * buffer){
 
 		memcpy(&(paquete->tiempo), buffer, 4);
 		memcpy(&(paquete->nombre_length), buffer + 4, 4);
-		paquete->nombre = string_duplicate((char *)(buffer + 8));
+		paquete->nombre = (char *) malloc(paquete->nombre_length);
+		memcpy(paquete->nombre, buffer + 8, paquete->nombre_length);
+//		paquete->nombre = string_duplicate((char *)(buffer + 8));
 
 		free(buffer);
 		return paquete;
