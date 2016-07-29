@@ -675,7 +675,7 @@ void eliminarStackActivo(){
 	t_stack * ultimoStack;
 
 	posicionUltimoStack = list_size(pcbActual->indice_stack);
-	ultimoStack = list_get(pcbActual->indice_stack, posicionUltimoStack);
+	ultimoStack = list_get(pcbActual->indice_stack, posicionUltimoStack - 1);
 
 	actualizarStackPointer(ultimoStack);
 
