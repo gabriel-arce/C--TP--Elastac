@@ -372,8 +372,8 @@ void llamarConRetorno(t_nombre_etiqueta etiqueta, t_puntero donde_retornar){				
 	desactivarStackActivo();
 	crearStack();
 	asignarPosicionYDireccionDeRetorno(posicionDeRetorno, direccionDeRetorno);
-	irAlLabel(etiqueta);
 
+	irAlLabel(etiqueta);
 
 }
 
@@ -559,7 +559,6 @@ void ejecutarProximaInstruccion(){
 
 	analizadorLinea(instruccionSplit[0], &functions, &kernel_functions);
 
-	free(instruccionACorrer);
 
 }
 
@@ -646,7 +645,9 @@ void asignarPosicionYDireccionDeRetorno(t_posicion donde_retornar, uint32_t dire
 
 	stackActivo = buscarStackActivo();
 	stackActivo->retVar = malloc(sizeof(t_posicion));
-	stackActivo->retVar = &donde_retornar;
+	stackActivo->retVar->pagina = donde_retornar.pagina;
+	stackActivo->retVar->offset = donde_retornar.offset;
+	stackActivo->retVar->size = donde_retornar.size;
 	stackActivo->retPos = direccionDeRetorno;
 
 }

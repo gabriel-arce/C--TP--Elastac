@@ -46,7 +46,7 @@ t_pcb *crearPCB(char *programa, int pid, int fd_consola, int tamanioPaginas) {
 	pcb->indice_codigo = list_create();
 
 	int i;
-	for (i = 0; i <= meta->instrucciones_size; i++)
+	for (i = 0; i < meta->instrucciones_size; i++)
 		list_add(pcb->indice_codigo,
 				crearIndiceCodigo(meta->instrucciones_serializado[i].start,
 						meta->instrucciones_serializado[i].offset));

@@ -28,6 +28,7 @@ int main(int argc, char * argv[]){
 	while(!hotPlugActivado){
 
 		escucharAlNucleo();								//Escuchar al nucleo a la espera de nuevos PCBs
+		imprimir_pcb(pcbActual);
 		cambiar_proceso_activo(pcbActual->pcb_pid);		//envio a umc nuevo PID
 
 /*		//Modifico finalizacion programa
