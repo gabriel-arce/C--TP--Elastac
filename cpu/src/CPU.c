@@ -599,7 +599,6 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 			offset = 0;
 			aux -= loQueGuardo;
 
-			printf("instruccion: %s", instruccion); //TODO prueba
 		}
 
 		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, aux));
