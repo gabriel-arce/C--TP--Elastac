@@ -567,7 +567,7 @@ int getSemValue(char *valor){
 t_semNucleo *crearSemaforoGlobal(char *semaforo, int valor, int io_sleep){
 	t_semNucleo *semNucleo = malloc(sizeof(t_semNucleo));
 	semNucleo->id						= string_duplicate(semaforo);
-	semNucleo->valor					= valor;      //TODO castea int a semaforo?
+	semNucleo->valor					= crearSemaforo(valor);
 	semNucleo->io_sleep			= io_sleep;
 	semNucleo->bloqueados	= list_create();
 	return semNucleo;
@@ -596,6 +596,7 @@ char *getSharedValue(char *valor){
 void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 
 	char* nombreSemaforo;
+	int valorSemaforo;
 
 	nombreSemaforo = recibir_wait_identificador_semaforo(tamanio_buffer, cpu->fd);
 
@@ -603,9 +604,7 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 	t_header *header;
 	t_pcb *pcb;
 	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
-	int valorSemaforo = (int)semaforo->valor;
-
-	if ((valorSemaforo--) < 0){
+	if ((sem_getvalue(semaforo->valor, &valorSemaforo)) < 0){
 		//cpu->disponible = No;
 		enviar_header(31, 0, cpu->fd);
 
@@ -618,15 +617,12 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 
 		//enviar el pcb a bloqueados
 		list_add(lista_bloqueados, pcb);
-
-
-
-	}
-	else
-		{cpu->disponible = Si;
+	} else {
+		cpu->disponible = Si;
 		signalSemaforo(semCpuDisponible);
 		pcb =NULL;
-		enviar_header(32, 0, cpu->fd);}
+		enviar_header(32, 0, cpu->fd);
+	}
 
 	param->pcb = pcb;
 	param->semaforo = semaforo;
@@ -636,15 +632,17 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 }
 
 t_semNucleo *obtenerSemaforoPorID(char *nombreSemaforo){
-	int i;
+	int i, j;
 	t_semNucleo *semaforo;
 
 	for(i = 0; i < list_size(lista_semaforos); i++){
 		semaforo = list_get(lista_semaforos, i);
 		if(strcmp(semaforo->id, nombreSemaforo) == 0){
-			printf("Valor actual: %d\n", (int)semaforo->valor);		//TODO castea semaforo a int?
-			semaforo->valor--;
-			printf("Valor actual: %d\n", (int)semaforo->valor);
+			sem_getvalue(semaforo->valor, &j);
+			printf("Valor actual: %d\n", j);		//TODO castea semaforo a int?
+			waitSemaforo(semaforo->valor);
+			sem_getvalue(semaforo->valor, &j);
+			printf("Valor actual: %d\n", j);
 			break;
 		}
 	}
@@ -798,13 +796,12 @@ void destruirCPU(t_clienteCPU *cpu){
 
 void crearHiloBloqueados(t_pcb *pcb, t_semNucleo *semaforo){
 
-	waitSemaforo(semaforo->valor);
+	//waitSemaforo(semaforo->valor);
 
 	if(semaforo->io_sleep != 0){
-
-		//usleep(1);
 		signalSemaforo(semaforo->valor);
 	}
+
 	int i=0;
 
 	for(i=0; i < list_size(lista_bloqueados); i++){
