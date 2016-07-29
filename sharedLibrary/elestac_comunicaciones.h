@@ -91,7 +91,7 @@ int deserializar_tamanio_pagina(void * buffer);
 void * serializar_respuesta_inicio(int response);
 int deserializar_respuesta_inicio(void * buffer);
 
-void * serializar_ansisop(char * programa);
+void * serializar_ansisop(void * programa, int programa_length);
 t_paquete_programa * deserializar_ansisop(void * buffer);
 
 void * serializar_imprimir_texto(char * texto);
