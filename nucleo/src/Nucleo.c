@@ -135,13 +135,13 @@ void crearListasYColas(){
 		int valor = atoi(valor_char);
 
 
-		list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor,0));
-		/*t_semaforo * s = malloc(sizeof(t_semaforo));
+		//list_add(lista_semaforos, crearSemaforoGlobal(semaforo,valor,0));
+		t_semaforo * s = malloc(sizeof(t_semaforo));
 		s->id = string_duplicate(semaforo);
 		s->sem = crearSemaforo(valor);
 		s->bloqueados = queue_create();
 		list_add(semaforos, (void *) s);
-	*/
+
 	}
 
 	//Recorro del config los dispositivos

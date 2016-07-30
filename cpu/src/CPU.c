@@ -771,7 +771,7 @@ void finalizacionPrograma(){
 }
 
 void finDeQuantum(){
-	enviar_header(FINALIZACION_QUANTUM,0,socketNucleo);
+	if(pcbCorriendo) enviar_header(FINALIZACION_QUANTUM,0,socketNucleo);
 }
 
 void actualizarStackPointer(t_stack * stackAEliminar){

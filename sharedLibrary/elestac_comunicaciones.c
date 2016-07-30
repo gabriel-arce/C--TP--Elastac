@@ -341,7 +341,7 @@ t_paquete_entrada_salida * deserializar_entrada_salida(void * buffer){
 
 		memcpy(&(paquete->tiempo), buffer, 4);
 		memcpy(&(paquete->nombre_length), buffer + 4, 4);
-		paquete->nombre = (char *) malloc(paquete->nombre_length);
+		paquete->nombre = malloc(paquete->nombre_length);
 		memcpy(paquete->nombre, buffer + 8, paquete->nombre_length);
 //		paquete->nombre = string_duplicate((char *)(buffer + 8));
 
