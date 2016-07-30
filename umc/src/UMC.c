@@ -580,7 +580,7 @@ int leer_bytes(int socket_cpu, int bytes) {
 
 	printf("\nDATOS QUE LE ENVIO A CPU: %s\n", (char *) datos_leidos);
 
-	if ((send(cpu->socket_cpu, datos_leidos, solicitud->bytes, 0)) < 0) {
+	if ((send(cpu->socket_cpu, datos_leidos, solicitud->bytes + 1, 0)) < 0) {
 		free(solicitud);
 		free(datos_leidos);
 		return catch_read_error();
