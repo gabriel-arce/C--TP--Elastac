@@ -349,8 +349,7 @@ void * leer_datos(int frame, int offset, int bytes) {
 
 	usleep(umc_config->retardo * 1000);
 
-	void * datos = malloc(bytes + 1);
-	memset(datos, '\0', bytes + 1);
+	void * datos = malloc(bytes);
 	int dir_fisica = 0;
 	dir_fisica = (frame * umc_config->frames_size) + offset;
 

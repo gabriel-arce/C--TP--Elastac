@@ -152,8 +152,8 @@ int socketUMC;
 int tamanio_pagina;
 int pid_global;
 
-//t_queue *cola_listos;
-t_list * cola_listos;
+t_queue *cola_listos;
+//t_list * cola_listos;
 t_list	*lista_bloqueados;
 //, *cola_ejecutando;
 

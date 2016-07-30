@@ -113,8 +113,8 @@ void crearSemaforos(){
 
 void crearListasYColas(){
 
-//	cola_listos 				= queue_create();
-	cola_listos = list_create();
+	cola_listos 				= queue_create();
+//	cola_listos = list_create();
 
 	lista_bloqueados		=	list_create();
 	lista_ejecutando		=	list_create();
@@ -266,8 +266,8 @@ void pasarAEjecutar(){
 	if(cpuDeEjecucion != NULL){
 
 		//Se obtiene el PCB para la transicion
-		//pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
-		pcbEjecutando = (t_pcb *) list_take_and_remove(cola_listos, 0);
+		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
+		//pcbEjecutando = (t_pcb *) list_take_and_remove(cola_listos, 0);
 
 		//2da version
 		//Enviar a Ejecutar
@@ -286,8 +286,8 @@ void pasarAListos(t_pcb *pcb){
 	//Agrega el PCB a la cola de Listos
 	waitSemaforo(mutexListos);
 	printf("\nPasando a listos el pcb con pid: %d\n", pcb->pcb_pid);
-//	queue_push(cola_listos, (void *) pcb);
-	list_add(cola_listos, pcb);
+	queue_push(cola_listos, (void *) pcb);
+//	list_add(cola_listos, pcb);
 	signalSemaforo(mutexListos);
 
 	//Incrementa la cantidad de pcb
@@ -382,8 +382,8 @@ void inicializar_programa(void * fd) {
 			continue;
 
 		if (head->identificador == (uint8_t) 33) {
-			finalizar_aca(pid);
-			enviar_header(13, pid, socketUMC);
+//			finalizar_aca(pid);
+//			enviar_header(13, pid, socketUMC);
 		}
 
 		free(head);
@@ -391,25 +391,25 @@ void inicializar_programa(void * fd) {
 	}
 }
 
-void finalizar_aca(int pid) {
-
-	bool no_encontro = true;
-
-	while (no_encontro) {
-		int cola_listos_size = cola_listos->elements_count;
-		int i;
-		for (i = 0; i < cola_listos_size; i++) {
-			t_pcb * pcb_encontrada = list_get(cola_listos, i);
-
-			if (pcb_encontrada->pcb_pid == pid) {
-				no_encontro = false;
-				list_remove(cola_listos, i);
-				destruirPCB(pcb_encontrada);
-				break;
-			}
-		}
-	}
-}
+//void finalizar_aca(int pid) {
+//
+//	bool no_encontro = true;
+//
+//	while (no_encontro) {
+//		int cola_listos_size = cola_listos->elements_count;
+//		int i;
+//		for (i = 0; i < cola_listos_size; i++) {
+//			t_pcb * pcb_encontrada = list_get(cola_listos, i);
+//
+//			if (pcb_encontrada->pcb_pid == pid) {
+//				no_encontro = false;
+//				list_remove(cola_listos, i);
+//				destruirPCB(pcb_encontrada);
+//				break;
+//			}
+//		}
+//	}
+//}
 
 int calcular_cantidad_paginas(int codigo_length) {
 	int paginas_codigo = 0;
