@@ -201,7 +201,7 @@ t_valor_variable leerBytesDeVariable(uint32_t pagina, uint32_t offset, uint32_t 
 
 char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 
-	void * instruccion = malloc(size);
+	char * instruccion = malloc(size + 1);
 
 	if(enviar_solicitud_lectura(pagina, offset, size, socketUMC) == -1){
 			salirPor("No se concreto la solicitud de lectura");
@@ -210,8 +210,7 @@ char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 	if(recv(socketUMC, instruccion, size, 0) != size){
 	 		salirPor("no se pudo recibir la instruccion");
 	 	}
-
-	return (char*)instruccion;
+	return instruccion;
 }
 
 void mandarTextoANucleo(char* texto){
@@ -607,6 +606,7 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 
 	if(aux <= tamanio_paginas){
 		size= instruccionACorrer->tamanio;
+		char* cah = leerBytesDeInstruccion(pagina,offset, size);
 		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, size));
 	}
 	else{
