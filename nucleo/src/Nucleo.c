@@ -796,13 +796,12 @@ void ejecutarFinalizacionPrograma(t_clienteCPU *cpu, t_header *header){
 
 	   t_pcb *pcb = recibir_pcb(cpu->fd, header_pcb->tamanio);
 
+	   cpu->disponible = Si;
 
 	   agregarPCBaFinalizados(lista_finalizados,  pcb, cpu);
 
 	   finalizar();
 
-	   cpu->disponible = Si;
-	   signalSemaforo(semCpuDisponible);
 
 
 }
