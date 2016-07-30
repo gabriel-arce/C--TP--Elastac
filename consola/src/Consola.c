@@ -68,7 +68,7 @@ void rutina (int n) {
 	switch (n) {
 		case SIGINT:
 			printf("\nPrograma abortado\n");
-			enviar_header(ABORTAR_PROGRAMA, 0,socketConsola);
+			enviar_header(ABORTAR_PROGRAMA, 0, socketConsola);
 			pid_t my_pid = getpid();
 			kill(my_pid, SIGKILL);
 			break;

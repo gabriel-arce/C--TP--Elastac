@@ -96,12 +96,12 @@ int main(int argc, char * argv[]) {
 		switch (cabecera->identificador) {
 		case Imprimir_valor:
 			printf("\n");
-			int valor = (int) recibir_valor_de_variable(socketConsola);
-			printf("VALOR: %d\n", valor);
+			printf("VALOR: %d\n", cabecera->tamanio);
 			break;
 		case Imprimir_texto:
 			printf("\n");
-			char* texto = recibir_texto(cabecera->tamanio, socketConsola);
+			char* texto = string_new();
+			texto = recibir_texto(cabecera->tamanio, socketConsola);
 			printf("TEXTO: %s\n", texto);
 			free(texto);
 			break;

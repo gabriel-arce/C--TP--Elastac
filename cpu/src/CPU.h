@@ -72,6 +72,7 @@ fd_set master;				// conjunto maestro de descriptores de fichero
 fd_set read_fds;			// conjunto temporal de descriptores de fichero para select()
 bool hotPlugActivado;
 bool pcbCorriendo;
+bool pcbFinalizado;
 
 //------------------Funciones
 
