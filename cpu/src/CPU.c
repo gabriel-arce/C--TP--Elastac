@@ -604,13 +604,11 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 	uint32_t offset;
 	uint32_t size;
 	uint32_t aux;
-	uint32_t aux2;
 	uint32_t loQueGuardo;
 
 	pagina = instruccionACorrer->posicion / tamanio_paginas;					//dividir devuelve el numero entero (redondeado para abajo)
 	offset = (instruccionACorrer->posicion - (tamanio_paginas * pagina));
 	aux = offset + instruccionACorrer->tamanio;
-	aux2 = instruccionACorrer->tamanio;
 
 	if(aux <= tamanio_paginas){
 		size= instruccionACorrer->tamanio;
