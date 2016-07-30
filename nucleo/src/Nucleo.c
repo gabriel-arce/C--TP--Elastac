@@ -101,7 +101,8 @@ void crearSemaforos(){
 	semBloqueados			= crearSemaforo(0);
 	semFinalizados			= crearSemaforo(0);
 	mutex_pid					= crearMutex();
-
+	pthread_mutex_init(&mutex_accept_cpu, 0);
+	pthread_mutex_init(&mutex_serv_cpu, 0);
 }
 
 /*void destruirPCB(t_pcb *pcb){
@@ -113,6 +114,7 @@ void crearSemaforos(){
 void crearListasYColas(){
 
 	cola_listos 				= queue_create();
+//	cola_listos = list_create();
 
 	lista_bloqueados		=	list_create();
 	lista_ejecutando		=	list_create();
@@ -265,6 +267,7 @@ void pasarAEjecutar(){
 
 		//Se obtiene el PCB para la transicion
 		pcbEjecutando = (t_pcb *) queue_pop(cola_listos);
+		//pcbEjecutando = (t_pcb *) list_take_and_remove(cola_listos, 0);
 
 		//2da version
 		//Enviar a Ejecutar
@@ -284,6 +287,7 @@ void pasarAListos(t_pcb *pcb){
 	waitSemaforo(mutexListos);
 	printf("\nPasando a listos el pcb con pid: %d\n", pcb->pcb_pid);
 	queue_push(cola_listos, (void *) pcb);
+//	list_add(cola_listos, pcb);
 	signalSemaforo(mutexListos);
 
 	//Incrementa la cantidad de pcb
@@ -315,8 +319,10 @@ void crearServerConsola(){
 
 		waitSemaforo(mutexConsolas);
 
-		if ((newfd = aceptarEntrantes(listener)) == -1)
-			salirPor("accept");
+		if ((newfd = aceptarEntrantes(listener)) == -1) {
+			signalSemaforo(mutexConsolas);
+			continue;
+		}
 
 		setsockopt(newfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
 
@@ -367,9 +373,43 @@ void inicializar_programa(void * fd) {
 		enviar_header(Fin_programa, 0, socket_consola);
 	}
 
-	//se muere el hilo?
-	//por ahi lo necesito vivo por si se muere consola para que me avise que se re pudrio
+	int recibido = 1;
+	t_header * head = NULL;
+	while (recibido) {
+		head = recibir_header(socket_consola);
+
+		if (head == NULL)
+			continue;
+
+		if (head->identificador == (uint8_t) 33) {
+//			finalizar_aca(pid);
+//			enviar_header(13, pid, socketUMC);
+		}
+
+		free(head);
+		recibido = -1;
+	}
 }
+
+//void finalizar_aca(int pid) {
+//
+//	bool no_encontro = true;
+//
+//	while (no_encontro) {
+//		int cola_listos_size = cola_listos->elements_count;
+//		int i;
+//		for (i = 0; i < cola_listos_size; i++) {
+//			t_pcb * pcb_encontrada = list_get(cola_listos, i);
+//
+//			if (pcb_encontrada->pcb_pid == pid) {
+//				no_encontro = false;
+//				list_remove(cola_listos, i);
+//				destruirPCB(pcb_encontrada);
+//				break;
+//			}
+//		}
+//	}
+//}
 
 int calcular_cantidad_paginas(int codigo_length) {
 	int paginas_codigo = 0;
@@ -421,8 +461,12 @@ void crearServerCPU(){
 
 	while(1){
 
-		if ((newfd = aceptarEntrantes(listener)) == -1)
-			salirPor("accept");
+		pthread_mutex_lock(&mutex_accept_cpu);
+
+		if ((newfd = aceptarEntrantes(listener)) == -1) {
+			pthread_mutex_unlock(&mutex_accept_cpu);
+			continue;
+		}
 
 		if (recibir_handshake(newfd) != CPU)
 			puts("Proceso desconocido por puerto de CPU");
@@ -446,7 +490,7 @@ void crearServerCPU(){
 /*		hiloCPU = pthread_join(pIDCpu, respuestaHilo);
 		if(respuestaHilo == PTHREAD_CANCELED)
 			printf("El hilo de CPU %d fue terminado", nuevaCPU->cpuID);*/
-
+		pthread_mutex_unlock(&mutex_accept_cpu);
 
 	}
 }
@@ -516,7 +560,12 @@ t_paquete_programa *obtener_programa(t_header *header, int fd){
 
 void accionesDeCPU(t_clienteCPU *cpu){
 
-	t_header *header;
+	t_header *header = NULL;
+	int recibido;
+	sem_t *mutex_acciones = crearMutex();
+	void *buffer;
+
+	fd_set readset;
 
 	//Enviar Quantum
 	if (enviar_header(28, nucleo->quantum, cpu->fd) == -1)
@@ -529,7 +578,122 @@ void accionesDeCPU(t_clienteCPU *cpu){
 	//Signal por CPU nueva
 	signalSemaforo(semCpuDisponible);
 
-	while((header = recibir_header(cpu->fd)) != NULL){
+	FD_ZERO(&readset);
+	FD_SET(cpu->fd, &readset);
+
+	while(1){
+		if ((recibido = pselect(cpu->fd + 1, &readset, NULL, NULL, NULL, NULL)) < 0){
+			//Error
+			printf("Fin hilo de acciones del CPU %d", cpu->fd);
+			pthread_cancel(pIDCpu);
+			break;
+		} else if( FD_ISSET(cpu->fd, &readset)){
+			if ((header = recibir_header(cpu->fd)) != NULL){
+				switch(header->identificador){
+						case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
+						case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
+						case Signal: 										{ ejecutarSignal(header->tamanio, cpu); break; }
+						case EntradaSalida:							{ ejecutarEntradaSalida(cpu, header); break;}
+						case ObtenerValorCompartido:	{ ejecutarObtenerValorCompartido(cpu->fd, header->tamanio); break;}
+						case AsignarValorCompartido:		{ ejecutarAsignarValorCompartido(cpu->fd, header->tamanio); break;}
+						case MuereCPU:								{ ejecutarMuerteCPU(cpu); break;}
+						case FinalizacionQuantum:				{ ejecutaFinalizacionDeQuantum(cpu); break;}
+						case abortarPrograma:					{ ejecutarFinalizacionPrograma(cpu, header); break;}
+						case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
+						case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
+				} //Fin switch
+				free(header);
+			}
+		}
+	}
+
+
+/*
+	do{
+
+			if( FD_ISSET(cpu->fd, &readset)){
+				if ((header = recibir_header(cpu->fd)) != NULL){
+					switch(header->identificador){
+							case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
+							case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
+							case Signal: 										{ ejecutarSignal(header->tamanio, cpu); break; }
+							case EntradaSalida:							{ ejecutarEntradaSalida(cpu, header); break;}
+							case ObtenerValorCompartido:	{ ejecutarObtenerValorCompartido(cpu->fd, header->tamanio); break;}
+							case AsignarValorCompartido:		{ ejecutarAsignarValorCompartido(cpu->fd, header->tamanio); break;}
+							case MuereCPU:								{ ejecutarMuerteCPU(cpu); break;}
+							case FinalizacionQuantum:				{ ejecutaFinalizacionDeQuantum(cpu); break;}
+							case abortarPrograma:					{ ejecutarFinalizacionPrograma(cpu, header); break;}
+							case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
+							case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
+					} //Fin switch
+					free(header);
+
+				} else{
+					printf("Fin hilo de acciones del CPU %d", cpu->fd);
+					pthread_cancel(pIDCpu);
+					result = -1;
+					break;
+				}
+			}
+	} while (result == -1 && errno == EINTR);
+*/
+
+/*	if(result > 0){
+		if( FD_ISSET(cpu->fd, &readset)){
+			result = recv(cpu->fd, buffer, MAXIMO_BUFFER, 0);
+			if(result == 0){
+				printf("Fin hilo de acciones del CPU %d", cpu->fd);
+				pthread_cancel(pIDCpu);
+				recibido = -1;
+				free(header);
+				//signalSemaforo(mutex_acciones);
+			} else {
+				puts("recibi accion");
+			}
+		}
+	}*/
+
+
+/* 	while(recibido > 0){
+		waitSemaforo(mutex_acciones);
+
+		if ((header = recibir_header(cpu->fd)) == NULL){
+			printf("Fin hilo de acciones del CPU %d", cpu->fd);
+			pthread_cancel(pIDCpu);
+			recibido = -1;
+			free(header);
+			signalSemaforo(mutex_acciones);
+			break;
+		}
+
+	int recibido = 1;
+
+	while(recibido){
+
+		pthread_mutex_lock(&mutex_serv_cpu);
+
+		header = recibir_header(cpu->fd);
+
+		if (header == NULL) {
+			pthread_mutex_unlock(&mutex_serv_cpu);
+			recibido = -1;
+			continue;
+		}
+
+	int recibido = 1;
+
+	while(recibido){
+
+		pthread_mutex_lock(&mutex_serv_cpu);
+
+		header = recibir_header(cpu->fd);
+
+		if (header == NULL) {
+			pthread_mutex_unlock(&mutex_serv_cpu);
+			recibido = -1;
+			continue;
+		}
+
 		switch(header->identificador){
 				case FinalizacionPrograma:			{ ejecutarFinalizacionPrograma(cpu, header); break;}
 				case Wait:											{ ejecutarWait(header->tamanio, cpu); break; }
@@ -543,13 +707,13 @@ void accionesDeCPU(t_clienteCPU *cpu){
 				case imprimir_texto:							{ ejecutarImprimirTexto(cpu->fd, header->tamanio); break;}
 				case imprimir_variable:					{ ejecutarImprimirVariable(cpu->fd, header->tamanio); break;}
 			} //Fin switch
+
 		free(header);
-	}//Fin while
 
-	if(header == NULL){
-		printf("Fin hilo de acciones del CPU %d", cpu->fd);
-		pthread_cancel(pIDCpu);}
+		pthread_mutex_unlock(&mutex_serv_cpu);
+		signalSemaforo(mutex_acciones);*/
 
+	//}//Fin while
 }
 
 void agregarPCBaBloqueados(t_queue *cola, t_pcb *pcb, t_clienteCPU *cpu){
@@ -629,29 +793,42 @@ void ejecutarWait(int tamanio_buffer, t_clienteCPU *cpu){
 	pth_args->semaforo = semaforo;
 	t_pcb * pcb = NULL;
 
-	if ((sem_getvalue(semaforo->sem, &valorSemaforo)) < 0) {
+	if ((sem_getvalue(semaforo->sem, &valorSemaforo)) <= 0) {
 		//cpu->disponible = No;
 		enviar_header(31, 0, cpu->fd);
 
 		//recibir el pcb y enviar a bloqueados
 		t_header * header = recibir_header(cpu->fd);
 		t_pcb * pcb = recibir_pcb(cpu->fd, header->tamanio);
+		pth_args->pcb = pcb;
 
 		//enviar el pcb a bloqueados
 //		list_add(lista_bloqueados, pcb);
 		queue_push(semaforo->bloqueados, pcb);
+
+		cpu->disponible = Si;
+		signalSemaforo(semCpuDisponible);
+
+
+		pthread_create(&PiDBloqueado, NULL, (void *) ejecutar_sem, (void *) pth_args);
 	} else {
 		pcb = NULL;
 		enviar_header(32, 0, cpu->fd);
+		waitSemaforo(semaforo->sem);
 	}
+
+/*	param->pcb = pcb;
+	param->semaforo = semaforo;
+	param->tiempo = 0;
+	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, &param);*/
 
 	cpu->disponible = Si;
 	signalSemaforo(semCpuDisponible);
 
 	pth_args->pcb = pcb;
-
 	pthread_create(&PiDBloqueado, NULL, ejecutar_sem, (void *) pth_args);
-//
+
+	//
 //	t_semNucleo * semaforo = obtenerSemaforoPorID(nombreSemaforo);
 //	t_header *header;
 //	t_pcb *pcb;
@@ -709,13 +886,6 @@ void ejecutarSignal(int tamanio_buffer, t_clienteCPU * cpu){
 //	t_semNucleo *semaforo = obtenerSemaforoPorID(nombreSemaforo);
 	signalSemaforo(semaforo->sem);
 }
-
-//t_pcb *recibir_pcb(t_clienteCPU *cpu, uint32_t tamanio){
-//    void *buffer_aux	= malloc(sizeof(t_pcb));
-//
-//    recv(cpu->fd, buffer_aux, tamanio, 0);
-//    return convertirPCB(buffer_aux);
-//}
 
 void ejecutarObtenerValorCompartido(int fd, int tamanio_buffer){
 
@@ -799,37 +969,6 @@ void ejecutarEntradaSalida(t_clienteCPU *cpu, t_header * header){
 	thread_args->cpu = cpu;
 
 	pthread_create(&PiDBloqueado, NULL, (void *) ejecutar_io, (void *) thread_args);
-
-//	t_paquete_entrada_salida * paquete;
-//	t_semNucleo *semaforo;
-//
-//	t_pcb * pcb  = malloc(sizeof(t_pcb));
-//	t_parametrosHiloBloqueados * param = malloc(sizeof(t_parametrosHiloBloqueados));
-//
-//	paquete = recibir_entrada_salida(header->tamanio, cpu->fd);
-//
-//	//recibir el pcb y enviar a bloqueados
-//	header = recibir_header(cpu->fd);
-//	pcb = recibir_pcb(cpu->fd, header->tamanio);
-//	cpu->disponible = Si;
-//	signalSemaforo(semCpuDisponible);
-//
-//	semaforo = obtenerSemaforoPorID(paquete->nombre);
-//
-//	param->pcb = pcb;
-//	param->semaforo = semaforo;
-//	param->tiempo = paquete->tiempo;
-//
-//	pthread_create(&PiDBloqueado, NULL, (void *)crearHiloBloqueados, param);
-	//pthread_join(PiDBloqueado, NULL);
-
-
-/*
-	   t_pcb *pcb = recibir_pcb(cpu, header->tamanio);
-
-	   agregarPCBaBloqueados(cola_bloqueados, pcb, cpu);
-*/
-
 }
 
 void ejecutarMuerteCPU(t_clienteCPU *cpu){
@@ -937,5 +1076,11 @@ void ejecutar_io(void * args) {
 }
 
 void ejecutar_sem(void * args) {
+	t_pth_sems_bloqueados * arg_sem = args;
 
+	waitSemaforo(arg_sem->semaforo->sem);
+
+	t_pcb * pcb_desbloqueado = queue_pop(arg_sem->semaforo->bloqueados);
+
+	pasarAListos(pcb_desbloqueado);
 }

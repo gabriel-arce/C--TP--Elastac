@@ -210,7 +210,14 @@ char * leerBytesDeInstruccion(uint32_t pagina, uint32_t offset, uint32_t size){
 	if(recv(socketUMC, instruccion, size, 0) != size){
 	 		salirPor("no se pudo recibir la instruccion");
 	 	}
+
 	return instruccion;
+
+	char * instruccion_que_retorno = string_duplicate(instruccion);
+	string_append(&instruccion_que_retorno, "\0");
+
+	return (char*)instruccion;
+
 }
 
 void mandarTextoANucleo(char* texto){
@@ -596,17 +603,14 @@ char* obtenerInstruccion(t_indice_de_codigo * instruccionACorrer){
 	uint32_t offset;
 	uint32_t size;
 	uint32_t aux;
-	uint32_t aux2;
 	uint32_t loQueGuardo;
 
 	pagina = instruccionACorrer->posicion / tamanio_paginas;					//dividir devuelve el numero entero (redondeado para abajo)
 	offset = (instruccionACorrer->posicion - (tamanio_paginas * pagina));
 	aux = offset + instruccionACorrer->tamanio;
-	aux2 = instruccionACorrer->tamanio;
 
 	if(aux <= tamanio_paginas){
 		size= instruccionACorrer->tamanio;
-		char* cah = leerBytesDeInstruccion(pagina,offset, size);
 		string_append(&instruccion, leerBytesDeInstruccion(pagina, offset, size));
 	}
 	else{

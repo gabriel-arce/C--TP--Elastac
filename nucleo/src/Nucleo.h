@@ -51,7 +51,7 @@
 #define Inicializar_programa 14
 #define Respuesta_inicio 17
 #define Fin_programa 13
-
+#define MAXIMO_BUFFER 2000
 
 /****** Estructuras ******/
 typedef enum {
@@ -153,6 +153,7 @@ int tamanio_pagina;
 int pid_global;
 
 t_queue *cola_listos;
+//t_list * cola_listos;
 t_list	*lista_bloqueados;
 //, *cola_ejecutando;
 
@@ -177,6 +178,8 @@ sem_t *semFinalizados;
 sem_t *mutexConsolas;
 sem_t *mutex_pid;
 
+pthread_mutex_t mutex_accept_cpu;
+pthread_mutex_t mutex_serv_cpu;
 
 pthread_t pIDServerNucleo;
 pthread_t pIDServerConsola;
@@ -247,5 +250,6 @@ void crearObserverConfiguracion(char *ruta);
 
 void ejecutar_io(void * args);
 void ejecutar_sem(void * args);
+void finalizar_aca(int pid);
 
 #endif /* NUCLEO_H_ */
