@@ -15,11 +15,9 @@ int main(int argc, char * argv[]) {
 	printf("Proceso Consola..\n");
 	printf("\n");
 
-	pthread_mutex_init(&mutex_nucleo, 0);
-
 	FILE * fp_in;
 	long fp_size;
-	void * prog_buffer = NULL;
+	char * prog_buffer = NULL;
 
 	socketConsola = 0;		//Descriptor de consola
 
