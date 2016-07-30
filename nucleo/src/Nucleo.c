@@ -101,7 +101,8 @@ void crearSemaforos(){
 	semBloqueados			= crearSemaforo(0);
 	semFinalizados			= crearSemaforo(0);
 	mutex_pid					= crearMutex();
-
+	pthread_mutex_init(&mutex_accept_cpu, 0);
+	pthread_mutex_init(&mutex_serv_cpu, 0);
 }
 
 /*void destruirPCB(t_pcb *pcb){
